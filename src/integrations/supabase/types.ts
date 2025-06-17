@@ -62,6 +62,177 @@ export type Database = {
           },
         ]
       }
+      crm_atividades: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_atividade: string
+          descricao: string | null
+          id: string
+          prospect_id: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_atividade?: string
+          descricao?: string | null
+          id?: string
+          prospect_id: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_atividade?: string
+          descricao?: string | null
+          id?: string
+          prospect_id?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_atividades_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_atividades_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "crm_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_prospects: {
+        Row: {
+          cargo: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          empresa_cliente: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          observacoes: string | null
+          origem: string | null
+          proximo_followup: string | null
+          responsavel_id: string | null
+          stage: string
+          tags: string[] | null
+          telefone: string | null
+          updated_at: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          cargo?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_cliente?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          origem?: string | null
+          proximo_followup?: string | null
+          responsavel_id?: string | null
+          stage?: string
+          tags?: string[] | null
+          telefone?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          cargo?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_cliente?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          origem?: string | null
+          proximo_followup?: string | null
+          responsavel_id?: string | null
+          stage?: string
+          tags?: string[] | null
+          telefone?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_prospects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_prospects_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_prospects_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_stages: {
+        Row: {
+          ativo: boolean | null
+          cor: string | null
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          ordem: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_stages_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ativa: boolean
