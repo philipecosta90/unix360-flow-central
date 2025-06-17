@@ -1,48 +1,47 @@
 
-import { useState, useEffect } from "react";
-import { LoginForm } from "@/components/auth/LoginForm";
+import { AuthPage } from "@/components/auth/AuthPage";
 import { Dashboard } from "@/components/dashboard/Dashboard";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user, userProfile, loading, signOut } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Check if user is already logged in
-    const storedUser = localStorage.getItem('unix360_user');
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
-    }
-  }, []);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#43B26D]/10 to-[#43B26D]/5 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-[#43B26D] rounded-lg flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <span className="text-white font-bold text-2xl">X</span>
+          </div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleLogin = (userData) => {
-    setCurrentUser(userData);
-    setIsAuthenticated(true);
-    localStorage.setItem('unix360_user', JSON.stringify(userData));
-    toast({
-      title: "Login realizado com sucesso!",
-      description: `Bem-vindo ao UniX360, ${userData.name}!`,
-    });
-  };
+  if (!user || !userProfile) {
+    return <AuthPage onAuthSuccess={() => window.location.reload()} />;
+  }
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('unix360_user');
+  const handleLogout = async () => {
+    await signOut();
     toast({
       title: "Logout realizado",
       description: "Até logo!",
     });
   };
 
-  if (!isAuthenticated) {
-    return <LoginForm onLogin={handleLogin} />;
-  }
+  // Adaptar dados do perfil para o Dashboard
+  const userData = {
+    name: userProfile.nome,
+    email: user.email,
+    company: userProfile.empresas?.nome || 'Empresa',
+    role: userProfile.nivel_permissao
+  };
 
-  return <Dashboard user={currentUser} onLogout={handleLogout} />;
+  return <Dashboard user={userData} onLogout={handleLogout} />;
 };
 
 export default Index;
