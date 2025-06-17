@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +47,7 @@ export const AuthPage = () => {
           description: "Bem-vindo ao UniX360!",
         });
         // Navigate to dashboard after successful login
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       toast({
@@ -85,7 +84,7 @@ export const AuthPage = () => {
     setIsLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/dashboard`;
       
       const { data, error } = await supabase.auth.signUp({
         email: signupForm.email,
@@ -116,7 +115,7 @@ export const AuthPage = () => {
         });
         // If user is immediately confirmed, navigate to dashboard
         if (data.session) {
-          navigate("/", { replace: true });
+          navigate("/dashboard", { replace: true });
         }
       }
     } catch (error) {
