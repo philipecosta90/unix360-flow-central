@@ -7,12 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
-interface AuthPageProps {
-  onAuthSuccess: () => void;
-}
-
-export const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
+export const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [signupForm, setSignupForm] = useState({
@@ -24,6 +21,7 @@ export const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
     cnpj: ""
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +47,8 @@ export const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
           title: "Login realizado com sucesso!",
           description: "Bem-vindo ao UniX360!",
         });
-        onAuthSuccess();
+        // Navigate to dashboard after successful login
+        navigate("/", { replace: true });
       }
     } catch (error) {
       toast({
@@ -115,6 +114,10 @@ export const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
           title: "Cadastro realizado!",
           description: "Verifique seu email para confirmar a conta.",
         });
+        // If user is immediately confirmed, navigate to dashboard
+        if (data.session) {
+          navigate("/", { replace: true });
+        }
       }
     } catch (error) {
       toast({
