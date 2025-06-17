@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +32,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
     nome: "",
     email: "",
     telefone: "",
-    status: "lead" as const,
+    status: "lead" as 'ativo' | 'inativo' | 'lead' | 'prospecto',
     plano_contratado: "",
     tags: "",
     observacoes: ""
@@ -139,7 +138,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                 <Label>Status</Label>
                 <Select 
                   value={formData.status} 
-                  onValueChange={(value: any) => setFormData({...formData, status: value})}
+                  onValueChange={(value: 'ativo' | 'inativo' | 'lead' | 'prospecto') => setFormData({...formData, status: value})}
                 >
                   <SelectTrigger>
                     <SelectValue />
