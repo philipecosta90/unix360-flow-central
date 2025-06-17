@@ -9,6 +9,59 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      clientes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          observacoes: string | null
+          plano_contratado: string | null
+          status: Database["public"]["Enums"]["status_cliente"]
+          tags: string[] | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          plano_contratado?: string | null
+          status?: Database["public"]["Enums"]["status_cliente"]
+          tags?: string[] | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          plano_contratado?: string | null
+          status?: Database["public"]["Enums"]["status_cliente"]
+          tags?: string[] | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ativa: boolean
@@ -111,6 +164,7 @@ export type Database = {
     }
     Enums: {
       nivel_permissao: "admin" | "operacional" | "visualizacao"
+      status_cliente: "ativo" | "inativo" | "lead" | "prospecto"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -227,6 +281,7 @@ export const Constants = {
   public: {
     Enums: {
       nivel_permissao: ["admin", "operacional", "visualizacao"],
+      status_cliente: ["ativo", "inativo", "lead", "prospecto"],
     },
   },
 } as const
