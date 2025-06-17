@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { 
   Calendar, 
   User, 
-  folder, 
-  folder-check,
-  plus,
-  check,
-  mail,
+  Folder, 
+  FolderCheck,
+  Plus,
+  Check,
+  Mail,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -19,12 +19,12 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: "dashboard", label: "Dashboard", icon: folder },
-  { id: "crm", label: "CRM", icon: folder-check },
+  { id: "dashboard", label: "Dashboard", icon: Folder },
+  { id: "crm", label: "CRM", icon: FolderCheck },
   { id: "clients", label: "Clientes", icon: User },
-  { id: "financial", label: "Financeiro", icon: plus },
-  { id: "tasks", label: "Tarefas", icon: check },
-  { id: "contracts", label: "Contratos", icon: mail },
+  { id: "financial", label: "Financeiro", icon: Plus },
+  { id: "tasks", label: "Tarefas", icon: Check },
+  { id: "contracts", label: "Contratos", icon: Mail },
 ];
 
 export const Sidebar = ({ currentModule, onModuleChange, collapsed, onToggleCollapse }: SidebarProps) => {
