@@ -27,10 +27,6 @@ interface CRMProspect {
   proximo_followup: string;
   observacoes: string;
   created_at: string;
-  perfis?: {
-    nome: string;
-    sobrenome: string;
-  };
 }
 
 interface CRMColumnProps {

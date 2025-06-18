@@ -24,10 +24,6 @@ interface CRMProspect {
   proximo_followup: string;
   observacoes: string;
   created_at: string;
-  perfis?: {
-    nome: string;
-    sobrenome: string;
-  };
 }
 
 interface CRMCardProps {
@@ -168,10 +164,10 @@ export const CRMCard = ({ prospect, isDragging = false }: CRMCardProps) => {
               </div>
             )}
 
-            {/* Responsible */}
-            {prospect.perfis && (
+            {/* Responsible - for now just show the ID since we removed the join */}
+            {prospect.responsavel_id && (
               <div className="text-xs text-gray-600">
-                Responsável: {prospect.perfis.nome} {prospect.perfis.sobrenome}
+                Responsável: {prospect.responsavel_id}
               </div>
             )}
           </div>

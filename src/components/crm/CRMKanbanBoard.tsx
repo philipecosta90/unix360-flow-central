@@ -38,10 +38,6 @@ interface CRMProspect {
   proximo_followup: string;
   observacoes: string;
   created_at: string;
-  perfis?: {
-    nome: string;
-    sobrenome: string;
-  };
 }
 
 interface CRMKanbanBoardProps {
@@ -86,13 +82,7 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
       
       let query = supabase
         .from('crm_prospects')
-        .select(`
-          *,
-          perfis:responsavel_id (
-            nome,
-            sobrenome
-          )
-        `)
+        .select('*')
         .eq('empresa_id', userProfile.empresa_id);
 
       // Apply filters
