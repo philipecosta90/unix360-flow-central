@@ -12,6 +12,7 @@ interface FinancialTransaction {
   categoria: string;
   data: string;
   a_receber: boolean;
+  recorrente: boolean;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -24,6 +25,7 @@ interface CreateTransactionData {
   categoria: string;
   data: string;
   a_receber?: boolean;
+  recorrente?: boolean;
 }
 
 interface FinancialFilters {
@@ -168,6 +170,13 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
 
   const balance = totalRevenue - totalExpenses;
 
+  // Transações vencidas (para alertas)
+  const overdueTransactions = allTransactions.filter(t => 
+    t.a_receber && 
+    t.data <= today && 
+    !t.recorrente
+  );
+
   // Group by category for charts (usando transações filtradas)
   const categoryData = transactions.reduce((acc, transaction) => {
     const key = `${transaction.categoria}-${transaction.tipo}`;
@@ -192,6 +201,8 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       pendingRevenue,
     },
     categoryData: Object.values(categoryData),
+    overdueTransactions,
+    overdueCount: overdueTransactions.length,
     createTransaction,
     updateTransaction,
     deleteTransaction,

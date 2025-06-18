@@ -2,7 +2,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, RefreshCw } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -12,6 +12,7 @@ interface Transaction {
   categoria: string;
   data: string;
   a_receber: boolean;
+  recorrente: boolean;
 }
 
 interface TransactionTableProps {
@@ -58,13 +59,14 @@ export const TransactionTable = ({ transactions, onDelete }: TransactionTablePro
             <TableHead>Categoria</TableHead>
             <TableHead>Valor</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Recorrente</TableHead>
             <TableHead className="w-[80px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {transactions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                 Nenhuma transação encontrada
               </TableCell>
             </TableRow>
@@ -84,6 +86,11 @@ export const TransactionTable = ({ transactions, onDelete }: TransactionTablePro
                 </TableCell>
                 <TableCell>
                   {getStatusBadge(transaction.a_receber)}
+                </TableCell>
+                <TableCell>
+                  {transaction.recorrente && (
+                    <RefreshCw className="h-4 w-4 text-blue-600" title="Transação recorrente" />
+                  )}
                 </TableCell>
                 <TableCell>
                   <Button

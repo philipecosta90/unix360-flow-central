@@ -1,16 +1,22 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 import { AddTransactionDialog } from "./AddTransactionDialog";
 import { FinancialKPIs } from "./FinancialKPIs";
 import { FinancialFilters } from "./FinancialFilters";
 import { FinancialChart } from "./FinancialChart";
 import { TransactionTable } from "./TransactionTable";
+import { ExportDialog } from "./ExportDialog";
+import { OverdueTransactionsDialog } from "./OverdueTransactionsDialog";
 import { toast } from "sonner";
+import { Download, AlertTriangle } from "lucide-react";
 
 export const FinancialModule = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isOverdueDialogOpen, setIsOverdueDialogOpen] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -24,6 +30,8 @@ export const FinancialModule = () => {
     isLoading, 
     kpis, 
     categoryData, 
+    overdueTransactions,
+    overdueCount,
     deleteTransaction 
   } = useFinancialTransactions(filters);
 
@@ -61,12 +69,35 @@ export const FinancialModule = () => {
           <h1 className="text-3xl font-bold text-gray-900">Financeiro</h1>
           <p className="text-gray-600 mt-2">Controle suas receitas e despesas</p>
         </div>
-        <Button 
-          className="bg-[#43B26D] hover:bg-[#37A05B]"
-          onClick={() => setIsAddDialogOpen(true)}
-        >
-          + Nova Transação
-        </Button>
+        <div className="flex items-center gap-3">
+          {overdueCount > 0 && (
+            <Button 
+              variant="outline"
+              onClick={() => setIsOverdueDialogOpen(true)}
+              className="text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-2"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <Badge variant="destructive" className="ml-1">
+                {overdueCount}
+              </Badge>
+              Vencidas
+            </Button>
+          )}
+          <Button 
+            variant="outline"
+            onClick={() => setIsExportDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Exportar
+          </Button>
+          <Button 
+            className="bg-[#43B26D] hover:bg-[#37A05B]"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
+            + Nova Transação
+          </Button>
+        </div>
       </div>
 
       {/* Filtros de Período */}
@@ -103,6 +134,21 @@ export const FinancialModule = () => {
       <AddTransactionDialog 
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
+      />
+
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        transactions={transactions}
+        kpis={kpis}
+        startDate={startDate}
+        endDate={endDate}
+      />
+
+      <OverdueTransactionsDialog
+        open={isOverdueDialogOpen}
+        onOpenChange={setIsOverdueDialogOpen}
+        overdueTransactions={overdueTransactions}
       />
     </div>
   );

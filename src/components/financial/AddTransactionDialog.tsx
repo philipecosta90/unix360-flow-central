@@ -22,6 +22,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
     categoria: '',
     data: new Date().toISOString().split('T')[0],
     a_receber: false,
+    recorrente: false,
   });
 
   const { createTransaction } = useFinancialTransactions();
@@ -49,6 +50,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
         categoria: '',
         data: new Date().toISOString().split('T')[0],
         a_receber: false,
+        recorrente: false,
       });
     } catch (error) {
       console.error('Erro ao criar transação:', error);
@@ -136,6 +138,15 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
               onCheckedChange={(checked) => setFormData({...formData, a_receber: checked})}
             />
             <Label htmlFor="a_receber">A receber</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="recorrente"
+              checked={formData.recorrente}
+              onCheckedChange={(checked) => setFormData({...formData, recorrente: checked})}
+            />
+            <Label htmlFor="recorrente">Recorrente mensal</Label>
           </div>
 
           <div className="flex justify-end space-x-2">

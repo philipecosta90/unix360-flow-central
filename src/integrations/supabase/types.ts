@@ -279,6 +279,7 @@ export type Database = {
           descricao: string
           empresa_id: string
           id: string
+          recorrente: boolean | null
           tipo: string
           updated_at: string | null
           valor: number
@@ -292,6 +293,7 @@ export type Database = {
           descricao: string
           empresa_id: string
           id?: string
+          recorrente?: boolean | null
           tipo: string
           updated_at?: string | null
           valor: number
@@ -305,6 +307,7 @@ export type Database = {
           descricao?: string
           empresa_id?: string
           id?: string
+          recorrente?: boolean | null
           tipo?: string
           updated_at?: string | null
           valor?: number
