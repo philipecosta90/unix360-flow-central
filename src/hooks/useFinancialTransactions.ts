@@ -31,12 +31,29 @@ interface FinancialFilters {
   endDate?: string | null;
 }
 
+const getCurrentMonthRange = () => {
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
+  return {
+    startDate: firstDay.toISOString().split('T')[0],
+    endDate: lastDay.toISOString().split('T')[0]
+  };
+};
+
 export const useFinancialTransactions = (filters?: FinancialFilters) => {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
 
+  // Se não há filtros definidos, usar o mês atual
+  const effectiveFilters = {
+    startDate: filters?.startDate || getCurrentMonthRange().startDate,
+    endDate: filters?.endDate || getCurrentMonthRange().endDate,
+  };
+
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['financial-transactions', userProfile?.empresa_id, filters],
+    queryKey: ['financial-transactions', userProfile?.empresa_id, effectiveFilters],
     queryFn: async () => {
       if (!userProfile?.empresa_id) return [];
       
@@ -45,15 +62,32 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
         .select('*')
         .eq('empresa_id', userProfile.empresa_id);
 
-      if (filters?.startDate) {
-        query = query.gte('data', filters.startDate);
+      if (effectiveFilters.startDate) {
+        query = query.gte('data', effectiveFilters.startDate);
       }
       
-      if (filters?.endDate) {
-        query = query.lte('data', filters.endDate);
+      if (effectiveFilters.endDate) {
+        query = query.lte('data', effectiveFilters.endDate);
       }
 
       const { data, error } = await query.order('data', { ascending: false });
+
+      if (error) throw error;
+      return data as FinancialTransaction[];
+    },
+    enabled: !!userProfile?.empresa_id,
+  });
+
+  // Buscar todas as transações para calcular "A Receber" corretamente
+  const { data: allTransactions = [] } = useQuery({
+    queryKey: ['all-financial-transactions', userProfile?.empresa_id],
+    queryFn: async () => {
+      if (!userProfile?.empresa_id) return [];
+      
+      const { data, error } = await supabase
+        .from('financeiro_lancamentos')
+        .select('*')
+        .eq('empresa_id', userProfile.empresa_id);
 
       if (error) throw error;
       return data as FinancialTransaction[];
@@ -80,6 +114,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
     },
   });
 
@@ -97,6 +132,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
     },
   });
 
@@ -111,10 +147,11 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
     },
   });
 
-  // Calculate KPIs
+  // Calculate KPIs baseado no período filtrado
   const totalRevenue = transactions
     .filter(t => t.tipo === 'entrada')
     .reduce((sum, t) => sum + Number(t.valor), 0);
@@ -123,13 +160,15 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     .filter(t => t.tipo === 'saida')
     .reduce((sum, t) => sum + Number(t.valor), 0);
 
-  const pendingRevenue = transactions
-    .filter(t => t.tipo === 'entrada' && t.a_receber)
+  // A Receber: valores futuros com a_receber = true
+  const today = new Date().toISOString().split('T')[0];
+  const pendingRevenue = allTransactions
+    .filter(t => t.tipo === 'entrada' && t.a_receber && t.data > today)
     .reduce((sum, t) => sum + Number(t.valor), 0);
 
   const balance = totalRevenue - totalExpenses;
 
-  // Group by category for charts
+  // Group by category for charts (usando transações filtradas)
   const categoryData = transactions.reduce((acc, transaction) => {
     const key = `${transaction.categoria}-${transaction.tipo}`;
     if (!acc[key]) {

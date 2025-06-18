@@ -81,9 +81,6 @@ export const FinancialModule = () => {
       {/* KPIs Principais */}
       <FinancialKPIs kpis={kpis} />
 
-      {/* Gráfico por Categoria */}
-      <FinancialChart data={categoryData} />
-
       {/* Lista de Transações */}
       <div className="bg-white rounded-lg border">
         <div className="p-6 border-b">
@@ -99,6 +96,9 @@ export const FinancialModule = () => {
           />
         </div>
       </div>
+
+      {/* Gráfico por Categoria - Movido para o final */}
+      <FinancialChart data={categoryData} />
 
       <AddTransactionDialog 
         open={isAddDialogOpen}

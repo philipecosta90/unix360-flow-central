@@ -23,7 +23,7 @@ export const FinancialKPIs = ({ kpis }: FinancialKPIsProps) => {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-            <span className="mr-2">💚</span> Receita Total
+            <span className="mr-2">💚</span> Receita do Mês
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -37,7 +37,7 @@ export const FinancialKPIs = ({ kpis }: FinancialKPIsProps) => {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-            <span className="mr-2">❤️</span> Despesas Totais
+            <span className="mr-2">❤️</span> Despesas do Mês
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -51,7 +51,7 @@ export const FinancialKPIs = ({ kpis }: FinancialKPIsProps) => {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-            <span className="mr-2">💰</span> Saldo Total
+            <span className="mr-2">💰</span> Saldo do Mês
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -72,7 +72,7 @@ export const FinancialKPIs = ({ kpis }: FinancialKPIsProps) => {
           <div className="text-2xl font-bold text-yellow-600">
             {formatCurrency(kpis.pendingRevenue)}
           </div>
-          <p className="text-xs text-gray-500 mt-1">Valores pendentes</p>
+          <p className="text-xs text-gray-500 mt-1">Valores futuros</p>
         </CardContent>
       </Card>
     </div>
