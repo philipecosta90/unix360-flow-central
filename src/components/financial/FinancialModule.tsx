@@ -4,53 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
+import { AddTransactionDialog } from "./AddTransactionDialog";
 
 export const FinancialModule = () => {
-  const [transactions] = useState([
-    {
-      id: 1,
-      type: "Receita",
-      description: "Pagamento João Silva - Coaching Premium",
-      amount: 2500,
-      date: "2024-01-15",
-      status: "Pago",
-      category: "Serviços"
-    },
-    {
-      id: 2,
-      type: "Receita",
-      description: "Pagamento Maria Santos - Consultoria",
-      amount: 1800,
-      date: "2024-01-14",
-      status: "Pendente",
-      category: "Serviços"
-    },
-    {
-      id: 3,
-      type: "Despesa",
-      description: "Software de gestão mensal",
-      amount: -299,
-      date: "2024-01-10",
-      status: "Pago",
-      category: "Tecnologia"
-    },
-    {
-      id: 4,
-      type: "Despesa",
-      description: "Marketing digital - Google Ads",
-      amount: -850,
-      date: "2024-01-08",
-      status: "Pago",
-      category: "Marketing"
-    }
-  ]);
-
-  const monthlyStats = {
-    totalRevenue: 47560,
-    totalExpenses: 12300,
-    netProfit: 35260,
-    pendingRevenue: 8900
-  };
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { transactions, isLoading, monthlyStats } = useFinancialTransactions();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -62,8 +21,28 @@ export const FinancialModule = () => {
   };
 
   const getTypeColor = (type: string) => {
-    return type === "Receita" ? "text-green-600" : "text-red-600";
+    return type === "entrada" ? "text-green-600" : "text-red-600";
   };
+
+  const formatTransactionForDisplay = (transaction: any) => ({
+    id: transaction.id,
+    type: transaction.tipo === 'entrada' ? 'Receita' : 'Despesa',
+    description: transaction.descricao,
+    amount: transaction.tipo === 'entrada' ? transaction.valor : -transaction.valor,
+    date: transaction.data,
+    status: transaction.a_receber ? 'Pendente' : 'Pago',
+    category: transaction.categoria
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-8">
+          <p className="text-gray-500">Carregando dados financeiros...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -72,7 +51,10 @@ export const FinancialModule = () => {
           <h1 className="text-3xl font-bold text-gray-900">Financeiro</h1>
           <p className="text-gray-600 mt-2">Controle suas receitas e despesas</p>
         </div>
-        <Button className="bg-[#43B26D] hover:bg-[#37A05B]">
+        <Button 
+          className="bg-[#43B26D] hover:bg-[#37A05B]"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
           + Nova Transação
         </Button>
       </div>
@@ -150,31 +132,46 @@ export const FinancialModule = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {transactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{transaction.description}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {transaction.category}
-                        </Badge>
-                        <span className="text-xs text-gray-500">
-                          {new Date(transaction.date).toLocaleDateString('pt-BR')}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className={`font-medium ${getTypeColor(transaction.type)}`}>
-                          {transaction.amount > 0 ? '+' : ''}R$ {Math.abs(transaction.amount).toLocaleString('pt-BR')}
-                        </p>
-                        <Badge className={getStatusColor(transaction.status)}>
-                          {transaction.status}
-                        </Badge>
-                      </div>
-                    </div>
+                {transactions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Nenhuma transação encontrada</p>
+                    <Button 
+                      className="mt-4 bg-[#43B26D] hover:bg-[#37A05B]"
+                      onClick={() => setIsAddDialogOpen(true)}
+                    >
+                      Adicionar primeira transação
+                    </Button>
                   </div>
-                ))}
+                ) : (
+                  transactions.map((transaction) => {
+                    const displayTransaction = formatTransactionForDisplay(transaction);
+                    return (
+                      <div key={displayTransaction.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{displayTransaction.description}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {displayTransaction.category}
+                            </Badge>
+                            <span className="text-xs text-gray-500">
+                              {new Date(displayTransaction.date).toLocaleDateString('pt-BR')}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className={`font-medium ${getTypeColor(transaction.tipo)}`}>
+                              {displayTransaction.amount > 0 ? '+' : ''}R$ {Math.abs(displayTransaction.amount).toLocaleString('pt-BR')}
+                            </p>
+                            <Badge className={getStatusColor(displayTransaction.status)}>
+                              {displayTransaction.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </CardContent>
           </Card>
@@ -196,6 +193,11 @@ export const FinancialModule = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AddTransactionDialog 
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+      />
     </div>
   );
 };

@@ -269,6 +269,63 @@ export type Database = {
         }
         Relationships: []
       }
+      financeiro_lancamentos: {
+        Row: {
+          a_receber: boolean | null
+          categoria: string
+          created_at: string | null
+          created_by: string | null
+          data: string
+          descricao: string
+          empresa_id: string
+          id: string
+          tipo: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          a_receber?: boolean | null
+          categoria: string
+          created_at?: string | null
+          created_by?: string | null
+          data: string
+          descricao: string
+          empresa_id: string
+          id?: string
+          tipo: string
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          a_receber?: boolean | null
+          categoria?: string
+          created_at?: string | null
+          created_by?: string | null
+          data?: string
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          tipo?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financeiro_lancamentos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financeiro_lancamentos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis: {
         Row: {
           ativo: boolean
