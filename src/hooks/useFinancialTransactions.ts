@@ -26,20 +26,34 @@ interface CreateTransactionData {
   a_receber?: boolean;
 }
 
-export const useFinancialTransactions = () => {
+interface FinancialFilters {
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+export const useFinancialTransactions = (filters?: FinancialFilters) => {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['financial-transactions', userProfile?.empresa_id],
+    queryKey: ['financial-transactions', userProfile?.empresa_id, filters],
     queryFn: async () => {
       if (!userProfile?.empresa_id) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('financeiro_lancamentos')
         .select('*')
-        .eq('empresa_id', userProfile.empresa_id)
-        .order('data', { ascending: false });
+        .eq('empresa_id', userProfile.empresa_id);
+
+      if (filters?.startDate) {
+        query = query.gte('data', filters.startDate);
+      }
+      
+      if (filters?.endDate) {
+        query = query.lte('data', filters.endDate);
+      }
+
+      const { data, error } = await query.order('data', { ascending: false });
 
       if (error) throw error;
       return data as FinancialTransaction[];
@@ -100,28 +114,45 @@ export const useFinancialTransactions = () => {
     },
   });
 
-  // Calculate monthly stats
-  const monthlyStats = {
-    totalRevenue: transactions
-      .filter(t => t.tipo === 'entrada')
-      .reduce((sum, t) => sum + Number(t.valor), 0),
-    totalExpenses: transactions
-      .filter(t => t.tipo === 'saida')
-      .reduce((sum, t) => sum + Number(t.valor), 0),
-    pendingRevenue: transactions
-      .filter(t => t.tipo === 'entrada' && t.a_receber)
-      .reduce((sum, t) => sum + Number(t.valor), 0),
-  };
+  // Calculate KPIs
+  const totalRevenue = transactions
+    .filter(t => t.tipo === 'entrada')
+    .reduce((sum, t) => sum + Number(t.valor), 0);
 
-  const netProfit = monthlyStats.totalRevenue - monthlyStats.totalExpenses;
+  const totalExpenses = transactions
+    .filter(t => t.tipo === 'saida')
+    .reduce((sum, t) => sum + Number(t.valor), 0);
+
+  const pendingRevenue = transactions
+    .filter(t => t.tipo === 'entrada' && t.a_receber)
+    .reduce((sum, t) => sum + Number(t.valor), 0);
+
+  const balance = totalRevenue - totalExpenses;
+
+  // Group by category for charts
+  const categoryData = transactions.reduce((acc, transaction) => {
+    const key = `${transaction.categoria}-${transaction.tipo}`;
+    if (!acc[key]) {
+      acc[key] = {
+        categoria: transaction.categoria,
+        tipo: transaction.tipo,
+        valor: 0,
+      };
+    }
+    acc[key].valor += Number(transaction.valor);
+    return acc;
+  }, {} as Record<string, { categoria: string; tipo: string; valor: number }>);
 
   return {
     transactions,
     isLoading,
-    monthlyStats: {
-      ...monthlyStats,
-      netProfit,
+    kpis: {
+      totalRevenue,
+      totalExpenses,
+      balance,
+      pendingRevenue,
     },
+    categoryData: Object.values(categoryData),
     createTransaction,
     updateTransaction,
     deleteTransaction,
