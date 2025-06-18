@@ -89,7 +89,7 @@ export const TransactionTable = ({ transactions, onDelete }: TransactionTablePro
                 </TableCell>
                 <TableCell>
                   {transaction.recorrente && (
-                    <RefreshCw className="h-4 w-4 text-blue-600" title="Transação recorrente" />
+                    <RefreshCw className="h-4 w-4 text-blue-600" aria-label="Transação recorrente" />
                   )}
                 </TableCell>
                 <TableCell>
