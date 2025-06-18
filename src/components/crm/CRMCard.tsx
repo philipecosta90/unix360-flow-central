@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Phone, Mail, Calendar } from "lucide-react";
 import { useState } from "react";
 import { EditProspectDialog } from "./EditProspectDialog";
+import { CRMProspectDetail } from "./CRMProspectDetail";
 
 interface CRMProspect {
   id: string;
@@ -33,6 +34,7 @@ interface CRMCardProps {
 
 export const CRMCard = ({ prospect, isDragging = false }: CRMCardProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailDrawer, setShowDetailDrawer] = useState(false);
   
   const {
     attributes,
@@ -69,6 +71,14 @@ export const CRMCard = ({ prospect, isDragging = false }: CRMCardProps) => {
     return followupDate < today;
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't open detail if clicking on edit button
+    if ((e.target as HTMLElement).closest('[data-edit-button]')) {
+      return;
+    }
+    setShowDetailDrawer(true);
+  };
+
   return (
     <>
       <Card 
@@ -77,6 +87,7 @@ export const CRMCard = ({ prospect, isDragging = false }: CRMCardProps) => {
         {...attributes}
         {...listeners}
         className="bg-white shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
+        onClick={handleCardClick}
       >
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
@@ -94,6 +105,7 @@ export const CRMCard = ({ prospect, isDragging = false }: CRMCardProps) => {
               </div>
             </div>
             <Button
+              data-edit-button
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0"
@@ -178,6 +190,12 @@ export const CRMCard = ({ prospect, isDragging = false }: CRMCardProps) => {
         prospect={prospect}
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
+      />
+
+      <CRMProspectDetail
+        prospectId={prospect.id}
+        open={showDetailDrawer}
+        onOpenChange={setShowDetailDrawer}
       />
     </>
   );
