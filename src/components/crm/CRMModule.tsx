@@ -3,6 +3,7 @@ import { useState } from "react";
 import { CRMKanbanBoard } from "./CRMKanbanBoard";
 import { CRMDashboard } from "./CRMDashboard";
 import { CRMConversionReport } from "./CRMConversionReport";
+import { CRMFollowupAlerts } from "./CRMFollowupAlerts";
 import { CRMFilters } from "./CRMFilters";
 import { AddProspectDialog } from "./AddProspectDialog";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,10 @@ export const CRMModule = () => {
       </div>
 
       {currentView === "dashboard" ? (
-        <CRMDashboard />
+        <div className="space-y-6">
+          <CRMDashboard />
+          <CRMFollowupAlerts />
+        </div>
       ) : currentView === "conversion" ? (
         <CRMConversionReport />
       ) : (
