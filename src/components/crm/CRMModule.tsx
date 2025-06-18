@@ -17,6 +17,8 @@ export const CRMModule = () => {
     tags: [] as string[],
     responsavel: "",
     stage: "",
+    startDate: undefined as Date | undefined,
+    endDate: undefined as Date | undefined,
   });
 
   return (

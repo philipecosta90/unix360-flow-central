@@ -25,6 +25,8 @@ interface CRMFilters {
   tags: string[];
   responsavel: string;
   stage: string;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
 }
 
 export const useCRMProspects = (filters: CRMFilters) => {
@@ -55,6 +57,15 @@ export const useCRMProspects = (filters: CRMFilters) => {
 
       if (filters.tags.length > 0) {
         query = query.overlaps('tags', filters.tags);
+      }
+
+      // Apply date range filters
+      if (filters.startDate) {
+        query = query.gte('proximo_followup', filters.startDate.toISOString().split('T')[0]);
+      }
+      
+      if (filters.endDate) {
+        query = query.lte('proximo_followup', filters.endDate.toISOString().split('T')[0]);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });

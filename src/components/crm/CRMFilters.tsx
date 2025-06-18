@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, X, Filter } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Search, X, Filter, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface CRMFiltersProps {
   filters: {
@@ -16,6 +19,8 @@ interface CRMFiltersProps {
     tags: string[];
     responsavel: string;
     stage: string;
+    startDate: Date | undefined;
+    endDate: Date | undefined;
   };
   onFiltersChange: (filters: any) => void;
 }
@@ -101,10 +106,12 @@ export const CRMFilters = ({ filters, onFiltersChange }: CRMFiltersProps) => {
       tags: [],
       responsavel: "",
       stage: "",
+      startDate: undefined,
+      endDate: undefined,
     });
   };
 
-  const hasActiveFilters = filters.search || filters.tags.length > 0 || filters.responsavel || filters.stage;
+  const hasActiveFilters = filters.search || filters.tags.length > 0 || filters.responsavel || filters.stage || filters.startDate || filters.endDate;
 
   return (
     <Card>
@@ -142,64 +149,128 @@ export const CRMFilters = ({ filters, onFiltersChange }: CRMFiltersProps) => {
 
         {/* Expanded Filters */}
         {showFilters && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Stage Filter */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Etapa
-              </label>
-              <Select value={filters.stage} onValueChange={(value) => updateFilters('stage', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as etapas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todas as etapas</SelectItem>
-                  {stages.map((stage) => (
-                    <SelectItem key={stage.id} value={stage.id}>
-                      {stage.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Stage Filter */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Etapa
+                </label>
+                <Select value={filters.stage} onValueChange={(value) => updateFilters('stage', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas as etapas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todas as etapas</SelectItem>
+                    {stages.map((stage) => (
+                      <SelectItem key={stage.id} value={stage.id}>
+                        {stage.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Responsible Filter */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Responsável
+                </label>
+                <Select value={filters.responsavel} onValueChange={(value) => updateFilters('responsavel', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os responsáveis" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos os responsáveis</SelectItem>
+                    {teamMembers.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.nome} {member.sobrenome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tags Filter */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Tags
+                </label>
+                <Select onValueChange={addTag}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Adicionar tag" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableTags.map((tag) => (
+                      <SelectItem key={tag} value={tag}>
+                        {tag}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Responsible Filter */}
+            {/* Date Range Filter */}
             <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Responsável
+                Período de Follow-up
               </label>
-              <Select value={filters.responsavel} onValueChange={(value) => updateFilters('responsavel', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os responsáveis" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os responsáveis</SelectItem>
-                  {teamMembers.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.nome} {member.sobrenome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Start Date */}
+                <div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !filters.startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {filters.startDate ? format(filters.startDate, "dd/MM/yyyy") : "Início"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={filters.startDate}
+                        onSelect={(date) => updateFilters('startDate', date)}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-            {/* Tags Filter */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Tags
-              </label>
-              <Select onValueChange={addTag}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Adicionar tag" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTags.map((tag) => (
-                    <SelectItem key={tag} value={tag}>
-                      {tag}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {/* End Date */}
+                <div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !filters.endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {filters.endDate ? format(filters.endDate, "dd/MM/yyyy") : "Fim"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={filters.endDate}
+                        onSelect={(date) => updateFilters('endDate', date)}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -220,6 +291,29 @@ export const CRMFilters = ({ filters, onFiltersChange }: CRMFiltersProps) => {
                   />
                 </Badge>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Active Date Range */}
+        {(filters.startDate || filters.endDate) && (
+          <div className="mt-4">
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Período selecionado:
+            </label>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                {filters.startDate ? format(filters.startDate, "dd/MM/yyyy") : "Sem início"}
+                {" - "}
+                {filters.endDate ? format(filters.endDate, "dd/MM/yyyy") : "Sem fim"}
+                <X 
+                  className="h-3 w-3 ml-1 cursor-pointer" 
+                  onClick={() => {
+                    updateFilters('startDate', undefined);
+                    updateFilters('endDate', undefined);
+                  }}
+                />
+              </Badge>
             </div>
           </div>
         )}
