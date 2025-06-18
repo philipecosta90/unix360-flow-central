@@ -20,6 +20,8 @@ interface CRMKanbanBoardProps {
     tags: string[];
     responsavel: string;
     stage: string;
+    startDate: Date | undefined;
+    endDate: Date | undefined;
   };
 }
 
