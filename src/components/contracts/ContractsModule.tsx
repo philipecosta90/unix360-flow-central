@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ContractDetailDialog } from "./ContractDetailDialog";
 import { EditContractDialog } from "./EditContractDialog";
+import { AddContractDialog } from "./AddContractDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Contract {
   id: number;
@@ -20,11 +22,13 @@ interface Contract {
 }
 
 export const ContractsModule = () => {
+  const { toast } = useToast();
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
-  const [contracts] = useState<Contract[]>([
+  const [contracts, setContracts] = useState<Contract[]>([
     {
       id: 1,
       clientName: "João Silva",
@@ -98,6 +102,20 @@ export const ContractsModule = () => {
     setShowEditDialog(true);
   };
 
+  const handleDeleteContract = (contractId: number) => {
+    if (confirm('Tem certeza que deseja excluir este contrato?')) {
+      setContracts(prev => prev.filter(c => c.id !== contractId));
+      toast({
+        title: "Contrato excluído",
+        description: "O contrato foi removido com sucesso.",
+      });
+    }
+  };
+
+  const handleAddContract = () => {
+    setShowAddDialog(true);
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -106,7 +124,10 @@ export const ContractsModule = () => {
             <h1 className="text-3xl font-bold text-gray-900">Contratos</h1>
             <p className="text-gray-600 mt-2">Gerencie seus contratos e propostas</p>
           </div>
-          <Button className="bg-[#43B26D] hover:bg-[#37A05B]">
+          <Button 
+            className="bg-[#43B26D] hover:bg-[#37A05B]"
+            onClick={handleAddContract}
+          >
             + Novo Contrato
           </Button>
         </div>
@@ -230,15 +251,20 @@ export const ContractsModule = () => {
                     >
                       Ver
                     </Button>
-                    {contract.status !== "Assinado" && (
-                      <Button 
-                        size="sm" 
-                        className="bg-[#43B26D] hover:bg-[#37A05B]"
-                        onClick={() => handleEditContract(contract)}
-                      >
-                        Editar
-                      </Button>
-                    )}
+                    <Button 
+                      size="sm" 
+                      className="bg-[#43B26D] hover:bg-[#37A05B]"
+                      onClick={() => handleEditContract(contract)}
+                    >
+                      Editar
+                    </Button>
+                    <Button 
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteContract(contract.id)}
+                    >
+                      Excluir
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -258,6 +284,11 @@ export const ContractsModule = () => {
         contract={selectedContract}
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
+      />
+
+      <AddContractDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
       />
     </>
   );

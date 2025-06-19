@@ -2,16 +2,15 @@
 import { useState } from "react";
 import { CRMKanbanBoard } from "./CRMKanbanBoard";
 import { CRMDashboard } from "./CRMDashboard";
-import { CRMConversionReport } from "./CRMConversionReport";
 import { CRMFollowupAlerts } from "./CRMFollowupAlerts";
 import { CRMFilters } from "./CRMFilters";
 import { AddProspectDialog } from "./AddProspectDialog";
 import { Button } from "@/components/ui/button";
-import { Plus, BarChart3, Kanban, TrendingUp } from "lucide-react";
+import { Plus, BarChart3, Kanban } from "lucide-react";
 
 export const CRMModule = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [currentView, setCurrentView] = useState<"kanban" | "dashboard" | "conversion">("kanban");
+  const [currentView, setCurrentView] = useState<"kanban" | "dashboard">("kanban");
   const [filters, setFilters] = useState({
     search: "",
     tags: [] as string[],
@@ -48,15 +47,6 @@ export const CRMModule = () => {
               <BarChart3 className="w-4 h-4 mr-2" />
               Dashboard
             </Button>
-            <Button
-              variant={currentView === "conversion" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setCurrentView("conversion")}
-              className={currentView === "conversion" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}
-            >
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Conversão
-            </Button>
           </div>
           <Button 
             onClick={() => setShowAddDialog(true)}
@@ -73,8 +63,6 @@ export const CRMModule = () => {
           <CRMDashboard />
           <CRMFollowupAlerts />
         </div>
-      ) : currentView === "conversion" ? (
-        <CRMConversionReport />
       ) : (
         <>
           <CRMFilters filters={filters} onFiltersChange={setFilters} />

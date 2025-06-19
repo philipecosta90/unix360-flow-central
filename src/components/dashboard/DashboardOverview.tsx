@@ -137,50 +137,17 @@ export const DashboardOverview = () => {
         ))}
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Atividades Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {dashboardData?.atividadesRecentes.length ? (
-                dashboardData.atividadesRecentes.slice(0, 4).map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
-                    <div className={`w-2 h-2 rounded-full ${
-                      activity.tipo === 'cliente' ? 'bg-blue-500' :
-                      activity.tipo === 'tarefa' ? 'bg-green-500' :
-                      activity.tipo === 'prospect' ? 'bg-purple-500' :
-                      'bg-yellow-500'
-                    }`}></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                      <p className="text-sm text-gray-600">{activity.client}</p>
-                    </div>
-                    <span className="text-xs text-gray-500">{activity.time}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Nenhuma atividade recente</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Próximas Tarefas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <ProximasTarefas />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Próximas Tarefas */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Próximas Tarefas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <ProximasTarefas />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

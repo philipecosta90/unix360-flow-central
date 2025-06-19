@@ -43,7 +43,6 @@ export const CRMFollowupAlerts = () => {
 
       if (error) throw error;
       
-      // Transform the data to match expected interface
       return {
         ...data,
         perfis: data.perfis && !('error' in data.perfis) ? data.perfis : null
@@ -134,25 +133,21 @@ export const CRMFollowupAlerts = () => {
   };
 
   const handleViewProspect = (prospectId: string) => {
-    console.log('Ver prospect clicado:', prospectId);
     setSelectedProspectId(prospectId);
     setShowProspectDetail(true);
   };
 
   const handleEditProspect = (prospectId: string) => {
-    console.log('Editar prospect clicado:', prospectId);
     setSelectedProspectId(prospectId);
     setShowEditDialog(true);
   };
 
   const handleScheduleFollowUp = (prospectId: string) => {
-    console.log('Agendar follow-up clicado:', prospectId);
     setSelectedProspectId(prospectId);
     setShowActivityDialog(true);
   };
 
   const handleDeleteProspect = (prospectId: string) => {
-    console.log('Excluir prospect clicado:', prospectId);
     if (confirm('Tem certeza que deseja excluir este prospect?')) {
       deleteProspectMutation.mutate(prospectId);
     }
@@ -190,15 +185,15 @@ export const CRMFollowupAlerts = () => {
                       : 'border-orange-200 bg-orange-50'
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-3">
                         {alert.is_critical && (
                           <span className="text-red-500 text-lg" title="Alerta crítico">
                             ⚠️
                           </span>
                         )}
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-gray-900 truncate">
                           {alert.nome}
                         </h3>
                         <Badge className={getStageColor(alert.stage)}>
@@ -206,27 +201,27 @@ export const CRMFollowupAlerts = () => {
                         </Badge>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600 mb-3">
                         {alert.email && (
-                          <div className="flex items-center gap-1">
-                            <Mail className="w-4 h-4" />
-                            <span>{alert.email}</span>
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate">{alert.email}</span>
                           </div>
                         )}
                         {alert.telefone && (
-                          <div className="flex items-center gap-1">
-                            <Phone className="w-4 h-4" />
-                            <span>{alert.telefone}</span>
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate">{alert.telefone}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>Última atividade: {formatDate(alert.last_activity_date)}</span>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">Última atividade: {formatDate(alert.last_activity_date)}</span>
                         </div>
                         {alert.proximo_followup && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>Follow-up: {formatDate(alert.proximo_followup)}</span>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate">Follow-up: {formatDate(alert.proximo_followup)}</span>
                           </div>
                         )}
                       </div>
@@ -245,36 +240,43 @@ export const CRMFollowupAlerts = () => {
                       </div>
                     </div>
                     
-                    <div className="flex gap-2 ml-4">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleViewProspect(alert.id)}
-                      >
-                        Ver Prospect
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        className="bg-[#43B26D] hover:bg-[#37A05B]"
-                        onClick={() => handleScheduleFollowUp(alert.id)}
-                      >
-                        Agendar Follow-up
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleEditProspect(alert.id)}
-                      >
-                        Editar
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive"
-                        onClick={() => handleDeleteProspect(alert.id)}
-                        disabled={deleteProspectMutation.isPending}
-                      >
-                        Excluir
-                      </Button>
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                      <div className="flex gap-1">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewProspect(alert.id)}
+                          className="text-xs px-2 py-1 h-7"
+                        >
+                          Ver
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          className="bg-[#43B26D] hover:bg-[#37A05B] text-xs px-2 py-1 h-7"
+                          onClick={() => handleScheduleFollowUp(alert.id)}
+                        >
+                          Follow-up
+                        </Button>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleEditProspect(alert.id)}
+                          className="text-xs px-2 py-1 h-7"
+                        >
+                          Editar
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => handleDeleteProspect(alert.id)}
+                          disabled={deleteProspectMutation.isPending}
+                          className="text-xs px-2 py-1 h-7"
+                        >
+                          Excluir
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
