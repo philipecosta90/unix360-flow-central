@@ -20,7 +20,14 @@ interface TasksCalendarProps {
 
 export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const { data: prospects = [] } = useCRMProspects();
+  const { data: prospects = [] } = useCRMProspects({
+    search: "",
+    tags: [],
+    responsavel: "",
+    stage: "",
+    startDate: undefined,
+    endDate: undefined,
+  });
 
   const getClientName = (clientId: string | null) => {
     if (!clientId) return "Não vinculado";

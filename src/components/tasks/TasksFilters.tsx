@@ -19,7 +19,14 @@ interface TasksFiltersProps {
 }
 
 export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) => {
-  const { data: prospects = [] } = useCRMProspects();
+  const { data: prospects = [] } = useCRMProspects({
+    search: "",
+    tags: [],
+    responsavel: "",
+    stage: "",
+    startDate: undefined,
+    endDate: undefined,
+  });
 
   const handleFilterChange = (key: string, value: any) => {
     onFiltersChange({ ...filters, [key]: value });

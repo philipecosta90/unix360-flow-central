@@ -21,7 +21,14 @@ interface TasksListProps {
 
 export const TasksList = ({ tasks }: TasksListProps) => {
   const { updateTask } = useFinancialTasks();
-  const { data: prospects = [] } = useCRMProspects();
+  const { data: prospects = [] } = useCRMProspects({
+    search: "",
+    tags: [],
+    responsavel: "",
+    stage: "",
+    startDate: undefined,
+    endDate: undefined,
+  });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');

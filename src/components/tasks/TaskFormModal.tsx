@@ -34,7 +34,14 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
   });
 
   const { createTask, updateTask } = useFinancialTasks();
-  const { data: prospects = [] } = useCRMProspects();
+  const { data: prospects = [] } = useCRMProspects({
+    search: "",
+    tags: [],
+    responsavel: "",
+    stage: "",
+    startDate: undefined,
+    endDate: undefined,
+  });
 
   useEffect(() => {
     if (task) {
