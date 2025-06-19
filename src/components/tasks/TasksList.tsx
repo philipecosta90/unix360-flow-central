@@ -32,7 +32,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
   });
 
   const formatDate = (dateString: string) => {
-    const dateSegura = dateString ?? "";
+    const dateSegura = (dateString ?? "").toString();
     if (!dateSegura) return "-";
     try {
       return new Date(dateSegura).toLocaleDateString('pt-BR');
@@ -44,7 +44,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
   const getClientName = (clientId: string | null) => {
     if (!clientId) return "Não vinculado";
     const client = prospects.find(p => p.id === clientId);
-    return client?.nome ?? "Cliente não encontrado";
+    return (client?.nome ?? "Cliente não encontrado").toString();
   };
 
   const getStatusBadge = (vencimento: string, concluida: boolean) => {
@@ -57,7 +57,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
       );
     }
 
-    const vencimentoSeguro = vencimento ?? "";
+    const vencimentoSeguro = (vencimento ?? "").toString();
     const today = new Date().toISOString().split('T')[0];
     const isOverdue = vencimentoSeguro < today;
     const isDueToday = vencimentoSeguro === today;
@@ -90,7 +90,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
   const getRowClassName = (vencimento: string, concluida: boolean) => {
     if (concluida) return "opacity-60";
     
-    const vencimentoSeguro = vencimento ?? "";
+    const vencimentoSeguro = (vencimento ?? "").toString();
     const today = new Date().toISOString().split('T')[0];
     const isOverdue = vencimentoSeguro < today;
     const isDueToday = vencimentoSeguro === today;
@@ -135,18 +135,18 @@ export const TasksList = ({ tasks }: TasksListProps) => {
                 </TableRow>
               ) : (
                 tasks.map((task) => (
-                  <TableRow key={task.id} className={getRowClassName(task.vencimento ?? "", task.concluida)}>
+                  <TableRow key={task.id} className={getRowClassName((task.vencimento ?? "").toString(), task.concluida)}>
                     <TableCell className="font-medium">
                       {formatDate(task.vencimento)}
                     </TableCell>
                     <TableCell className={task.concluida ? "line-through text-gray-500" : ""}>
-                      {task.descricao ?? "Sem descrição"}
+                      {(task.descricao ?? "Sem descrição").toString()}
                     </TableCell>
                     <TableCell>
                       {getClientName(task.cliente_id)}
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(task.vencimento ?? "", task.concluida)}
+                      {getStatusBadge((task.vencimento ?? "").toString(), task.concluida)}
                     </TableCell>
                     <TableCell>
                       <Button

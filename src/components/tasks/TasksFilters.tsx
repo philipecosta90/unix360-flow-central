@@ -41,7 +41,7 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
             <Input
               id="startDate"
               type="date"
-              value={filters.startDate ?? ''}
+              value={(filters.startDate ?? "").toString()}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
             />
           </div>
@@ -51,7 +51,7 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
             <Input
               id="endDate"
               type="date"
-              value={filters.endDate ?? ''}
+              value={(filters.endDate ?? "").toString()}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
             />
           </div>
@@ -59,7 +59,7 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
           <div className="space-y-2">
             <Label htmlFor="client">Cliente</Label>
             <Select 
-              value={filters.clientId ?? ''} 
+              value={(filters.clientId ?? "").toString()} 
               onValueChange={(value) => handleFilterChange('clientId', value)}
             >
               <SelectTrigger>
@@ -69,7 +69,7 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
                 <SelectItem value="">Todos os clientes</SelectItem>
                 {prospects.map((prospect) => (
                   <SelectItem key={prospect.id} value={prospect.id}>
-                    {prospect.nome ?? "Cliente sem nome"}
+                    {(prospect.nome ?? "Cliente sem nome").toString()}
                   </SelectItem>
                 ))}
               </SelectContent>

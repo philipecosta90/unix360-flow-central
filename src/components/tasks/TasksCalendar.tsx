@@ -33,12 +33,12 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
   const getClientName = (clientId: string | null) => {
     if (!clientId) return "Não vinculado";
     const client = prospects.find(p => p.id === clientId);
-    return client?.nome ?? "Cliente não encontrado";
+    return (client?.nome ?? "Cliente não encontrado").toString();
   };
 
   const getTasksForDate = (date: Date) => {
     const dateString = date.toISOString().split('T')[0];
-    return tasks.filter(task => task.vencimento === dateString);
+    return tasks.filter(task => (task.vencimento ?? "").toString() === dateString);
   };
 
   const getTasksForWeek = () => {
@@ -66,13 +66,13 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
   const weekTasks = getTasksForWeek();
 
   const isOverdue = (vencimento: string) => {
-    const vencimentoSeguro = vencimento ?? "";
+    const vencimentoSeguro = (vencimento ?? "").toString();
     const today = new Date().toISOString().split('T')[0];
     return vencimentoSeguro < today;
   };
 
   const isDueToday = (vencimento: string) => {
-    const vencimentoSeguro = vencimento ?? "";
+    const vencimentoSeguro = (vencimento ?? "").toString();
     const today = new Date().toISOString().split('T')[0];
     return vencimentoSeguro === today;
   };
@@ -116,9 +116,9 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
                         className={`p-2 rounded text-xs border-l-2 ${
                           task.concluida 
                             ? 'bg-green-50 border-green-500 opacity-60' 
-                            : isOverdue(task.vencimento)
+                            : isOverdue((task.vencimento ?? "").toString())
                             ? 'bg-red-50 border-red-500'
-                            : isDueToday(task.vencimento)
+                            : isDueToday((task.vencimento ?? "").toString())
                             ? 'bg-yellow-50 border-yellow-500'
                             : 'bg-blue-50 border-blue-500'
                         }`}
@@ -126,7 +126,7 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
                         <div className="flex items-start justify-between gap-1">
                           <div className="flex-1 min-w-0">
                             <div className={`font-medium truncate ${task.concluida ? 'line-through' : ''}`}>
-                              {task.descricao ?? "Sem descrição"}
+                              {(task.descricao ?? "Sem descrição").toString()}
                             </div>
                             <div className="text-gray-600 truncate">
                               {getClientName(task.cliente_id)}
@@ -136,7 +136,7 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
                           <div className="flex-shrink-0">
                             {task.concluida ? (
                               <CheckCircle className="h-3 w-3 text-green-600" />
-                            ) : isOverdue(task.vencimento ?? "") ? (
+                            ) : isOverdue((task.vencimento ?? "").toString()) ? (
                               <AlertTriangle className="h-3 w-3 text-red-600" />
                             ) : null}
                           </div>

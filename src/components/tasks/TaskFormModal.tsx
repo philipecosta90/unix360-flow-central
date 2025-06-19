@@ -47,9 +47,9 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
   useEffect(() => {
     if (task) {
       setFormData({
-        descricao: task.descricao ?? '',
-        vencimento: task.vencimento ?? new Date().toISOString().split('T')[0],
-        cliente_id: task.cliente_id ?? '',
+        descricao: (task.descricao ?? "").toString(),
+        vencimento: (task.vencimento ?? new Date().toISOString().split('T')[0]).toString(),
+        cliente_id: (task.cliente_id ?? "").toString(),
         concluida: task.concluida ?? false,
       });
     } else {
@@ -65,8 +65,8 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const descricaoSegura = formData.descricao?.trim() ?? "";
-    const vencimentoSeguro = formData.vencimento ?? "";
+    const descricaoSegura = (formData.descricao?.trim() ?? "").toString();
+    const vencimentoSeguro = (formData.vencimento ?? "").toString();
     
     if (!descricaoSegura || !vencimentoSeguro) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
@@ -107,7 +107,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
             <Label htmlFor="descricao">Descrição *</Label>
             <Textarea
               id="descricao"
-              value={formData.descricao ?? ''}
+              value={(formData.descricao ?? "").toString()}
               onChange={(e) => setFormData({...formData, descricao: e.target.value})}
               placeholder="Descreva a tarefa..."
               required
@@ -119,7 +119,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
             <Input
               id="vencimento"
               type="date"
-              value={formData.vencimento ?? ''}
+              value={(formData.vencimento ?? "").toString()}
               onChange={(e) => setFormData({...formData, vencimento: e.target.value})}
               required
             />
@@ -128,7 +128,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
           <div className="space-y-2">
             <Label htmlFor="cliente">Cliente (Opcional)</Label>
             <Select 
-              value={formData.cliente_id ?? ''} 
+              value={(formData.cliente_id ?? "").toString()} 
               onValueChange={(value) => setFormData({...formData, cliente_id: value})}
             >
               <SelectTrigger>
@@ -138,7 +138,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
                 <SelectItem value="">Nenhum cliente</SelectItem>
                 {prospects.map((prospect) => (
                   <SelectItem key={prospect.id} value={prospect.id}>
-                    {prospect.nome ?? "Cliente sem nome"}
+                    {(prospect.nome ?? "Cliente sem nome").toString()}
                   </SelectItem>
                 ))}
               </SelectContent>
