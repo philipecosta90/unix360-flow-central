@@ -12,7 +12,7 @@ import { ClientsModule } from "@/components/clients/ClientsModule";
 import { ContractsModule } from "@/components/contracts/ContractsModule";
 
 const Index = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -35,8 +35,10 @@ const Index = () => {
         return <ClientsModule />;
       case '/contratos':
         return <ContractsModule />;
+      case '/dashboard':
+        return <Dashboard user={user} onLogout={signOut} />;
       default:
-        return <Dashboard />;
+        return <Dashboard user={user} onLogout={signOut} />;
     }
   };
 
@@ -44,7 +46,11 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
       <div className="flex-1">
-        <Header />
+        <Header 
+          user={user} 
+          onLogout={signOut}
+          onToggleSidebar={() => {}}
+        />
         <main className="p-6">
           {renderContent()}
         </main>

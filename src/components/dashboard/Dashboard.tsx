@@ -10,8 +10,8 @@ import { TasksModule } from "@/components/tasks/TasksModule";
 import { ContractsModule } from "@/components/contracts/ContractsModule";
 
 interface DashboardProps {
-  user: any;
-  onLogout: () => void;
+  user?: any;
+  onLogout?: () => void;
 }
 
 export const Dashboard = ({ user, onLogout }: DashboardProps) => {
@@ -39,16 +39,11 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar 
-        currentModule={currentModule}
-        onModuleChange={setCurrentModule}
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+      <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header 
           user={user} 
-          onLogout={onLogout}
+          onLogout={onLogout || (() => {})}
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
         <main className="flex-1 overflow-y-auto p-6">
