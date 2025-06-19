@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,11 +79,11 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
       telefone: "",
       empresa_cliente: "",
       cargo: "",
-      stage: "",
+      stage: "none",
       valor_estimado: "",
       origem: "",
       tags: "",
-      responsavel_id: "",
+      responsavel_id: "none",
       proximo_followup: "",
       observacoes: "",
     },
@@ -97,11 +98,11 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
         telefone: prospect.telefone || "",
         empresa_cliente: prospect.empresa_cliente || "",
         cargo: prospect.cargo || "",
-        stage: prospect.stage || "",
+        stage: prospect.stage || "none",
         valor_estimado: prospect.valor_estimado?.toString() || "",
         origem: prospect.origem || "",
         tags: prospect.tags?.join(", ") || "",
-        responsavel_id: prospect.responsavel_id || "",
+        responsavel_id: prospect.responsavel_id || "none",
         proximo_followup: prospect.proximo_followup || "",
         observacoes: prospect.observacoes || "",
       });
@@ -157,11 +158,11 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
           telefone: data.telefone || null,
           empresa_cliente: data.empresa_cliente || null,
           cargo: data.cargo || null,
-          stage: data.stage,
+          stage: data.stage === "none" ? null : data.stage,
           valor_estimado: data.valor_estimado ? parseFloat(data.valor_estimado) : null,
           origem: data.origem || null,
           tags,
-          responsavel_id: data.responsavel_id || null,
+          responsavel_id: data.responsavel_id === "none" ? null : data.responsavel_id,
           proximo_followup: data.proximo_followup || null,
           observacoes: data.observacoes || null,
         })
@@ -320,6 +321,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="none">Selecione a etapa</SelectItem>
                         {stages.map((stage) => (
                           <SelectItem key={stage.id} value={stage.id}>
                             {stage.nome}
@@ -373,6 +375,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="none">Selecione o responsável</SelectItem>
                         {teamMembers.map((member) => (
                           <SelectItem key={member.id} value={member.id}>
                             {member.nome} {member.sobrenome}

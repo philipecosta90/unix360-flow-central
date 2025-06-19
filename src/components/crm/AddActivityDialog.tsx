@@ -34,7 +34,7 @@ export const AddActivityDialog = ({ prospectId, open, onOpenChange }: AddActivit
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
-    tipo: "",
+    tipo: "none",
     titulo: "",
     descricao: "",
     data_atividade: new Date().toISOString().slice(0, 16), // Current datetime in HTML format
@@ -50,7 +50,7 @@ export const AddActivityDialog = ({ prospectId, open, onOpenChange }: AddActivit
         .from('crm_atividades')
         .insert({
           prospect_id: prospectId,
-          tipo: data.tipo,
+          tipo: data.tipo === "none" ? null : data.tipo,
           titulo: data.titulo,
           descricao: data.descricao,
           data_atividade: data.data_atividade,
@@ -80,7 +80,7 @@ export const AddActivityDialog = ({ prospectId, open, onOpenChange }: AddActivit
 
   const resetForm = () => {
     setFormData({
-      tipo: "",
+      tipo: "none",
       titulo: "",
       descricao: "",
       data_atividade: new Date().toISOString().slice(0, 16),
@@ -90,7 +90,7 @@ export const AddActivityDialog = ({ prospectId, open, onOpenChange }: AddActivit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tipo || !formData.titulo) {
+    if (formData.tipo === "none" || !formData.titulo) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha o tipo e título da atividade.",
@@ -128,6 +128,7 @@ export const AddActivityDialog = ({ prospectId, open, onOpenChange }: AddActivit
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">Selecione o tipo</SelectItem>
                   <SelectItem value="call">Ligação</SelectItem>
                   <SelectItem value="email">E-mail</SelectItem>
                   <SelectItem value="meeting">Reunião</SelectItem>
