@@ -77,7 +77,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
       const taskData = {
         descricao: descricaoSegura,
         vencimento: vencimentoSeguro,
-        cliente_id: formData.cliente_id || null,
+        cliente_id: formData.cliente_id === "none" ? null : (formData.cliente_id || null),
         concluida: formData.concluida ?? false,
       };
 
@@ -94,6 +94,10 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
       console.error('Erro ao salvar tarefa:', error);
       toast.error("Erro ao salvar tarefa");
     }
+  };
+
+  const handleClientChange = (value: string) => {
+    setFormData({...formData, cliente_id: value});
   };
 
   return (
@@ -128,14 +132,14 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
           <div className="space-y-2">
             <Label htmlFor="cliente">Cliente (Opcional)</Label>
             <Select 
-              value={(formData.cliente_id ?? "").toString()} 
-              onValueChange={(value) => setFormData({...formData, cliente_id: value})}
+              value={formData.cliente_id === "" ? "none" : (formData.cliente_id ?? "none").toString()} 
+              onValueChange={handleClientChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um cliente" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum cliente</SelectItem>
+                <SelectItem value="none">Nenhum cliente</SelectItem>
                 {prospects.map((prospect) => (
                   <SelectItem key={prospect.id} value={prospect.id}>
                     {(prospect.nome ?? "Cliente sem nome").toString()}

@@ -29,7 +29,9 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
   });
 
   const handleFilterChange = (key: string, value: any) => {
-    onFiltersChange({ ...filters, [key]: value });
+    // Converte "none" de volta para string vazia para manter a funcionalidade
+    const finalValue = value === "none" ? "" : value;
+    onFiltersChange({ ...filters, [key]: finalValue });
   };
 
   return (
@@ -59,14 +61,14 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
           <div className="space-y-2">
             <Label htmlFor="client">Cliente</Label>
             <Select 
-              value={(filters.clientId ?? "").toString()} 
+              value={filters.clientId === "" ? "none" : (filters.clientId ?? "none").toString()} 
               onValueChange={(value) => handleFilterChange('clientId', value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Todos os clientes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os clientes</SelectItem>
+                <SelectItem value="none">Todos os clientes</SelectItem>
                 {prospects.map((prospect) => (
                   <SelectItem key={prospect.id} value={prospect.id}>
                     {(prospect.nome ?? "Cliente sem nome").toString()}
