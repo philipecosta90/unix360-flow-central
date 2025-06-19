@@ -1,32 +1,15 @@
-
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CRMCard } from "./CRMCard";
+import { CRMProspect } from "@/types/crm";
 
 interface CRMStage {
   id: string;
   nome: string;
   ordem: number;
   cor: string;
-}
-
-interface CRMProspect {
-  id: string;
-  nome: string;
-  email: string;
-  telefone: string;
-  empresa_cliente: string;
-  cargo: string;
-  stage: string;
-  valor_estimado: number;
-  origem: string;
-  tags: string[];
-  responsavel_id: string;
-  proximo_followup: string;
-  observacoes: string;
-  created_at: string;
 }
 
 interface CRMColumnProps {
