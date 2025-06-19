@@ -33,9 +33,10 @@ interface CRMColumnProps {
   stage: CRMStage;
   prospects: CRMProspect[];
   totalValue: number;
+  onProspectClick?: (prospectId: string) => void;
 }
 
-export const CRMColumn = ({ stage, prospects, totalValue }: CRMColumnProps) => {
+export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRMColumnProps) => {
   const { setNodeRef } = useDroppable({
     id: stage.id,
   });
@@ -69,7 +70,11 @@ export const CRMColumn = ({ stage, prospects, totalValue }: CRMColumnProps) => {
         >
           <SortableContext items={prospects.map(p => p.id)} strategy={verticalListSortingStrategy}>
             {prospects.map((prospect) => (
-              <CRMCard key={prospect.id} prospect={prospect} />
+              <CRMCard 
+                key={prospect.id} 
+                prospect={prospect} 
+                onProspectClick={onProspectClick}
+              />
             ))}
           </SortableContext>
           
