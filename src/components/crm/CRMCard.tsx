@@ -30,9 +30,10 @@ interface CRMProspect {
 interface CRMCardProps {
   prospect: CRMProspect;
   isDragging?: boolean;
+  onProspectClick?: (prospectId: string) => void;
 }
 
-export const CRMCard = ({ prospect, isDragging = false }: CRMCardProps) => {
+export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCardProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDrawer, setShowDetailDrawer] = useState(false);
   
@@ -76,7 +77,13 @@ export const CRMCard = ({ prospect, isDragging = false }: CRMCardProps) => {
     if ((e.target as HTMLElement).closest('[data-edit-button]')) {
       return;
     }
-    setShowDetailDrawer(true);
+    
+    // Use onProspectClick if provided, otherwise use local state
+    if (onProspectClick) {
+      onProspectClick(prospect.id);
+    } else {
+      setShowDetailDrawer(true);
+    }
   };
 
   return (
@@ -192,11 +199,14 @@ export const CRMCard = ({ prospect, isDragging = false }: CRMCardProps) => {
         onOpenChange={setShowEditDialog}
       />
 
-      <CRMProspectDetail
-        prospectId={prospect.id}
-        open={showDetailDrawer}
-        onOpenChange={setShowDetailDrawer}
-      />
+      {/* Only show local detail drawer if onProspectClick is not provided */}
+      {!onProspectClick && (
+        <CRMProspectDetail
+          prospectId={prospect.id}
+          open={showDetailDrawer}
+          onOpenChange={setShowDetailDrawer}
+        />
+      )}
     </>
   );
 };
