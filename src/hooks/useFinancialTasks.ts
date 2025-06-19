@@ -59,24 +59,42 @@ export const useFinancialTasks = () => {
     mutationFn: async (taskData: CreateTaskData) => {
       console.log('Criando nova tarefa:', taskData);
 
-      // Buscar empresa_id do usuário atual
-      const { data: profile } = await supabase
+      // Buscar dados do usuário atual
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Erro ao obter usuário:', userError);
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Buscar perfil do usuário para obter empresa_id
+      const { data: profile, error: profileError } = await supabase
         .from('perfis')
-        .select('empresa_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .select('id, empresa_id')
+        .eq('user_id', user.id)
         .single();
 
-      if (!profile?.empresa_id) {
-        throw new Error('Empresa não encontrada para o usuário');
+      if (profileError || !profile?.empresa_id) {
+        console.error('Erro ao buscar perfil do usuário:', profileError);
+        throw new Error('Perfil de usuário não encontrado ou empresa não associada');
       }
+
+      console.log('Perfil do usuário:', profile);
+
+      const insertData = {
+        descricao: taskData.descricao,
+        vencimento: taskData.vencimento,
+        cliente_id: taskData.cliente_id === "none" ? null : (taskData.cliente_id || null),
+        concluida: taskData.concluida ?? false,
+        empresa_id: profile.empresa_id,
+        created_by: profile.id
+      };
+
+      console.log('Dados para insert:', insertData);
 
       const { data, error } = await supabase
         .from('financeiro_tarefas')
-        .insert({
-          ...taskData,
-          empresa_id: profile.empresa_id,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        })
+        .insert(insertData)
         .select()
         .single();
 
