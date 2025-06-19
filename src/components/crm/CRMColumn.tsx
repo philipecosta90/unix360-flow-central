@@ -1,3 +1,4 @@
+
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +21,7 @@ interface CRMColumnProps {
 }
 
 export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRMColumnProps) => {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
   });
 
@@ -37,7 +38,7 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
 
   return (
     <div className="min-w-[300px]">
-      <Card className={`${getBackgroundColor(stage.cor)} border-2`}>
+      <Card className={`${getBackgroundColor(stage.cor)} border-2 ${isOver ? 'ring-2 ring-blue-400' : ''}`}>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center justify-between">
             {stage.nome}

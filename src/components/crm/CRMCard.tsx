@@ -7,6 +7,7 @@ import { EditProspectDialog } from "./EditProspectDialog";
 import { CRMProspectDetail } from "./CRMProspectDetail";
 import { CRMCardContent } from "./CRMCardContent";
 import { CRMCardProps } from "@/types/crm";
+import { GripVertical } from "lucide-react";
 
 export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCardProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -30,8 +31,9 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't open detail if clicking on edit button
-    if ((e.target as HTMLElement).closest('[data-edit-button]')) {
+    // Don't open detail if clicking on edit button or drag handle
+    if ((e.target as HTMLElement).closest('[data-edit-button]') || 
+        (e.target as HTMLElement).closest('[data-drag-handle]')) {
       return;
     }
     
@@ -53,12 +55,20 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
       <Card 
         ref={setNodeRef}
         style={style}
-        {...attributes}
-        {...listeners}
-        className="bg-white shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
+        className="bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
         onClick={handleCardClick}
+        {...attributes}
       >
-        <CardContent className="p-4">
+        {/* Drag Handle - separate from main card content */}
+        <div
+          data-drag-handle
+          className="absolute top-2 right-2 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100"
+          {...listeners}
+        >
+          <GripVertical className="h-3 w-3 text-gray-400" />
+        </div>
+
+        <CardContent className="p-4 pr-8">
           <CRMCardContent 
             prospect={prospect} 
             onEditClick={handleEditClick}
