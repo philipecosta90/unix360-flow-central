@@ -233,6 +233,165 @@ export type Database = {
           },
         ]
       }
+      cs_interacoes: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          data_interacao: string
+          descricao: string | null
+          empresa_id: string
+          id: string
+          responsavel_id: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          data_interacao?: string
+          descricao?: string | null
+          empresa_id: string
+          id?: string
+          responsavel_id?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          data_interacao?: string
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          responsavel_id?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cs_interacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cs_interacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cs_nps: {
+        Row: {
+          cliente_id: string
+          comentario: string | null
+          created_at: string
+          data_resposta: string
+          empresa_id: string
+          id: string
+          nota: number
+          responsavel_id: string | null
+        }
+        Insert: {
+          cliente_id: string
+          comentario?: string | null
+          created_at?: string
+          data_resposta?: string
+          empresa_id: string
+          id?: string
+          nota: number
+          responsavel_id?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          comentario?: string | null
+          created_at?: string
+          data_resposta?: string
+          empresa_id?: string
+          id?: string
+          nota?: number
+          responsavel_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cs_nps_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cs_nps_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cs_onboarding: {
+        Row: {
+          cliente_id: string
+          concluido: boolean
+          created_at: string
+          data_conclusao: string | null
+          descricao: string | null
+          empresa_id: string
+          id: string
+          ordem: number
+          responsavel_id: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          concluido?: boolean
+          created_at?: string
+          data_conclusao?: string | null
+          descricao?: string | null
+          empresa_id: string
+          id?: string
+          ordem?: number
+          responsavel_id?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          concluido?: boolean
+          created_at?: string
+          data_conclusao?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          ordem?: number
+          responsavel_id?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cs_onboarding_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cs_onboarding_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ativa: boolean

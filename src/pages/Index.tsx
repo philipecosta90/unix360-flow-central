@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
 import { AuthPage } from "@/components/auth/AuthPage";
@@ -10,6 +9,7 @@ import { FinancialModule } from "@/components/financial/FinancialModule";
 import { TasksModule } from "@/components/tasks/TasksModule";
 import { ClientsModule } from "@/components/clients/ClientsModule";
 import { ContractsModule } from "@/components/contracts/ContractsModule";
+import { CSModule } from "@/components/cs/CSModule";
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -35,6 +35,9 @@ const Index = () => {
         return <ClientsModule />;
       case '/contratos':
         return <ContractsModule />;
+      case '/cs':
+      case '/sucesso-cliente':
+        return <CSModule />;
       case '/dashboard':
       case '/':
       default:
