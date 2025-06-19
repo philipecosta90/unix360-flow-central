@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,13 +10,38 @@ import { ptBR } from "date-fns/locale";
 import { CRMProspectDetail } from "./CRMProspectDetail";
 import { EditProspectDialog } from "./EditProspectDialog";
 import { AddActivityDialog } from "./AddActivityDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export const CRMFollowupAlerts = () => {
+  const { userProfile } = useAuth();
   const { data: alerts = [], isLoading, error } = useCRMFollowupAlerts();
   const [selectedProspectId, setSelectedProspectId] = useState<string | null>(null);
   const [showProspectDetail, setShowProspectDetail] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showActivityDialog, setShowActivityDialog] = useState(false);
+
+  // Fetch the selected prospect data for the EditProspectDialog
+  const { data: selectedProspect } = useQuery({
+    queryKey: ['crm-prospect', selectedProspectId],
+    queryFn: async () => {
+      if (!selectedProspectId) return null;
+      
+      const { data, error } = await supabase
+        .from('crm_prospects')
+        .select(`
+          *,
+          perfis:responsavel_id(nome, sobrenome)
+        `)
+        .eq('id', selectedProspectId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedProspectId && showEditDialog,
+  });
 
   if (isLoading) {
     return (
@@ -220,11 +244,13 @@ export const CRMFollowupAlerts = () => {
             onOpenChange={setShowProspectDetail}
           />
           
-          <EditProspectDialog
-            prospectId={selectedProspectId}
-            open={showEditDialog}
-            onOpenChange={setShowEditDialog}
-          />
+          {selectedProspect && (
+            <EditProspectDialog
+              prospect={selectedProspect}
+              open={showEditDialog}
+              onOpenChange={setShowEditDialog}
+            />
+          )}
           
           <AddActivityDialog
             prospectId={selectedProspectId}
