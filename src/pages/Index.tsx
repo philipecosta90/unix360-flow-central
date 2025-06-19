@@ -36,7 +36,7 @@ const Index = () => {
       case '/contratos':
         return <ContractsModule />;
       case '/dashboard':
-        return <Dashboard user={user} onLogout={signOut} />;
+      case '/':
       default:
         return <Dashboard user={user} onLogout={signOut} />;
     }
