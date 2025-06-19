@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
 import { AuthPage } from "@/components/auth/AuthPage";

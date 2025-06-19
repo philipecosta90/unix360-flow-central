@@ -11,7 +11,7 @@ import { Plus, BarChart3, Kanban, TrendingUp } from "lucide-react";
 
 export const CRMModule = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [currentView, setCurrentView] = useState<"dashboard" | "kanban" | "conversion">("dashboard");
+  const [currentView, setCurrentView] = useState<"kanban" | "dashboard" | "conversion">("kanban");
   const [filters, setFilters] = useState({
     search: "",
     tags: [] as string[],
@@ -31,15 +31,6 @@ export const CRMModule = () => {
         <div className="flex items-center gap-3">
           <div className="flex rounded-lg border bg-gray-50 p-1">
             <Button
-              variant={currentView === "dashboard" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setCurrentView("dashboard")}
-              className={currentView === "dashboard" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Dashboard
-            </Button>
-            <Button
               variant={currentView === "kanban" ? "default" : "ghost"}
               size="sm"
               onClick={() => setCurrentView("kanban")}
@@ -47,6 +38,15 @@ export const CRMModule = () => {
             >
               <Kanban className="w-4 h-4 mr-2" />
               Pipeline
+            </Button>
+            <Button
+              variant={currentView === "dashboard" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setCurrentView("dashboard")}
+              className={currentView === "dashboard" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Dashboard
             </Button>
             <Button
               variant={currentView === "conversion" ? "default" : "ghost"}

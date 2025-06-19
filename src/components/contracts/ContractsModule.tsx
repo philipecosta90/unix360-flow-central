@@ -4,9 +4,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ContractDetailDialog } from "./ContractDetailDialog";
+import { EditContractDialog } from "./EditContractDialog";
+
+interface Contract {
+  id: number;
+  clientName: string;
+  title: string;
+  value: number;
+  status: string;
+  sentDate: string | null;
+  signedDate: string | null;
+  validUntil: string | null;
+  type: string;
+}
 
 export const ContractsModule = () => {
-  const [contracts] = useState([
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+
+  const [contracts] = useState<Contract[]>([
     {
       id: 1,
       clientName: "João Silva",
@@ -70,144 +88,177 @@ export const ContractsModule = () => {
     totalValue: contracts.filter(c => c.status === "Assinado").reduce((sum, c) => sum + c.value, 0)
   };
 
+  const handleViewContract = (contract: Contract) => {
+    setSelectedContract(contract);
+    setShowDetailDialog(true);
+  };
+
+  const handleEditContract = (contract: Contract) => {
+    setSelectedContract(contract);
+    setShowEditDialog(true);
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contratos</h1>
-          <p className="text-gray-600 mt-2">Gerencie seus contratos e propostas</p>
+    <>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Contratos</h1>
+            <p className="text-gray-600 mt-2">Gerencie seus contratos e propostas</p>
+          </div>
+          <Button className="bg-[#43B26D] hover:bg-[#37A05B]">
+            + Novo Contrato
+          </Button>
         </div>
-        <Button className="bg-[#43B26D] hover:bg-[#37A05B]">
-          + Novo Contrato
-        </Button>
-      </div>
 
-      {/* Contract Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Contract Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="h-8 w-8 text-blue-600 flex items-center justify-center bg-blue-100 rounded">
+                  📄
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total</p>
+                  <p className="text-2xl font-bold text-gray-900">{contractStats.total}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="h-8 w-8 text-green-600 flex items-center justify-center bg-green-100 rounded">
+                  ✅
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Assinados</p>
+                  <p className="text-2xl font-bold text-gray-900">{contractStats.signed}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="h-8 w-8 text-yellow-600 flex items-center justify-center bg-yellow-100 rounded">
+                  ⏰
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Pendentes</p>
+                  <p className="text-2xl font-bold text-gray-900">{contractStats.pending}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="h-8 w-8 text-[#43B26D] flex items-center justify-center bg-green-100 rounded">
+                  💰
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Valor Total</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    R$ {contractStats.totalValue.toLocaleString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Contracts List */}
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 text-blue-600 flex items-center justify-center bg-blue-100 rounded">
-                📄
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{contractStats.total}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 text-green-600 flex items-center justify-center bg-green-100 rounded">
-                ✅
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Assinados</p>
-                <p className="text-2xl font-bold text-gray-900">{contractStats.signed}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 text-yellow-600 flex items-center justify-center bg-yellow-100 rounded">
-                ⏰
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pendentes</p>
-                <p className="text-2xl font-bold text-gray-900">{contractStats.pending}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="h-8 w-8 text-[#43B26D] flex items-center justify-center bg-green-100 rounded">
-                💰
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Valor Total</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  R$ {contractStats.totalValue.toLocaleString('pt-BR')}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Contracts List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Todos os Contratos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {contracts.map((contract) => (
-              <div key={contract.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex items-center space-x-4">
-                  <Avatar>
-                    <AvatarFallback className="bg-[#43B26D] text-white">
-                      {contract.clientName.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="font-medium text-gray-900">{contract.title}</h4>
-                    <p className="text-sm text-gray-600">{contract.clientName}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {contract.type}
-                      </Badge>
-                      <Badge className={getStatusColor(contract.status)}>
-                        {contract.status}
-                      </Badge>
+          <CardHeader>
+            <CardTitle>Todos os Contratos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {contracts.map((contract) => (
+                <div key={contract.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center space-x-4">
+                    <Avatar>
+                      <AvatarFallback className="bg-[#43B26D] text-white">
+                        {contract.clientName.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h4 className="font-medium text-gray-900">{contract.title}</h4>
+                      <p className="text-sm text-gray-600">{contract.clientName}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {contract.type}
+                        </Badge>
+                        <Badge className={getStatusColor(contract.status)}>
+                          {contract.status}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="text-right">
-                  <p className="font-medium text-[#43B26D]">
-                    R$ {contract.value.toLocaleString('pt-BR')}
-                  </p>
-                  {contract.sentDate && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Enviado: {new Date(contract.sentDate).toLocaleDateString('pt-BR')}
+                  
+                  <div className="text-right">
+                    <p className="font-medium text-[#43B26D]">
+                      R$ {contract.value.toLocaleString('pt-BR')}
                     </p>
-                  )}
-                  {contract.signedDate && (
-                    <p className="text-xs text-gray-500">
-                      Assinado: {new Date(contract.signedDate).toLocaleDateString('pt-BR')}
-                    </p>
-                  )}
-                  {contract.validUntil && (
-                    <p className="text-xs text-gray-500">
-                      Válido até: {new Date(contract.validUntil).toLocaleDateString('pt-BR')}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    Ver
-                  </Button>
-                  {contract.status !== "Assinado" && (
-                    <Button size="sm" className="bg-[#43B26D] hover:bg-[#37A05B]">
-                      Editar
+                    {contract.sentDate && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Enviado: {new Date(contract.sentDate).toLocaleDateString('pt-BR')}
+                      </p>
+                    )}
+                    {contract.signedDate && (
+                      <p className="text-xs text-gray-500">
+                        Assinado: {new Date(contract.signedDate).toLocaleDateString('pt-BR')}
+                      </p>
+                    )}
+                    {contract.validUntil && (
+                      <p className="text-xs text-gray-500">
+                        Válido até: {new Date(contract.validUntil).toLocaleDateString('pt-BR')}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewContract(contract)}
+                    >
+                      Ver
                     </Button>
-                  )}
+                    {contract.status !== "Assinado" && (
+                      <Button 
+                        size="sm" 
+                        className="bg-[#43B26D] hover:bg-[#37A05B]"
+                        onClick={() => handleEditContract(contract)}
+                      >
+                        Editar
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Dialogs */}
+      <ContractDetailDialog
+        contract={selectedContract}
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+      />
+
+      <EditContractDialog
+        contract={selectedContract}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+      />
+    </>
   );
 };

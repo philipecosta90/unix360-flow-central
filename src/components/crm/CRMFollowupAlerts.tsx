@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,12 +11,15 @@ import { ptBR } from "date-fns/locale";
 import { CRMProspectDetail } from "./CRMProspectDetail";
 import { EditProspectDialog } from "./EditProspectDialog";
 import { AddActivityDialog } from "./AddActivityDialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export const CRMFollowupAlerts = () => {
   const { userProfile } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: alerts = [], isLoading, error } = useCRMFollowupAlerts();
   const [selectedProspectId, setSelectedProspectId] = useState<string | null>(null);
   const [showProspectDetail, setShowProspectDetail] = useState(false);
@@ -38,9 +42,41 @@ export const CRMFollowupAlerts = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      
+      // Transform the data to match expected interface
+      return {
+        ...data,
+        perfis: data.perfis && !('error' in data.perfis) ? data.perfis : null
+      };
     },
     enabled: !!selectedProspectId && showEditDialog,
+  });
+
+  // Delete prospect mutation
+  const deleteProspectMutation = useMutation({
+    mutationFn: async (prospectId: string) => {
+      const { error } = await supabase
+        .from('crm_prospects')
+        .delete()
+        .eq('id', prospectId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-followup-alerts'] });
+      toast({
+        title: "Prospect excluído",
+        description: "O prospect foi removido com sucesso.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting prospect:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o prospect.",
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading) {
@@ -117,10 +153,8 @@ export const CRMFollowupAlerts = () => {
 
   const handleDeleteProspect = (prospectId: string) => {
     console.log('Excluir prospect clicado:', prospectId);
-    // TODO: Implementar confirmação de exclusão
     if (confirm('Tem certeza que deseja excluir este prospect?')) {
-      console.log('Prospect excluído:', prospectId);
-      // TODO: Implementar exclusão via API
+      deleteProspectMutation.mutate(prospectId);
     }
   };
 
@@ -225,6 +259,21 @@ export const CRMFollowupAlerts = () => {
                         onClick={() => handleScheduleFollowUp(alert.id)}
                       >
                         Agendar Follow-up
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleEditProspect(alert.id)}
+                      >
+                        Editar
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => handleDeleteProspect(alert.id)}
+                        disabled={deleteProspectMutation.isPending}
+                      >
+                        Excluir
                       </Button>
                     </div>
                   </div>
