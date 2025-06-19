@@ -37,6 +37,7 @@ const Index = () => {
       case '/contratos':
         return <ContractsModule />;
       case '/cs':
+        return <CSModule />;
       case '/sucesso-cliente':
         return <CSModule />;
       case '/dashboard':

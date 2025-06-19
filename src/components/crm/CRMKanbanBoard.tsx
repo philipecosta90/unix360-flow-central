@@ -70,7 +70,6 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
                   stage={stage}
                   prospects={stageProspects}
                   totalValue={stageValue}
-                  onProspectClick={handleProspectClick}
                 />
               );
             })}
