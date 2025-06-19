@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -46,10 +47,10 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
   useEffect(() => {
     if (task) {
       setFormData({
-        descricao: task.descricao,
-        vencimento: task.vencimento,
-        cliente_id: task.cliente_id || '',
-        concluida: task.concluida,
+        descricao: task.descricao ?? '',
+        vencimento: task.vencimento ?? new Date().toISOString().split('T')[0],
+        cliente_id: task.cliente_id ?? '',
+        concluida: task.concluida ?? false,
       });
     } else {
       setFormData({
@@ -64,17 +65,20 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.descricao || !formData.vencimento) {
+    const descricaoSegura = formData.descricao?.trim() ?? "";
+    const vencimentoSeguro = formData.vencimento ?? "";
+    
+    if (!descricaoSegura || !vencimentoSeguro) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
     try {
       const taskData = {
-        descricao: formData.descricao,
-        vencimento: formData.vencimento,
+        descricao: descricaoSegura,
+        vencimento: vencimentoSeguro,
         cliente_id: formData.cliente_id || null,
-        concluida: formData.concluida,
+        concluida: formData.concluida ?? false,
       };
 
       if (task) {
@@ -103,7 +107,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
             <Label htmlFor="descricao">Descrição *</Label>
             <Textarea
               id="descricao"
-              value={formData.descricao}
+              value={formData.descricao ?? ''}
               onChange={(e) => setFormData({...formData, descricao: e.target.value})}
               placeholder="Descreva a tarefa..."
               required
@@ -115,7 +119,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
             <Input
               id="vencimento"
               type="date"
-              value={formData.vencimento}
+              value={formData.vencimento ?? ''}
               onChange={(e) => setFormData({...formData, vencimento: e.target.value})}
               required
             />
@@ -124,7 +128,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
           <div className="space-y-2">
             <Label htmlFor="cliente">Cliente (Opcional)</Label>
             <Select 
-              value={formData.cliente_id} 
+              value={formData.cliente_id ?? ''} 
               onValueChange={(value) => setFormData({...formData, cliente_id: value})}
             >
               <SelectTrigger>
@@ -134,7 +138,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
                 <SelectItem value="">Nenhum cliente</SelectItem>
                 {prospects.map((prospect) => (
                   <SelectItem key={prospect.id} value={prospect.id}>
-                    {prospect.nome}
+                    {prospect.nome ?? "Cliente sem nome"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -144,7 +148,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
           <div className="flex items-center space-x-2">
             <Checkbox
               id="concluida"
-              checked={formData.concluida}
+              checked={formData.concluida ?? false}
               onCheckedChange={(checked) => setFormData({...formData, concluida: checked as boolean})}
             />
             <Label htmlFor="concluida">Marcar como Concluída</Label>

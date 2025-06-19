@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
@@ -32,7 +33,7 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
   const getClientName = (clientId: string | null) => {
     if (!clientId) return "Não vinculado";
     const client = prospects.find(p => p.id === clientId);
-    return client?.nome || "Cliente não encontrado";
+    return client?.nome ?? "Cliente não encontrado";
   };
 
   const getTasksForDate = (date: Date) => {
@@ -65,13 +66,15 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
   const weekTasks = getTasksForWeek();
 
   const isOverdue = (vencimento: string) => {
+    const vencimentoSeguro = vencimento ?? "";
     const today = new Date().toISOString().split('T')[0];
-    return vencimento < today;
+    return vencimentoSeguro < today;
   };
 
   const isDueToday = (vencimento: string) => {
+    const vencimentoSeguro = vencimento ?? "";
     const today = new Date().toISOString().split('T')[0];
-    return vencimento === today;
+    return vencimentoSeguro === today;
   };
 
   return (
@@ -92,7 +95,7 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
 
           <div className="flex-1">
             <h3 className="text-lg font-semibold mb-4">
-              Semana de {selectedDate?.toLocaleDateString('pt-BR')}
+              Semana de {selectedDate?.toLocaleDateString('pt-BR') ?? "-"}
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
@@ -123,7 +126,7 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
                         <div className="flex items-start justify-between gap-1">
                           <div className="flex-1 min-w-0">
                             <div className={`font-medium truncate ${task.concluida ? 'line-through' : ''}`}>
-                              {task.descricao}
+                              {task.descricao ?? "Sem descrição"}
                             </div>
                             <div className="text-gray-600 truncate">
                               {getClientName(task.cliente_id)}
@@ -133,7 +136,7 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
                           <div className="flex-shrink-0">
                             {task.concluida ? (
                               <CheckCircle className="h-3 w-3 text-green-600" />
-                            ) : isOverdue(task.vencimento) ? (
+                            ) : isOverdue(task.vencimento ?? "") ? (
                               <AlertTriangle className="h-3 w-3 text-red-600" />
                             ) : null}
                           </div>
