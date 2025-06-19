@@ -1,66 +1,56 @@
 
-import { AuthPage } from "@/components/auth/AuthPage";
-import { Dashboard } from "@/components/dashboard/Dashboard";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { AuthPage } from "@/components/auth/AuthPage";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Header } from "@/components/layout/Header";
+import { Dashboard } from "@/components/dashboard/Dashboard";
+import { CRMModule } from "@/components/crm/CRMModule";
+import { FinancialModule } from "@/components/financial/FinancialModule";
+import { TasksModule } from "@/components/tasks/TasksModule";
+import { ClientsModule } from "@/components/clients/ClientsModule";
+import { ContractsModule } from "@/components/contracts/ContractsModule";
 
 const Index = () => {
-  const { user, userProfile, loading, signOut } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  // Handle authentication state changes
-  useEffect(() => {
-    console.log('Auth state:', { user: !!user, userProfile: !!userProfile, loading });
-    
-    // If user is authenticated but no profile, stay on loading
-    if (user && !userProfile && !loading) {
-      console.log('User authenticated but no profile found');
-    }
-    
-    // If user is authenticated and has profile, ensure we're on the main page
-    if (user && userProfile) {
-      console.log('User fully authenticated with profile');
-    }
-  }, [user, userProfile, loading]);
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#43B26D]/10 to-[#43B26D]/5 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-[#43B26D] rounded-lg flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <span className="text-white font-bold text-2xl">X</span>
-          </div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
 
-  if (!user || !userProfile) {
+  if (!user) {
     return <AuthPage />;
   }
 
-  const handleLogout = async () => {
-    await signOut();
-    toast({
-      title: "Logout realizado",
-      description: "Até logo!",
-    });
-    navigate("/", { replace: true });
+  const renderContent = () => {
+    switch (location.pathname) {
+      case '/crm':
+        return <CRMModule />;
+      case '/financeiro':
+        return <FinancialModule />;
+      case '/tarefas':
+        return <TasksModule />;
+      case '/clientes':
+        return <ClientsModule />;
+      case '/contratos':
+        return <ContractsModule />;
+      default:
+        return <Dashboard />;
+    }
   };
 
-  // Adaptar dados do perfil para o Dashboard
-  const userData = {
-    name: userProfile.nome,
-    email: user.email,
-    company: userProfile.empresas?.nome || 'Empresa',
-    role: userProfile.nivel_permissao
-  };
-
-  return <Dashboard user={userData} onLogout={handleLogout} />;
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar />
+      <div className="flex-1">
+        <Header />
+        <main className="p-6">
+          {renderContent()}
+        </main>
+      </div>
+    </div>
+  );
 };
 
 export default Index;
