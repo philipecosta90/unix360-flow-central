@@ -1,36 +1,106 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const DashboardOverview = () => {
+  const { data: dashboardData, isLoading } = useDashboardData();
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-2">Visão geral do seu negócio</p>
+        </div>
+
+        {/* Loading skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, index) => (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-24 mb-2" />
+                <Skeleton className="h-3 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   const kpis = [
     {
       title: "Clientes Ativos",
-      value: "127",
-      change: "+12%",
+      value: dashboardData?.clientesAtivos.toString() || "0",
+      change: "",
       positive: true,
       icon: "👥",
       color: "text-blue-600"
     },
     {
       title: "Receita Mensal",
-      value: "R$ 45.760",
-      change: "+8%",
+      value: formatCurrency(dashboardData?.receitaMensal || 0),
+      change: "",
       positive: true,
       icon: "💰",
       color: "text-green-600"
     },
     {
-      title: "Tarefas Pendentes",
-      value: "23",
-      change: "-5",
+      title: "Despesas do Mês",
+      value: formatCurrency(dashboardData?.despesasMensal || 0),
+      change: "",
+      positive: false,
+      icon: "💸",
+      color: "text-red-600"
+    },
+    {
+      title: "Saldo do Mês",
+      value: formatCurrency(dashboardData?.saldoMensal || 0),
+      change: "",
+      positive: (dashboardData?.saldoMensal || 0) >= 0,
+      icon: "📊",
+      color: (dashboardData?.saldoMensal || 0) >= 0 ? "text-green-600" : "text-red-600"
+    },
+    {
+      title: "A Receber",
+      value: formatCurrency(dashboardData?.aReceber || 0),
+      change: "",
       positive: true,
-      icon: "✅",
+      icon: "⏰",
+      color: "text-yellow-600"
+    },
+    {
+      title: "Tarefas Pendentes",
+      value: dashboardData?.tarefasPendentes.toString() || "0",
+      change: "",
+      positive: false,
+      icon: "❗",
       color: "text-orange-600"
     },
     {
+      title: "Tarefas Concluídas",
+      value: dashboardData?.tarefasConcluidas.toString() || "0",
+      change: "",
+      positive: true,
+      icon: "✅",
+      color: "text-green-600"
+    },
+    {
       title: "Propostas Enviadas",
-      value: "15",
-      change: "+3",
+      value: dashboardData?.propostasEnviadas.toString() || "0",
+      change: "",
       positive: true,
       icon: "📧",
       color: "text-purple-600"
@@ -55,10 +125,12 @@ export const DashboardOverview = () => {
               <span className={`text-2xl ${kpi.color}`}>{kpi.icon}</span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{kpi.value}</div>
-              <p className={`text-xs ${kpi.positive ? 'text-green-600' : 'text-red-600'} mt-1`}>
-                {kpi.change} em relação ao mês anterior
-              </p>
+              <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
+              {kpi.title.includes("Mensal") && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Referente ao mês atual
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -72,21 +144,27 @@ export const DashboardOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { action: "Novo cliente cadastrado", client: "João Silva", time: "2 horas atrás" },
-                { action: "Proposta enviada", client: "Maria Santos", time: "4 horas atrás" },
-                { action: "Pagamento recebido", client: "Pedro Costa", time: "1 dia atrás" },
-                { action: "Tarefa concluída", client: "Ana Oliveira", time: "2 dias atrás" }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
-                  <div className="w-2 h-2 bg-[#43B26D] rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                    <p className="text-sm text-gray-600">{activity.client}</p>
+              {dashboardData?.atividadesRecentes.length ? (
+                dashboardData.atividadesRecentes.slice(0, 4).map((activity, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
+                    <div className={`w-2 h-2 rounded-full ${
+                      activity.tipo === 'cliente' ? 'bg-blue-500' :
+                      activity.tipo === 'tarefa' ? 'bg-green-500' :
+                      activity.tipo === 'prospect' ? 'bg-purple-500' :
+                      'bg-yellow-500'
+                    }`}></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                      <p className="text-sm text-gray-600">{activity.client}</p>
+                    </div>
+                    <span className="text-xs text-gray-500">{activity.time}</span>
                   </div>
-                  <span className="text-xs text-gray-500">{activity.time}</span>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nenhuma atividade recente</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -97,30 +175,110 @@ export const DashboardOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { task: "Follow-up com Maria Santos", priority: "Alta", due: "Hoje" },
-                { task: "Enviar proposta para João", priority: "Média", due: "Amanhã" },
-                { task: "Reunião de onboarding", priority: "Alta", due: "Sexta" },
-                { task: "Revisar contrato Pedro", priority: "Baixa", due: "Próxima semana" }
-              ].map((task, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{task.task}</p>
-                    <p className="text-xs text-gray-600">{task.due}</p>
-                  </div>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    task.priority === 'Alta' ? 'bg-red-100 text-red-600' :
-                    task.priority === 'Média' ? 'bg-yellow-100 text-yellow-600' :
-                    'bg-green-100 text-green-600'
-                  }`}>
-                    {task.priority}
-                  </span>
-                </div>
-              ))}
+              <ProximasTarefas />
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
+  );
+};
+
+// Componente separado para as próximas tarefas
+const ProximasTarefas = () => {
+  const { data: proximasTarefas, isLoading } = useQuery({
+    queryKey: ['proximas-tarefas'],
+    queryFn: async () => {
+      const { data: userResponse } = await supabase.auth.getUser();
+      if (!userResponse.user) return [];
+
+      const { data: profile } = await supabase
+        .from('perfis')
+        .select('empresa_id')
+        .eq('user_id', userResponse.user.id)
+        .single();
+
+      if (!profile?.empresa_id) return [];
+
+      const hoje = new Date().toISOString().split('T')[0];
+      const proximaSemana = new Date();
+      proximaSemana.setDate(proximaSemana.getDate() + 7);
+      const proximaSemanaStr = proximaSemana.toISOString().split('T')[0];
+
+      const { data } = await supabase
+        .from('financeiro_tarefas')
+        .select('*')
+        .eq('empresa_id', profile.empresa_id)
+        .eq('concluida', false)
+        .gte('vencimento', hoje)
+        .lte('vencimento', proximaSemanaStr)
+        .order('vencimento', { ascending: true })
+        .limit(4);
+
+      return data || [];
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, index) => (
+          <div key={index} className="p-3 rounded-lg bg-gray-50">
+            <Skeleton className="h-4 w-40 mb-2" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!proximasTarefas?.length) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Nenhuma tarefa próxima</p>
+      </div>
+    );
+  }
+
+  const formatarDataVencimento = (vencimento: string) => {
+    const data = new Date(vencimento);
+    const hoje = new Date();
+    const diffTime = data.getTime() - hoje.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Hoje";
+    if (diffDays === 1) return "Amanhã";
+    if (diffDays <= 7) return `Em ${diffDays} dias`;
+    return data.toLocaleDateString('pt-BR');
+  };
+
+  const getPrioridade = (vencimento: string) => {
+    const data = new Date(vencimento);
+    const hoje = new Date();
+    const diffTime = data.getTime() - hoje.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 1) return { label: "Urgente", color: "bg-red-100 text-red-600" };
+    if (diffDays <= 3) return { label: "Alta", color: "bg-orange-100 text-orange-600" };
+    return { label: "Normal", color: "bg-green-100 text-green-600" };
+  };
+
+  return (
+    <>
+      {proximasTarefas.map((task, index) => {
+        const prioridade = getPrioridade(task.vencimento);
+        return (
+          <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+            <div>
+              <p className="text-sm font-medium text-gray-900">{task.descricao}</p>
+              <p className="text-xs text-gray-600">{formatarDataVencimento(task.vencimento)}</p>
+            </div>
+            <span className={`px-2 py-1 text-xs rounded-full ${prioridade.color}`}>
+              {prioridade.label}
+            </span>
+          </div>
+        );
+      })}
+    </>
   );
 };

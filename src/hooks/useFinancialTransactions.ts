@@ -136,6 +136,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
     },
   });
 
@@ -154,6 +155,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
     },
   });
 
@@ -169,6 +171,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
     },
   });
 

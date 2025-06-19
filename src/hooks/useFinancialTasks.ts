@@ -108,6 +108,8 @@ export const useFinancialTasks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
+      queryClient.invalidateQueries({ queryKey: ['proximas-tarefas'] });
     },
     onError: (error) => {
       console.error('Erro na criação da tarefa:', error);
@@ -137,6 +139,8 @@ export const useFinancialTasks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
+      queryClient.invalidateQueries({ queryKey: ['proximas-tarefas'] });
     },
     onError: (error) => {
       console.error('Erro na atualização da tarefa:', error);
@@ -164,6 +168,8 @@ export const useFinancialTasks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financial-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
+      queryClient.invalidateQueries({ queryKey: ['proximas-tarefas'] });
       toast.success('Tarefa excluída com sucesso');
     },
     onError: (error) => {
