@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -93,6 +92,26 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
 
       if (error) throw error;
       return data as FinancialTransaction[];
+    },
+    enabled: !!userProfile?.empresa_id,
+  });
+
+  // Buscar tarefas vencidas para alertas
+  const { data: overdueTasks = [] } = useQuery({
+    queryKey: ['overdue-tasks', userProfile?.empresa_id],
+    queryFn: async () => {
+      if (!userProfile?.empresa_id) return [];
+      
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('financeiro_tarefas')
+        .select('*')
+        .eq('empresa_id', userProfile.empresa_id)
+        .eq('concluida', false)
+        .lte('vencimento', today);
+
+      if (error) throw error;
+      return data;
     },
     enabled: !!userProfile?.empresa_id,
   });
@@ -203,6 +222,8 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     categoryData: Object.values(categoryData),
     overdueTransactions,
     overdueCount: overdueTransactions.length,
+    overdueTasks,
+    overdueTasksCount: overdueTasks.length,
     createTransaction,
     updateTransaction,
     deleteTransaction,

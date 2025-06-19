@@ -1,0 +1,135 @@
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2, Calendar, AlertTriangle } from "lucide-react";
+import { useFinancialTasks } from "@/hooks/useFinancialTasks";
+
+interface Task {
+  id: string;
+  cliente_id: string | null;
+  descricao: string;
+  vencimento: string;
+  concluida: boolean;
+  created_at: string;
+}
+
+interface TasksTableProps {
+  tasks: Task[];
+}
+
+export const TasksTable = ({ tasks }: TasksTableProps) => {
+  const { updateTask, deleteTask } = useFinancialTasks();
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const getStatusBadge = (vencimento: string, concluida: boolean) => {
+    if (concluida) {
+      return (
+        <Badge variant="outline" className="bg-green-100 text-green-800">
+          Concluída
+        </Badge>
+      );
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const isOverdue = vencimento < today;
+    const isDueToday = vencimento === today;
+
+    if (isOverdue) {
+      return (
+        <Badge variant="destructive" className="flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Vencida
+        </Badge>
+      );
+    }
+
+    if (isDueToday) {
+      return (
+        <Badge variant="outline" className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
+          <Calendar className="h-3 w-3" />
+          Vence Hoje
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge variant="outline" className="bg-blue-100 text-blue-800">
+        Pendente
+      </Badge>
+    );
+  };
+
+  const handleToggleComplete = async (id: string, completed: boolean) => {
+    try {
+      await updateTask.mutateAsync({ id, concluida: completed });
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa:', error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteTask.mutateAsync(id);
+    } catch (error) {
+      console.error('Erro ao excluir tarefa:', error);
+    }
+  };
+
+  return (
+    <div className="border rounded-lg">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[50px]">✓</TableHead>
+            <TableHead>Descrição</TableHead>
+            <TableHead>Vencimento</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-[80px]">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tasks.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                Nenhuma tarefa encontrada
+              </TableCell>
+            </TableRow>
+          ) : (
+            tasks.map((task) => (
+              <TableRow key={task.id} className={task.concluida ? "opacity-60" : ""}>
+                <TableCell>
+                  <Checkbox
+                    checked={task.concluida}
+                    onCheckedChange={(checked) => handleToggleComplete(task.id, checked as boolean)}
+                  />
+                </TableCell>
+                <TableCell className={`font-medium ${task.concluida ? "line-through" : ""}`}>
+                  {task.descricao}
+                </TableCell>
+                <TableCell>{formatDate(task.vencimento)}</TableCell>
+                <TableCell>
+                  {getStatusBadge(task.vencimento, task.concluida)}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(task.id)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+};

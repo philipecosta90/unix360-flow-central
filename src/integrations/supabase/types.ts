@@ -329,6 +329,64 @@ export type Database = {
           },
         ]
       }
+      financeiro_tarefas: {
+        Row: {
+          cliente_id: string | null
+          concluida: boolean | null
+          created_at: string | null
+          created_by: string | null
+          descricao: string
+          empresa_id: string
+          id: string
+          updated_at: string | null
+          vencimento: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          concluida?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao: string
+          empresa_id: string
+          id?: string
+          updated_at?: string | null
+          vencimento: string
+        }
+        Update: {
+          cliente_id?: string | null
+          concluida?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          updated_at?: string | null
+          vencimento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financeiro_tarefas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "crm_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financeiro_tarefas_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financeiro_tarefas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis: {
         Row: {
           ativo: boolean
