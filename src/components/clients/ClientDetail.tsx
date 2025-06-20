@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,15 +38,24 @@ interface Interaction {
   created_at: string;
 }
 
+interface Document {
+  id: string;
+  nome: string;
+  tipo_arquivo: string;
+  tamanho: number;
+  created_at: string;
+}
+
 export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
   const { userProfile } = useAuth();
   const [showInteractionDialog, setShowInteractionDialog] = useState(false);
   const [showDocumentDialog, setShowDocumentDialog] = useState(false);
   const [showFinancialDialog, setShowFinancialDialog] = useState(false);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
-  const [documents] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loadingInteractions, setLoadingInteractions] = useState(false);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   const fetchInteractions = async () => {
@@ -68,6 +76,33 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
       console.error('Erro ao buscar interações:', error);
     } finally {
       setLoadingInteractions(false);
+    }
+  };
+
+  const fetchDocuments = async () => {
+    if (!userProfile?.empresa_id) return;
+    
+    try {
+      setLoadingDocuments(true);
+      const { data, error } = await supabase
+        .from('cliente_documentos')
+        .select('*')
+        .eq('empresa_id', userProfile.empresa_id)
+        .eq('cliente_id', client.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar documentos:', error);
+        // Se a tabela não existir ainda, vamos apenas deixar vazio
+        setDocuments([]);
+      } else {
+        setDocuments(data || []);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar documentos:', error);
+      setDocuments([]);
+    } finally {
+      setLoadingDocuments(false);
     }
   };
 
@@ -94,6 +129,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
   useEffect(() => {
     fetchInteractions();
+    fetchDocuments();
     fetchTransactions();
   }, [client.id, userProfile?.empresa_id]);
 
@@ -135,6 +171,14 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
       case 'feedback': return 'text-yellow-600 bg-yellow-100';
       default: return 'text-gray-600 bg-gray-100';
     }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -376,15 +420,19 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
               </Button>
             </CardHeader>
             <CardContent>
-              {documents.length > 0 ? (
+              {loadingDocuments ? (
+                <p>Carregando documentos...</p>
+              ) : documents.length > 0 ? (
                 <div className="space-y-2">
-                  {documents.map((doc, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center space-x-3 p-3 border rounded-lg">
                       <File className="w-5 h-5 text-gray-400" />
-                      <span className="font-medium">{doc.name}</span>
-                      <span className="text-sm text-gray-500">
-                        {new Date(doc.uploadDate).toLocaleDateString('pt-BR')}
-                      </span>
+                      <div className="flex-1">
+                        <span className="font-medium">{doc.nome}</span>
+                        <p className="text-sm text-gray-500">
+                          {formatFileSize(doc.tamanho)} • {new Date(doc.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -431,10 +479,10 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className={`font-medium ${transaction.tipo === 'receita' ? 'text-green-600' : 'text-red-600'}`}>
-                            {transaction.tipo === 'receita' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          <p className={`font-medium ${transaction.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
+                            {transaction.tipo === 'entrada' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </p>
-                          <p className="text-xs text-gray-500 capitalize">{transaction.tipo}</p>
+                          <p className="text-xs text-gray-500 capitalize">{transaction.tipo === 'entrada' ? 'Receita' : 'Despesa'}</p>
                         </div>
                       </div>
                     ))}
@@ -468,7 +516,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
         open={showDocumentDialog}
         onOpenChange={setShowDocumentDialog}
         clientId={client.id}
-        onDocumentAdded={() => {}}
+        onDocumentAdded={fetchDocuments}
       />
 
       <FinancialTransactionDialog

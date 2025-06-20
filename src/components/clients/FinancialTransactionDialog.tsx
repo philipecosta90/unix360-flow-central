@@ -42,11 +42,15 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
 
     try {
       setLoading(true);
+      
+      // Usar os valores corretos para o tipo conforme o check constraint do banco
+      const tipoCorreto = formData.tipo === "receita" ? "entrada" : "saida";
+      
       const { error } = await supabase
         .from('financeiro_lancamentos')
         .insert([{
           empresa_id: userProfile.empresa_id,
-          tipo: formData.tipo,
+          tipo: tipoCorreto,
           categoria: formData.categoria,
           descricao: `${formData.descricao} - Cliente: ${clientId}`,
           valor: parseFloat(formData.valor),
@@ -54,7 +58,10 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
           created_by: userProfile.id
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao registrar movimentação:', error);
+        throw error;
+      }
 
       toast({
         title: "Sucesso",

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -309,13 +308,13 @@ export const ContractsModule = () => {
         contract={selectedContract}
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
-        onContractUpdated={handleContractUpdated}
+        onSave={handleContractUpdated}
       />
 
       <AddContractDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        onContractAdded={handleContractAdded}
+        onSave={handleContractAdded}
       />
     </>
   );

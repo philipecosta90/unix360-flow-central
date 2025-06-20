@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, File } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -16,6 +18,7 @@ interface DocumentUploadDialogProps {
 
 export const DocumentUploadDialog = ({ open, onOpenChange, clientId, onDocumentAdded }: DocumentUploadDialogProps) => {
   const { toast } = useToast();
+  const { userProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
@@ -30,10 +33,19 @@ export const DocumentUploadDialog = ({ open, onOpenChange, clientId, onDocumentA
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) {
+    if (!selectedFile || !fileName.trim()) {
       toast({
         title: "Erro",
-        description: "Selecione um arquivo para upload.",
+        description: "Selecione um arquivo e informe o nome do documento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!userProfile?.empresa_id) {
+      toast({
+        title: "Erro",
+        description: "Usuário não possui empresa associada.",
         variant: "destructive",
       });
       return;
@@ -42,8 +54,23 @@ export const DocumentUploadDialog = ({ open, onOpenChange, clientId, onDocumentA
     try {
       setLoading(true);
       
-      // Simular upload - aqui você integraria com Supabase Storage
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simular salvamento do documento - aqui você integraria com Supabase Storage
+      // Por enquanto, vamos salvar apenas as informações do documento
+      const { error } = await supabase
+        .from('cliente_documentos')
+        .insert([{
+          empresa_id: userProfile.empresa_id,
+          cliente_id: clientId,
+          nome: fileName,
+          tipo_arquivo: selectedFile.type,
+          tamanho: selectedFile.size,
+          created_by: userProfile.id
+        }]);
+
+      if (error) {
+        console.error('Erro ao salvar documento:', error);
+        throw error;
+      }
       
       toast({
         title: "Sucesso",
