@@ -127,8 +127,7 @@ export const CSModule = () => {
           <CSInteracoes selectedClient={selectedClient} />
         </TabsContent>
 
-        <Tab
-Value="nps" className="space-y-6">
+        <TabsContent value="nps" className="space-y-6">
           <CSNPS selectedClient={selectedClient} />
         </TabsContent>
       </Tabs>
