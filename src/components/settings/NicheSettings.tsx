@@ -7,8 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Settings, Plus, X } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { useNicheSettings } from "@/hooks/useNicheSettings";
 import { useToast } from "@/hooks/use-toast";
 
 interface CustomField {
@@ -64,11 +63,11 @@ const NICHE_TEMPLATES = {
     ],
     metrics: ['Procedimentos/Mês', 'Valor Médio', 'Tempo de Tratamento', 'Retorno']
   }
-} satisfies Record<string, NicheConfig>;
+} as const;
 
 export const NicheSettings = () => {
-  const { userProfile } = useAuth();
   const { toast } = useToast();
+  const { settings, isLoading, updateSettings } = useNicheSettings();
   const [selectedNiche, setSelectedNiche] = useState<keyof typeof NICHE_TEMPLATES | 'custom'>('fitness');
   const [config, setConfig] = useState<NicheConfig>({
     ...NICHE_TEMPLATES.fitness,
@@ -78,7 +77,7 @@ export const NicheSettings = () => {
   });
   const [newStage, setNewStage] = useState('');
   const [newMetric, setNewMetric] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleNicheChange = (niche: keyof typeof NICHE_TEMPLATES | 'custom') => {
     setSelectedNiche(niche);
@@ -128,40 +127,16 @@ export const NicheSettings = () => {
   };
 
   const handleSaveSettings = async () => {
-    if (!userProfile?.empresa_id) {
-      toast({
-        title: "Erro",
-        description: "Usuário não está associado a uma empresa.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
+    setIsSaving(true);
 
     try {
-      // Salvar configurações de nicho na tabela empresas
-      const { error } = await supabase
-        .from('empresas')
-        .update({
-          // Armazenamos as configurações como JSON em um campo personalizado
-          configuracoes_nicho: {
-            niche_type: selectedNiche,
-            config: config,
-            updated_at: new Date().toISOString()
-          }
-        })
-        .eq('id', userProfile.empresa_id);
+      const newSettings = {
+        niche_type: selectedNiche,
+        config: config,
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) {
-        console.error('Erro ao salvar configurações:', error);
-        toast({
-          title: "Erro ao salvar",
-          description: "Não foi possível salvar as configurações. Tente novamente.",
-          variant: "destructive"
-        });
-        return;
-      }
+      await updateSettings(newSettings);
 
       toast({
         title: "Configurações salvas!",
@@ -169,16 +144,20 @@ export const NicheSettings = () => {
       });
 
     } catch (error) {
-      console.error('Erro inesperado:', error);
+      console.error('Erro ao salvar configurações:', error);
       toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as configurações. Tente novamente.",
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return <div>Carregando configurações...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -288,9 +267,9 @@ export const NicheSettings = () => {
         <Button 
           className="bg-[#43B26D] hover:bg-[#37A05B]"
           onClick={handleSaveSettings}
-          disabled={isLoading}
+          disabled={isSaving}
         >
-          {isLoading ? "Salvando..." : "Salvar Configurações"}
+          {isSaving ? "Salvando..." : "Salvar Configurações"}
         </Button>
       </div>
     </div>

@@ -483,6 +483,7 @@ export type Database = {
         Row: {
           ativa: boolean
           cnpj: string | null
+          configuracoes_nicho: Json | null
           created_at: string
           email: string | null
           endereco: string | null
@@ -494,6 +495,7 @@ export type Database = {
         Insert: {
           ativa?: boolean
           cnpj?: string | null
+          configuracoes_nicho?: Json | null
           created_at?: string
           email?: string | null
           endereco?: string | null
@@ -505,6 +507,7 @@ export type Database = {
         Update: {
           ativa?: boolean
           cnpj?: string | null
+          configuracoes_nicho?: Json | null
           created_at?: string
           email?: string | null
           endereco?: string | null
