@@ -22,11 +22,15 @@ export const CSClientList = ({ onSelectClient }: CSClientListProps) => {
   ) || [];
 
   const getClientStatus = (cliente: any) => {
-    // Lógica para determinar status do cliente
-    const isInRisk = csData?.clientesRiscoDetalhes?.some(c => c.id === cliente.id);
+    // Verificar se está nos clientes em risco detalhados
+    const clienteRisco = csData?.clientesRiscoDetalhes?.find(c => c.id === cliente.id);
     
-    if (isInRisk) {
-      return { label: "Em Risco", color: "bg-red-100 text-red-600", icon: AlertTriangle };
+    if (clienteRisco) {
+      return { 
+        label: `Em Risco (${clienteRisco.diasSemInteracao} dias sem interação)`, 
+        color: "bg-red-100 text-red-600", 
+        icon: AlertTriangle 
+      };
     }
     
     if (cliente.status === 'ativo') {

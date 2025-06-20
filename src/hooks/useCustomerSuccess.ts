@@ -40,6 +40,13 @@ export const useCustomerSuccess = () => {
           .select('*')
           .eq('empresa_id', userProfile.empresa_id);
 
+        // Buscar TODAS as interações para calcular a última interação de cada cliente
+        const { data: todasInteracoes } = await supabase
+          .from('cs_interacoes')
+          .select('cliente_id, data_interacao')
+          .eq('empresa_id', userProfile.empresa_id)
+          .order('data_interacao', { ascending: false });
+
         // Calcular métricas
         const totalOnboardings = onboardings?.length || 0;
         const onboardingsConcluidos = onboardings?.filter(o => o.concluido).length || 0;
@@ -48,14 +55,48 @@ export const useCustomerSuccess = () => {
         const npsMedian = npsData?.length ? 
           npsData.reduce((acc, curr) => acc + curr.nota, 0) / npsData.length : 0;
 
-        // Identificar clientes em risco (sem interação há mais de 30 dias)
-        const trintaDiasAtras = new Date();
-        trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+        // Identificar clientes em risco com base na última interação real
+        const agora = new Date();
+        const trintaDiasAtras = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         
-        const clientesComInteracao = interacoes?.map(i => i.cliente_id) || [];
-        const clientesEmRisco = clientes?.filter(c => 
-          !clientesComInteracao.includes(c.id)
-        ) || [];
+        // Criar mapa da última interação de cada cliente
+        const ultimaInteracaoMap = new Map<string, Date>();
+        todasInteracoes?.forEach(interacao => {
+          if (!ultimaInteracaoMap.has(interacao.cliente_id)) {
+            ultimaInteracaoMap.set(interacao.cliente_id, new Date(interacao.data_interacao));
+          }
+        });
+
+        // Identificar clientes em risco
+        const clientesEmRisco = clientes?.filter(cliente => {
+          const ultimaInteracao = ultimaInteracaoMap.get(cliente.id);
+          
+          // Se não há interação registrada ou a última foi há mais de 30 dias
+          if (!ultimaInteracao) {
+            return true; // Cliente sem nenhuma interação está em risco
+          }
+          
+          return ultimaInteracao < trintaDiasAtras;
+        }) || [];
+
+        // Adicionar informações detalhadas dos clientes em risco
+        const clientesRiscoDetalhes = clientesEmRisco.map(cliente => {
+          const ultimaInteracao = ultimaInteracaoMap.get(cliente.id);
+          let diasSemInteracao = 0;
+          
+          if (ultimaInteracao) {
+            diasSemInteracao = Math.floor((agora.getTime() - ultimaInteracao.getTime()) / (1000 * 60 * 60 * 24));
+          } else {
+            // Se não há interação, calcular desde a criação do cliente
+            diasSemInteracao = Math.floor((agora.getTime() - new Date(cliente.created_at).getTime()) / (1000 * 60 * 60 * 24));
+          }
+
+          return {
+            ...cliente,
+            ultimaInteracao: ultimaInteracao?.toISOString() || null,
+            diasSemInteracao
+          };
+        });
 
         return {
           totalClientes: clientes?.length || 0,
@@ -65,7 +106,7 @@ export const useCustomerSuccess = () => {
           interacoesRecentes: interacoes || [],
           onboardings: onboardings || [],
           clientes: clientes || [],
-          clientesRiscoDetalhes: clientesEmRisco
+          clientesRiscoDetalhes
         };
       },
       enabled: !!userProfile?.empresa_id
@@ -92,7 +133,6 @@ export const useCustomerSuccess = () => {
     });
   };
 
-  // Hook para buscar interações de um cliente
   const useClientInteracoes = (clienteId: string) => {
     return useQuery({
       queryKey: ['interacoes', clienteId, userProfile?.empresa_id],
@@ -112,7 +152,6 @@ export const useCustomerSuccess = () => {
     });
   };
 
-  // Hook para buscar NPS de um cliente
   const useClientNPS = (clienteId: string) => {
     return useQuery({
       queryKey: ['nps', clienteId, userProfile?.empresa_id],
@@ -132,7 +171,6 @@ export const useCustomerSuccess = () => {
     });
   };
 
-  // Mutations
   const createOnboardingStep = useMutation({
     mutationFn: async (data: any) => {
       const { error } = await supabase
