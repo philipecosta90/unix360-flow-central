@@ -37,9 +37,9 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
   };
 
   return (
-    <div className="min-w-[300px]">
-      <Card className={`${getBackgroundColor(stage.cor)} border-2 ${isOver ? 'ring-2 ring-blue-400' : ''}`}>
-        <CardHeader className="pb-3">
+    <div className="min-w-[320px] max-w-[320px] flex-shrink-0">
+      <Card className={`${getBackgroundColor(stage.cor)} border-2 ${isOver ? 'ring-2 ring-blue-400' : ''} h-full flex flex-col`}>
+        <CardHeader className="pb-3 flex-shrink-0">
           <CardTitle className="text-sm font-medium flex items-center justify-between">
             {stage.nome}
             <Badge variant="secondary">{prospects.length}</Badge>
@@ -50,7 +50,7 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
         </CardHeader>
         <CardContent 
           ref={setNodeRef}
-          className="space-y-3 min-h-[200px]"
+          className="flex-1 overflow-y-auto max-h-[calc(100vh-300px)] space-y-3 min-h-[200px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
         >
           <SortableContext items={prospects.map(p => p.id)} strategy={verticalListSortingStrategy}>
             {prospects.map((prospect) => (

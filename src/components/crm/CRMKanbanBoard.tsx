@@ -58,7 +58,7 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 overflow-x-auto">
+        <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
           <SortableContext items={stages.map(s => s.id)} strategy={horizontalListSortingStrategy}>
             {stages.map((stage) => {
               const stageProspects = getProspectsByStage(stage.id);

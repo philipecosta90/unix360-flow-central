@@ -55,14 +55,14 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
       <Card 
         ref={setNodeRef}
         style={style}
-        className="bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
+        className="bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer relative mb-3 flex-shrink-0"
         onClick={handleCardClick}
         {...attributes}
       >
         {/* Drag Handle - separate from main card content */}
         <div
           data-drag-handle
-          className="absolute top-2 right-2 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100"
+          className="absolute top-2 right-2 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100 z-10"
           {...listeners}
         >
           <GripVertical className="h-3 w-3 text-gray-400" />
