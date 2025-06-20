@@ -78,7 +78,7 @@ export const NicheSettings = () => {
     leadStages: [...NICHE_TEMPLATES.fitness.leadStages],
     customFields: NICHE_TEMPLATES.fitness.customFields.map(field => ({
       ...field,
-      options: field.options ? [...field.options] : undefined
+      options: field.type === 'select' && field.options ? [...field.options] : undefined
     })),
     metrics: [...NICHE_TEMPLATES.fitness.metrics]
   });
@@ -105,7 +105,7 @@ export const NicheSettings = () => {
         leadStages: [...template.leadStages],
         customFields: template.customFields.map(field => ({
           ...field,
-          options: field.options ? [...field.options] : undefined
+          options: field.type === 'select' && field.options ? [...field.options] : undefined
         })),
         metrics: [...template.metrics]
       });
