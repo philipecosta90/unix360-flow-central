@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,8 +28,8 @@ const NICHE_TEMPLATES = {
     name: "Academia/Personal",
     leadStages: ["Interesse", "Avaliação", "Proposta", "Matrícula", "Ativo"],
     customFields: [
-      { id: '1', name: 'Objetivo', type: 'select', options: ['Emagrecimento', 'Hipertrofia', 'Condicionamento'], required: true },
-      { id: '2', name: 'Experiência', type: 'select', options: ['Iniciante', 'Intermediário', 'Avançado'], required: false }
+      { id: '1', name: 'Objetivo', type: 'select' as const, options: ['Emagrecimento', 'Hipertrofia', 'Condicionamento'], required: true },
+      { id: '2', name: 'Experiência', type: 'select' as const, options: ['Iniciante', 'Intermediário', 'Avançado'], required: false }
     ],
     metrics: ['Frequência Semanal', 'IMC', 'Peso Atual', 'Meta de Peso']
   },
@@ -38,8 +37,8 @@ const NICHE_TEMPLATES = {
     name: "Clínica Médica",
     leadStages: ["Agendamento", "Consulta", "Retorno", "Tratamento", "Alta"],
     customFields: [
-      { id: '1', name: 'Especialidade', type: 'select', options: ['Cardiologia', 'Dermatologia', 'Pediatria'], required: true },
-      { id: '2', name: 'Plano de Saúde', type: 'text', required: false }
+      { id: '1', name: 'Especialidade', type: 'select' as const, options: ['Cardiologia', 'Dermatologia', 'Pediatria'], required: true },
+      { id: '2', name: 'Plano de Saúde', type: 'text' as const, required: false }
     ],
     metrics: ['Consultas/Mês', 'Taxa de Retorno', 'Satisfação', 'Tempo Médio']
   },
@@ -47,24 +46,35 @@ const NICHE_TEMPLATES = {
     name: "Consultório Odontológico",
     leadStages: ["Triagem", "Orçamento", "Aprovação", "Tratamento", "Finalizado"],
     customFields: [
-      { id: '1', name: 'Tratamento', type: 'select', options: ['Limpeza', 'Restauração', 'Implante', 'Ortodontia'], required: true },
-      { id: '2', name: 'Urgência', type: 'select', options: ['Baixa', 'Média', 'Alta'], required: false }
+      { id: '1', name: 'Tratamento', type: 'select' as const, options: ['Limpeza', 'Restauração', 'Implante', 'Ortodontia'], required: true },
+      { id: '2', name: 'Urgência', type: 'select' as const, options: ['Baixa', 'Média', 'Alta'], required: false }
     ],
     metrics: ['Procedimentos/Mês', 'Valor Médio', 'Tempo de Tratamento', 'Retorno']
   }
-} as const;
+} satisfies Record<string, NicheConfig>;
 
 export const NicheSettings = () => {
   const { userProfile } = useAuth();
   const [selectedNiche, setSelectedNiche] = useState<keyof typeof NICHE_TEMPLATES | 'custom'>('fitness');
-  const [config, setConfig] = useState<NicheConfig>(NICHE_TEMPLATES.fitness);
+  const [config, setConfig] = useState<NicheConfig>({
+    ...NICHE_TEMPLATES.fitness,
+    leadStages: [...NICHE_TEMPLATES.fitness.leadStages],
+    customFields: [...NICHE_TEMPLATES.fitness.customFields],
+    metrics: [...NICHE_TEMPLATES.fitness.metrics]
+  });
   const [newStage, setNewStage] = useState('');
   const [newMetric, setNewMetric] = useState('');
 
   const handleNicheChange = (niche: keyof typeof NICHE_TEMPLATES | 'custom') => {
     setSelectedNiche(niche);
     if (niche !== 'custom') {
-      setConfig(NICHE_TEMPLATES[niche]);
+      const template = NICHE_TEMPLATES[niche];
+      setConfig({
+        ...template,
+        leadStages: [...template.leadStages],
+        customFields: [...template.customFields],
+        metrics: [...template.metrics]
+      });
     }
   };
 
