@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +68,7 @@ const NICHE_TEMPLATES = {
 
 export const NicheSettings = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { settings, isLoading, updateSettings } = useNicheSettings();
   const [selectedNiche, setSelectedNiche] = useState<keyof typeof NICHE_TEMPLATES | 'custom'>('fitness');
   const [config, setConfig] = useState<NicheConfig>({
@@ -148,6 +150,9 @@ export const NicheSettings = () => {
         title: "Configurações salvas!",
         description: "As configurações do nicho foram salvas com sucesso.",
       });
+
+      // Redirecionar para a página principal após salvar
+      navigate('/dashboard');
 
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
