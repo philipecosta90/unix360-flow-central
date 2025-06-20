@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,8 @@ const NICHE_TEMPLATES = {
     leadStages: ["Interesse", "Avaliação", "Proposta", "Matrícula", "Ativo"],
     customFields: [
       { id: '1', name: 'Objetivo', type: 'select' as const, options: ['Emagrecimento', 'Hipertrofia', 'Condicionamento'], required: true },
-      { id: '2', name: 'Experiência', type: 'select' as const, options: ['Iniciante', 'Intermediário', 'Avançado'], required: false }
+      { id: '2', name: 'Experiência', type: 'select' as const, options: ['Iniciante', 'Intermediário', 'Avançado'], required: false },
+      { id: '3', name: 'Frequência Semanal', type: 'number' as const, required: false }
     ],
     metrics: ['Frequência Semanal', 'IMC', 'Peso Atual', 'Meta de Peso']
   },
@@ -42,7 +43,8 @@ const NICHE_TEMPLATES = {
     customFields: [
       { id: '1', name: 'Tipo de Consultoria', type: 'select' as const, options: ['Fitness', 'Nutricional', 'Performance'], required: true },
       { id: '2', name: 'Objetivo Principal', type: 'text' as const, required: true },
-      { id: '3', name: 'IMC Inicial', type: 'number' as const, required: false }
+      { id: '3', name: 'IMC Inicial', type: 'number' as const, required: false },
+      { id: '4', name: 'Área de Consultoria', type: 'text' as const, required: false }
     ],
     metrics: ['Sessões Realizadas', 'Resultados Alcançados', 'Satisfação', 'Renovações']
   },
@@ -84,7 +86,17 @@ export const NicheSettings = () => {
   const [newMetric, setNewMetric] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Carregar configurações salvas quando o componente monta
+  useEffect(() => {
+    if (settings && !isLoading) {
+      console.log('Carregando configurações salvas:', settings);
+      setSelectedNiche(settings.niche_type as keyof typeof NICHE_TEMPLATES || 'fitness');
+      setConfig(settings.config);
+    }
+  }, [settings, isLoading]);
+
   const handleNicheChange = (niche: keyof typeof NICHE_TEMPLATES | 'custom') => {
+    console.log('Mudando nicho para:', niche);
     setSelectedNiche(niche);
     if (niche !== 'custom') {
       const template = NICHE_TEMPLATES[niche];
@@ -144,6 +156,7 @@ export const NicheSettings = () => {
         updated_at: new Date().toISOString()
       };
 
+      console.log('Salvando configurações:', newSettings);
       await updateSettings(newSettings);
 
       toast({

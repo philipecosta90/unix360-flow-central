@@ -28,11 +28,14 @@ export const useNicheSettings = () => {
 
   const fetchSettings = async () => {
     if (!userProfile?.empresa_id) {
+      console.log('Empresa ID não encontrado:', userProfile?.empresa_id);
       setIsLoading(false);
       return;
     }
 
     try {
+      console.log('Buscando configurações para empresa:', userProfile.empresa_id);
+      
       const { data, error } = await supabase
         .from('empresas')
         .select('configuracoes_nicho')
@@ -45,8 +48,17 @@ export const useNicheSettings = () => {
         return;
       }
 
+      console.log('Dados carregados do Supabase:', data);
+      console.log('Configurações de nicho:', data?.configuracoes_nicho);
+
       if (data?.configuracoes_nicho) {
-        setSettings(data.configuracoes_nicho as unknown as NicheSettings);
+        const loadedSettings = data.configuracoes_nicho as unknown as NicheSettings;
+        console.log('Nicho carregado:', loadedSettings.niche_type);
+        setSettings(loadedSettings);
+      } else {
+        console.log('Nenhuma configuração encontrada, usando padrão');
+        // Se não há configurações, manter null para que o componente use os padrões
+        setSettings(null);
       }
     } catch (err) {
       console.error('Erro inesperado:', err);
@@ -65,6 +77,9 @@ export const useNicheSettings = () => {
       throw new Error('Usuário não está associado a uma empresa');
     }
 
+    console.log('Salvando configurações:', newSettings);
+    console.log('Para empresa:', userProfile.empresa_id);
+
     const { error } = await supabase
       .from('empresas')
       .update({
@@ -73,9 +88,11 @@ export const useNicheSettings = () => {
       .eq('id', userProfile.empresa_id);
 
     if (error) {
+      console.error('Erro ao salvar configurações:', error);
       throw error;
     }
 
+    console.log('Configurações salvas com sucesso');
     setSettings(newSettings);
   };
 
