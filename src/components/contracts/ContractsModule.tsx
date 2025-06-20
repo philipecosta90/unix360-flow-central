@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,7 +69,13 @@ export const ContractsModule = () => {
         return;
       }
 
-      setContracts(data || []);
+      // Convert Supabase data to Contract type with proper type assertion
+      const contractsData: Contract[] = (data || []).map(item => ({
+        ...item,
+        status: item.status as 'ativo' | 'inativo' | 'pendente' | 'cancelado'
+      }));
+
+      setContracts(contractsData);
     } catch (error) {
       console.error('Erro ao buscar contratos:', error);
       toast({
@@ -152,8 +157,13 @@ export const ContractsModule = () => {
         return;
       }
 
-      // Atualizar a lista de contratos
-      setContracts(prev => [data, ...prev]);
+      // Convert and add to state with proper type assertion
+      const newContract: Contract = {
+        ...data,
+        status: data.status as 'ativo' | 'inativo' | 'pendente' | 'cancelado'
+      };
+
+      setContracts(prev => [newContract, ...prev]);
       
       toast({
         title: "Contrato adicionado!",
@@ -209,9 +219,14 @@ export const ContractsModule = () => {
         return;
       }
 
-      // Atualizar a lista de contratos
+      // Convert and update state with proper type assertion
+      const updatedContract: Contract = {
+        ...data,
+        status: data.status as 'ativo' | 'inativo' | 'pendente' | 'cancelado'
+      };
+
       setContracts(prev => 
-        prev.map(c => c.id === contractData.id ? data : c)
+        prev.map(c => c.id === contractData.id ? updatedContract : c)
       );
       
       toast({
