@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Settings, Plus, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface CustomField {
   id: string;
@@ -25,13 +28,23 @@ interface NicheConfig {
 
 const NICHE_TEMPLATES = {
   fitness: {
-    name: "Academia/Personal",
+    name: "Academia/Estúdio",
     leadStages: ["Interesse", "Avaliação", "Proposta", "Matrícula", "Ativo"],
     customFields: [
       { id: '1', name: 'Objetivo', type: 'select' as const, options: ['Emagrecimento', 'Hipertrofia', 'Condicionamento'], required: true },
       { id: '2', name: 'Experiência', type: 'select' as const, options: ['Iniciante', 'Intermediário', 'Avançado'], required: false }
     ],
     metrics: ['Frequência Semanal', 'IMC', 'Peso Atual', 'Meta de Peso']
+  },
+  consultoria: {
+    name: "Consultoria",
+    leadStages: ["Contato Inicial", "Diagnóstico", "Proposta", "Contrato", "Execução"],
+    customFields: [
+      { id: '1', name: 'Tipo de Consultoria', type: 'select' as const, options: ['Fitness', 'Nutricional', 'Performance'], required: true },
+      { id: '2', name: 'Objetivo Principal', type: 'text' as const, required: true },
+      { id: '3', name: 'IMC Inicial', type: 'number' as const, required: false }
+    ],
+    metrics: ['Sessões Realizadas', 'Resultados Alcançados', 'Satisfação', 'Renovações']
   },
   medical: {
     name: "Clínica Médica",
@@ -55,6 +68,7 @@ const NICHE_TEMPLATES = {
 
 export const NicheSettings = () => {
   const { userProfile } = useAuth();
+  const { toast } = useToast();
   const [selectedNiche, setSelectedNiche] = useState<keyof typeof NICHE_TEMPLATES | 'custom'>('fitness');
   const [config, setConfig] = useState<NicheConfig>({
     ...NICHE_TEMPLATES.fitness,
@@ -64,6 +78,7 @@ export const NicheSettings = () => {
   });
   const [newStage, setNewStage] = useState('');
   const [newMetric, setNewMetric] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleNicheChange = (niche: keyof typeof NICHE_TEMPLATES | 'custom') => {
     setSelectedNiche(niche);
@@ -112,6 +127,59 @@ export const NicheSettings = () => {
     }));
   };
 
+  const handleSaveSettings = async () => {
+    if (!userProfile?.empresa_id) {
+      toast({
+        title: "Erro",
+        description: "Usuário não está associado a uma empresa.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Salvar configurações de nicho na tabela empresas
+      const { error } = await supabase
+        .from('empresas')
+        .update({
+          // Armazenamos as configurações como JSON em um campo personalizado
+          configuracoes_nicho: {
+            niche_type: selectedNiche,
+            config: config,
+            updated_at: new Date().toISOString()
+          }
+        })
+        .eq('id', userProfile.empresa_id);
+
+      if (error) {
+        console.error('Erro ao salvar configurações:', error);
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar as configurações. Tente novamente.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Configurações salvas!",
+        description: "As configurações do nicho foram salvas com sucesso.",
+      });
+
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -134,7 +202,8 @@ export const NicheSettings = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="fitness">Academia/Personal Trainer</SelectItem>
+                <SelectItem value="fitness">Academia/Estúdio</SelectItem>
+                <SelectItem value="consultoria">Consultoria</SelectItem>
                 <SelectItem value="medical">Clínica Médica</SelectItem>
                 <SelectItem value="dental">Consultório Odontológico</SelectItem>
                 <SelectItem value="custom">Personalizado</SelectItem>
@@ -216,8 +285,12 @@ export const NicheSettings = () => {
       </Card>
 
       <div className="flex justify-end">
-        <Button className="bg-[#43B26D] hover:bg-[#37A05B]">
-          Salvar Configurações
+        <Button 
+          className="bg-[#43B26D] hover:bg-[#37A05B]"
+          onClick={handleSaveSettings}
+          disabled={isLoading}
+        >
+          {isLoading ? "Salvando..." : "Salvar Configurações"}
         </Button>
       </div>
     </div>

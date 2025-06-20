@@ -72,7 +72,7 @@ export const Sidebar = () => {
     },
     {
       icon: Heart,
-      label: "Customer Success",
+      label: "Sucesso do Cliente",
       path: "/cs",
       isActive: location.pathname === "/cs",
     },
