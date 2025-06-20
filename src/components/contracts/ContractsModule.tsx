@@ -54,9 +54,23 @@ export const ContractsModule = () => {
 
     try {
       setLoading(true);
-      // Simular busca de contratos - substituir pela query real quando a tabela existir
-      const mockContracts: Contract[] = [];
-      setContracts(mockContracts);
+      const { data, error } = await supabase
+        .from('contratos')
+        .select('*')
+        .eq('empresa_id', userProfile.empresa_id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar contratos:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os contratos.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setContracts(data || []);
     } catch (error) {
       console.error('Erro ao buscar contratos:', error);
       toast({
@@ -69,7 +83,7 @@ export const ContractsModule = () => {
     }
   };
 
-  useEffect(() =>{ 
+  useEffect(() => {
     fetchContracts();
   }, [userProfile?.empresa_id]);
 
@@ -101,16 +115,45 @@ export const ContractsModule = () => {
   };
 
   const handleAddContract = async (contractData: Omit<Contract, "id" | "created_at" | "updated_at">) => {
+    if (!userProfile?.empresa_id) {
+      toast({
+        title: "Erro",
+        description: "Empresa não encontrada. Faça login novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Simular adição de contrato
-      const newContract: Contract = {
-        ...contractData,
-        id: Math.random().toString(36).substr(2, 9),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      setContracts(prev => [newContract, ...prev]);
+      const { data, error } = await supabase
+        .from('contratos')
+        .insert({
+          empresa_id: userProfile.empresa_id,
+          titulo: contractData.titulo,
+          cliente_nome: contractData.cliente_nome,
+          valor: contractData.valor,
+          data_inicio: contractData.data_inicio,
+          data_fim: contractData.data_fim,
+          status: contractData.status,
+          tipo: contractData.tipo,
+          observacoes: contractData.observacoes,
+          created_by: userProfile.user_id
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao adicionar contrato:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível adicionar o contrato.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Atualizar a lista de contratos
+      setContracts(prev => [data, ...prev]);
       
       toast({
         title: "Contrato adicionado!",
@@ -129,12 +172,46 @@ export const ContractsModule = () => {
   };
 
   const handleEditContract = async (contractData: Contract) => {
+    if (!userProfile?.empresa_id) {
+      toast({
+        title: "Erro",
+        description: "Empresa não encontrada. Faça login novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Simular edição de contrato
+      const { data, error } = await supabase
+        .from('contratos')
+        .update({
+          titulo: contractData.titulo,
+          cliente_nome: contractData.cliente_nome,
+          valor: contractData.valor,
+          data_inicio: contractData.data_inicio,
+          data_fim: contractData.data_fim,
+          status: contractData.status,
+          tipo: contractData.tipo,
+          observacoes: contractData.observacoes
+        })
+        .eq('id', contractData.id)
+        .eq('empresa_id', userProfile.empresa_id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar contrato:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível atualizar o contrato.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Atualizar a lista de contratos
       setContracts(prev => 
-        prev.map(c => c.id === contractData.id ? 
-          { ...contractData, updated_at: new Date().toISOString() } : c
-        )
+        prev.map(c => c.id === contractData.id ? data : c)
       );
       
       toast({
@@ -155,8 +232,33 @@ export const ContractsModule = () => {
   };
 
   const handleDeleteContract = async (contractId: string) => {
+    if (!userProfile?.empresa_id) {
+      toast({
+        title: "Erro",
+        description: "Empresa não encontrada. Faça login novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Simular exclusão de contrato
+      const { error } = await supabase
+        .from('contratos')
+        .delete()
+        .eq('id', contractId)
+        .eq('empresa_id', userProfile.empresa_id);
+
+      if (error) {
+        console.error('Erro ao excluir contrato:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível excluir o contrato.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Atualizar a lista de contratos
       setContracts(prev => prev.filter(c => c.id !== contractId));
       
       toast({

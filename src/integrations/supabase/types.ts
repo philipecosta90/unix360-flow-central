@@ -101,6 +101,54 @@ export type Database = {
           },
         ]
       }
+      contratos: {
+        Row: {
+          cliente_nome: string | null
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string
+          empresa_id: string
+          id: string
+          observacoes: string | null
+          status: string
+          tipo: string | null
+          titulo: string
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          cliente_nome?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          empresa_id: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          tipo?: string | null
+          titulo: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          cliente_nome?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          empresa_id?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          tipo?: string | null
+          titulo?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: []
+      }
       crm_atividades: {
         Row: {
           created_at: string
