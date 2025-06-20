@@ -7,13 +7,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings as SettingsIcon, Download, Palette, Users } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Settings() {
+  const { user, signOut } = useAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   return (
     <div className="min-h-screen flex w-full">
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        <Header />
+        <Header 
+          user={user} 
+          onLogout={signOut}
+          onToggleSidebar={handleToggleSidebar}
+        />
         <main className="flex-1 p-6 bg-gray-50">
           <div className="container mx-auto space-y-6">
             <div className="flex items-center justify-between">
