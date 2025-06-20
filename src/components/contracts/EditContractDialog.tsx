@@ -38,7 +38,7 @@ export const EditContractDialog = ({ contract, open, onOpenChange, onSubmit }: E
     valor: "",
     data_inicio: "",
     data_fim: "",
-    status: "pendente" as const,
+    status: "pendente" as 'ativo' | 'inativo' | 'pendente' | 'cancelado',
     tipo: "",
     observacoes: "",
   });
@@ -161,7 +161,7 @@ export const EditContractDialog = ({ contract, open, onOpenChange, onSubmit }: E
 
           <div>
             <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as any })}>
+            <Select value={formData.status} onValueChange={(value: 'ativo' | 'inativo' | 'pendente' | 'cancelado') => setFormData({ ...formData, status: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
