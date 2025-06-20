@@ -1,321 +1,354 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContractDetailDialog } from "./ContractDetailDialog";
-import { EditContractDialog } from "./EditContractDialog";
 import { AddContractDialog } from "./AddContractDialog";
-import { useToast } from "@/hooks/use-toast";
+import { EditContractDialog } from "./EditContractDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Loader2, 
+  Plus, 
+  Search, 
+  Calendar, 
+  FileText, 
+  Eye, 
+  Edit2, 
+  Trash2,
+  AlertCircle 
+} from "lucide-react";
 
 interface Contract {
-  id: number;
-  clientName: string;
-  title: string;
-  value: number;
-  status: string;
-  sentDate: string | null;
-  signedDate: string | null;
-  validUntil: string | null;
-  type: string;
+  id: string;
+  titulo: string;
+  cliente_nome?: string;
+  valor?: number;
+  data_inicio: string;
+  data_fim?: string;
+  status: 'ativo' | 'inativo' | 'pendente' | 'cancelado';
+  tipo?: string;
+  observacoes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const ContractsModule = () => {
-  const { toast } = useToast();
   const { userProfile } = useAuth();
+  const { toast } = useToast();
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [contracts, setContracts] = useState<Contract[]>([
-    {
-      id: 1,
-      clientName: "João Silva",
-      title: "Contrato de Coaching Executivo",
-      value: 12000,
-      status: "Assinado",
-      sentDate: "2024-01-10",
-      signedDate: "2024-01-12",
-      validUntil: "2024-07-12",
-      type: "Coaching"
-    },
-    {
-      id: 2,
-      clientName: "Maria Santos",
-      title: "Consultoria Empresarial",
-      value: 8500,
-      status: "Enviado",
-      sentDate: "2024-01-14",
-      signedDate: null,
-      validUntil: "2024-01-28",
-      type: "Consultoria"
-    },
-    {
-      id: 3,
-      clientName: "Pedro Costa",
-      title: "Programa de Mentoria",
-      value: 6000,
-      status: "Pendente",
-      sentDate: null,
-      signedDate: null,
-      validUntil: null,
-      type: "Mentoria"
-    },
-    {
-      id: 4,
-      clientName: "Ana Oliveira",
-      title: "Treinamento Corporativo",
-      value: 15000,
-      status: "Expirado",
-      sentDate: "2023-12-15",
-      signedDate: null,
-      validUntil: "2024-01-15",
-      type: "Treinamento"
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingContract, setEditingContract] = useState<Contract | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("todos");
+
+  const fetchContracts = async () => {
+    if (!userProfile?.empresa_id) return;
+
+    try {
+      setLoading(true);
+      // Simular busca de contratos - substituir pela query real quando a tabela existir
+      const mockContracts: Contract[] = [];
+      setContracts(mockContracts);
+    } catch (error) {
+      console.error('Erro ao buscar contratos:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os contratos.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() =>{ 
+    fetchContracts();
+  }, [userProfile?.empresa_id]);
+
+  const filteredContracts = contracts.filter(contract => {
+    const matchesSearch = contract.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         contract.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "todos" || contract.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Assinado": return "bg-green-100 text-green-800";
-      case "Enviado": return "bg-blue-100 text-blue-800";
-      case "Pendente": return "bg-yellow-100 text-yellow-800";
-      case "Expirado": return "bg-red-100 text-red-800";
+      case "ativo": return "bg-green-100 text-green-800";
+      case "pendente": return "bg-yellow-100 text-yellow-800";
+      case "cancelado": return "bg-red-100 text-red-800";
+      case "inativo": return "bg-gray-100 text-gray-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
 
-  const contractStats = {
-    total: contracts.length,
-    signed: contracts.filter(c => c.status === "Assinado").length,
-    pending: contracts.filter(c => c.status === "Enviado" || c.status === "Pendente").length,
-    totalValue: contracts.filter(c => c.status === "Assinado").reduce((sum, c) => sum + c.value, 0)
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "ativo": return "Ativo";
+      case "pendente": return "Pendente";
+      case "cancelado": return "Cancelado";
+      case "inativo": return "Inativo";
+      default: return status;
+    }
   };
 
-  const handleViewContract = (contract: Contract) => {
-    setSelectedContract(contract);
-    setShowDetailDialog(true);
-  };
-
-  const handleEditContract = (contract: Contract) => {
-    setSelectedContract(contract);
-    setShowEditDialog(true);
-  };
-
-  const handleDeleteContract = (contractId: number) => {
-    if (confirm('Tem certeza que deseja excluir este contrato?')) {
-      setContracts(prev => prev.filter(c => c.id !== contractId));
+  const handleAddContract = async (contractData: Omit<Contract, "id">) => {
+    try {
+      // Simular adição de contrato
+      const newContract: Contract = {
+        ...contractData,
+        id: Math.random().toString(36).substr(2, 9),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      setContracts(prev => [newContract, ...prev]);
+      
       toast({
-        title: "Contrato excluído",
-        description: "O contrato foi removido com sucesso.",
+        title: "Contrato adicionado!",
+        description: `${contractData.titulo} foi adicionado com sucesso.`,
+      });
+      
+      setShowAddDialog(false);
+    } catch (error) {
+      console.error('Erro ao adicionar contrato:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o contrato.",
+        variant: "destructive",
       });
     }
   };
 
-  const handleAddContract = () => {
-    setShowAddDialog(true);
+  const handleEditContract = async (contractData: Contract) => {
+    try {
+      // Simular edição de contrato
+      setContracts(prev => 
+        prev.map(c => c.id === contractData.id ? 
+          { ...contractData, updated_at: new Date().toISOString() } : c
+        )
+      );
+      
+      toast({
+        title: "Contrato atualizado!",
+        description: `${contractData.titulo} foi atualizado com sucesso.`,
+      });
+      
+      setShowEditDialog(false);
+      setEditingContract(null);
+    } catch (error) {
+      console.error('Erro ao atualizar contrato:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o contrato.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleContractAdded = (newContract: Omit<Contract, 'id'>) => {
-    const contractWithId = {
-      ...newContract,
-      id: Math.max(...contracts.map(c => c.id)) + 1
-    };
-    setContracts(prev => [contractWithId, ...prev]);
-    setShowAddDialog(false);
-    toast({
-      title: "Contrato adicionado",
-      description: "O contrato foi criado com sucesso.",
-    });
-  };
-
-  const handleContractUpdated = (updatedContract: Contract) => {
-    setContracts(prev => prev.map(c => c.id === updatedContract.id ? updatedContract : c));
-    setShowEditDialog(false);
-    setSelectedContract(null);
-    toast({
-      title: "Contrato atualizado",
-      description: "O contrato foi atualizado com sucesso.",
-    });
+  const handleDeleteContract = async (contractId: string) => {
+    try {
+      // Simular exclusão de contrato
+      setContracts(prev => prev.filter(c => c.id !== contractId));
+      
+      toast({
+        title: "Contrato excluído!",
+        description: "O contrato foi excluído com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao excluir contrato:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o contrato.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Contratos</h1>
-            <p className="text-gray-600 mt-2">Gerencie seus contratos e propostas</p>
-          </div>
-          <Button 
-            className="bg-[#43B26D] hover:bg-[#37A05B]"
-            onClick={handleAddContract}
-          >
-            + Novo Contrato
-          </Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Contratos</h1>
+          <p className="text-gray-600 mt-2">Gerencie seus contratos e acordos</p>
         </div>
-
-        {/* Contract Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="h-8 w-8 text-blue-600 flex items-center justify-center bg-blue-100 rounded">
-                  📄
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total</p>
-                  <p className="text-2xl font-bold text-gray-900">{contractStats.total}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="h-8 w-8 text-green-600 flex items-center justify-center bg-green-100 rounded">
-                  ✅
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Assinados</p>
-                  <p className="text-2xl font-bold text-gray-900">{contractStats.signed}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="h-8 w-8 text-yellow-600 flex items-center justify-center bg-yellow-100 rounded">
-                  ⏰
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Pendentes</p>
-                  <p className="text-2xl font-bold text-gray-900">{contractStats.pending}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="h-8 w-8 text-[#43B26D] flex items-center justify-center bg-green-100 rounded">
-                  💰
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Valor Total</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    R$ {contractStats.totalValue.toLocaleString('pt-BR')}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Contracts List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Todos os Contratos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {contracts.map((contract) => (
-                <div key={contract.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                  <div className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarFallback className="bg-[#43B26D] text-white">
-                        {contract.clientName.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h4 className="font-medium text-gray-900">{contract.title}</h4>
-                      <p className="text-sm text-gray-600">{contract.clientName}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {contract.type}
-                        </Badge>
-                        <Badge className={getStatusColor(contract.status)}>
-                          {contract.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <p className="font-medium text-[#43B26D]">
-                      R$ {contract.value.toLocaleString('pt-BR')}
-                    </p>
-                    {contract.sentDate && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Enviado: {new Date(contract.sentDate).toLocaleDateString('pt-BR')}
-                      </p>
-                    )}
-                    {contract.signedDate && (
-                      <p className="text-xs text-gray-500">
-                        Assinado: {new Date(contract.signedDate).toLocaleDateString('pt-BR')}
-                      </p>
-                    )}
-                    {contract.validUntil && (
-                      <p className="text-xs text-gray-500">
-                        Válido até: {new Date(contract.validUntil).toLocaleDateString('pt-BR')}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleViewContract(contract)}
-                    >
-                      Ver
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      className="bg-[#43B26D] hover:bg-[#37A05B]"
-                      onClick={() => handleEditContract(contract)}
-                    >
-                      Editar
-                    </Button>
-                    <Button 
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteContract(contract.id)}
-                    >
-                      Excluir
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <Button 
+          onClick={() => setShowAddDialog(true)}
+          className="bg-[#43B26D] hover:bg-[#37A05B]"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Contrato
+        </Button>
       </div>
 
-      {/* Dialogs */}
-      <ContractDetailDialog
-        contract={selectedContract}
-        open={showDetailDialog}
-        onOpenChange={setShowDetailDialog}
-      />
+      {/* Filtros e Busca */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar contratos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os status</SelectItem>
+                <SelectItem value="ativo">Ativo</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
+                <SelectItem value="inativo">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-      <EditContractDialog
-        contract={selectedContract}
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        onSave={handleContractUpdated}
-      />
+      {/* Loading */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#43B26D]" />
+          <span className="ml-2 text-gray-600">Carregando contratos...</span>
+        </div>
+      ) : (
+        <>
+          {/* Lista de Contratos */}
+          {filteredContracts.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 mb-4">
+                  {searchTerm || statusFilter !== "todos" 
+                    ? "Nenhum contrato encontrado com os filtros aplicados." 
+                    : "Nenhum contrato cadastrado ainda."}
+                </p>
+                <Button 
+                  onClick={() => setShowAddDialog(true)}
+                  className="bg-[#43B26D] hover:bg-[#37A05B]"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Primeiro Contrato
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredContracts.map((contract) => (
+                <Card key={contract.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{contract.titulo}</CardTitle>
+                        {contract.cliente_nome && (
+                          <p className="text-sm text-gray-600 mt-1">{contract.cliente_nome}</p>
+                        )}
+                      </div>
+                      <Badge className={getStatusColor(contract.status)}>
+                        {getStatusLabel(contract.status)}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Início:</span>
+                        <span>{new Date(contract.data_inicio).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      
+                      {contract.data_fim && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Fim:</span>
+                          <span>{new Date(contract.data_fim).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      )}
+                      
+                      {contract.valor && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Valor:</span>
+                          <span className="font-medium">
+                            R$ {contract.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between pt-3 border-t">
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setSelectedContract(contract)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setEditingContract(contract);
+                              setShowEditDialog(true);
+                            }}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDeleteContract(contract.id)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(contract.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Dialogs */}
+      {selectedContract && (
+        <ContractDetailDialog
+          contract={selectedContract}
+          open={!!selectedContract}
+          onOpenChange={() => setSelectedContract(null)}
+        />
+      )}
 
       <AddContractDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        onSave={handleContractAdded}
+        onSubmit={handleAddContract}
       />
-    </>
+
+      {editingContract && (
+        <EditContractDialog
+          contract={editingContract}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSubmit={handleEditContract}
+        />
+      )}
+    </div>
   );
 };

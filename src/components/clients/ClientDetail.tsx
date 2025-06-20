@@ -38,7 +38,7 @@ interface Interaction {
   created_at: string;
 }
 
-interface Document {
+interface ClientDocument {
   id: string;
   nome: string;
   tipo_arquivo: string;
@@ -52,7 +52,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
   const [showDocumentDialog, setShowDocumentDialog] = useState(false);
   const [showFinancialDialog, setShowFinancialDialog] = useState(false);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loadingInteractions, setLoadingInteractions] = useState(false);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
@@ -84,17 +84,29 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
     
     try {
       setLoadingDocuments(true);
+      // Usar query raw para a tabela cliente_documentos que agora existe
       const { data, error } = await supabase
-        .from('cliente_documentos')
-        .select('*')
-        .eq('empresa_id', userProfile.empresa_id)
-        .eq('cliente_id', client.id)
-        .order('created_at', { ascending: false });
+        .rpc('get_cliente_documentos', {
+          p_empresa_id: userProfile.empresa_id,
+          p_cliente_id: client.id
+        })
+        .returns<ClientDocument[]>();
 
       if (error) {
         console.error('Erro ao buscar documentos:', error);
-        // Se a tabela não existir ainda, vamos apenas deixar vazio
-        setDocuments([]);
+        // Fallback para busca direta se a função não existir
+        const { data: fallbackData, error: fallbackError } = await (supabase as any)
+          .from('cliente_documentos')
+          .select('*')
+          .eq('empresa_id', userProfile.empresa_id)
+          .eq('cliente_id', client.id)
+          .order('created_at', { ascending: false });
+        
+        if (!fallbackError) {
+          setDocuments(fallbackData || []);
+        } else {
+          setDocuments([]);
+        }
       } else {
         setDocuments(data || []);
       }

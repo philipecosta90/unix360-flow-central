@@ -54,9 +54,8 @@ export const DocumentUploadDialog = ({ open, onOpenChange, clientId, onDocumentA
     try {
       setLoading(true);
       
-      // Simular salvamento do documento - aqui você integraria com Supabase Storage
-      // Por enquanto, vamos salvar apenas as informações do documento
-      const { error } = await supabase
+      // Inserir documento na tabela cliente_documentos usando query direta
+      const { error } = await (supabase as any)
         .from('cliente_documentos')
         .insert([{
           empresa_id: userProfile.empresa_id,
