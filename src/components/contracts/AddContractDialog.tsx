@@ -4,156 +4,200 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+
+interface Contract {
+  id: string;
+  titulo: string;
+  cliente_nome?: string;
+  valor?: number;
+  data_inicio: string;
+  data_fim?: string;
+  status: 'ativo' | 'inativo' | 'pendente' | 'cancelado';
+  tipo?: string;
+  observacoes?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface AddContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (contractData: Omit<Contract, "id" | "created_at" | "updated_at">) => Promise<void>;
 }
 
-export const AddContractDialog = ({ open, onOpenChange }: AddContractDialogProps) => {
+export const AddContractDialog = ({ open, onOpenChange, onSubmit }: AddContractDialogProps) => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    clientName: "",
-    value: 0,
-    type: "",
-    status: "Pendente",
-    validUntil: "",
+    titulo: "",
+    cliente_nome: "",
+    valor: "",
+    data_inicio: "",
+    data_fim: "",
+    status: "pendente" as const,
+    tipo: "",
+    observacoes: "",
   });
 
-  const handleSave = () => {
-    if (!formData.title || !formData.clientName || !formData.type) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.titulo.trim() || !formData.data_inicio) {
       toast({
         title: "Erro",
-        description: "Preencha todos os campos obrigatórios.",
+        description: "Título e data de início são obrigatórios.",
         variant: "destructive",
       });
       return;
     }
 
-    // TODO: Implement save logic with real backend
-    console.log('Criando novo contrato:', formData);
-    
-    toast({
-      title: "Contrato criado",
-      description: "O novo contrato foi criado com sucesso.",
-    });
-    
-    // Reset form
-    setFormData({
-      title: "",
-      clientName: "",
-      value: 0,
-      type: "",
-      status: "Pendente",
-      validUntil: "",
-    });
-    
-    onOpenChange(false);
+    try {
+      setLoading(true);
+      await onSubmit({
+        titulo: formData.titulo,
+        cliente_nome: formData.cliente_nome || undefined,
+        valor: formData.valor ? parseFloat(formData.valor) : undefined,
+        data_inicio: formData.data_inicio,
+        data_fim: formData.data_fim || undefined,
+        status: formData.status,
+        tipo: formData.tipo || undefined,
+        observacoes: formData.observacoes || undefined,
+      });
+
+      // Reset form
+      setFormData({
+        titulo: "",
+        cliente_nome: "",
+        valor: "",
+        data_inicio: "",
+        data_fim: "",
+        status: "pendente",
+        tipo: "",
+        observacoes: "",
+      });
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Erro ao adicionar contrato:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o contrato.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Novo Contrato</DialogTitle>
         </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="titulo">Título*</Label>
+            <Input
+              id="titulo"
+              value={formData.titulo}
+              onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+              placeholder="Título do contrato"
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="cliente_nome">Cliente</Label>
+            <Input
+              id="cliente_nome"
+              value={formData.cliente_nome}
+              onChange={(e) => setFormData({ ...formData, cliente_nome: e.target.value })}
+              placeholder="Nome do cliente"
+            />
+          </div>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Título do Contrato *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Ex: Contrato de Coaching"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="clientName">Nome do Cliente *</Label>
-              <Input
-                id="clientName"
-                value={formData.clientName}
-                onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-                placeholder="Nome do cliente"
-              />
-            </div>
+          <div>
+            <Label htmlFor="valor">Valor</Label>
+            <Input
+              id="valor"
+              type="number"
+              step="0.01"
+              value={formData.valor}
+              onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+              placeholder="0.00"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="value">Valor (R$)</Label>
+            <div>
+              <Label htmlFor="data_inicio">Data Início*</Label>
               <Input
-                id="value"
-                type="number"
-                value={formData.value}
-                onChange={(e) => setFormData(prev => ({ ...prev, value: Number(e.target.value) }))}
-                placeholder="0"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="type">Tipo *</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Coaching">Coaching</SelectItem>
-                  <SelectItem value="Consultoria">Consultoria</SelectItem>
-                  <SelectItem value="Mentoria">Mentoria</SelectItem>
-                  <SelectItem value="Treinamento">Treinamento</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pendente">Pendente</SelectItem>
-                  <SelectItem value="Enviado">Enviado</SelectItem>
-                  <SelectItem value="Assinado">Assinado</SelectItem>
-                  <SelectItem value="Expirado">Expirado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="validUntil">Válido até</Label>
-              <Input
-                id="validUntil"
+                id="data_inicio"
                 type="date"
-                value={formData.validUntil}
-                onChange={(e) => setFormData(prev => ({ ...prev, validUntil: e.target.value }))}
+                value={formData.data_inicio}
+                onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="data_fim">Data Fim</Label>
+              <Input
+                id="data_fim"
+                type="date"
+                value={formData.data_fim}
+                onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
               />
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <div>
+            <Label htmlFor="status">Status</Label>
+            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as any })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="ativo">Ativo</SelectItem>
+                <SelectItem value="inativo">Inativo</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="tipo">Tipo</Label>
+            <Input
+              id="tipo"
+              value={formData.tipo}
+              onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+              placeholder="Tipo do contrato"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="observacoes">Observações</Label>
+            <Textarea
+              id="observacoes"
+              value={formData.observacoes}
+              onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+              placeholder="Observações sobre o contrato"
+              rows={3}
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} className="bg-[#43B26D] hover:bg-[#37A05B]">
-              Criar Contrato
+            <Button type="submit" disabled={loading} className="bg-[#43B26D] hover:bg-[#37A05B]">
+              {loading ? "Salvando..." : "Salvar Contrato"}
             </Button>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

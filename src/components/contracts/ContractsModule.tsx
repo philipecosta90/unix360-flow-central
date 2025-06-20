@@ -100,7 +100,7 @@ export const ContractsModule = () => {
     }
   };
 
-  const handleAddContract = async (contractData: Omit<Contract, "id">) => {
+  const handleAddContract = async (contractData: Omit<Contract, "id" | "created_at" | "updated_at">) => {
     try {
       // Simular adição de contrato
       const newContract: Contract = {

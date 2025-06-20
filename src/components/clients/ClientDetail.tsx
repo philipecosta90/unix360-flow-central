@@ -84,29 +84,17 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
     
     try {
       setLoadingDocuments(true);
-      // Usar query raw para a tabela cliente_documentos que agora existe
+      // Busca direta na tabela cliente_documentos
       const { data, error } = await supabase
-        .rpc('get_cliente_documentos', {
-          p_empresa_id: userProfile.empresa_id,
-          p_cliente_id: client.id
-        })
-        .returns<ClientDocument[]>();
-
+        .from('cliente_documentos')
+        .select('*')
+        .eq('empresa_id', userProfile.empresa_id)
+        .eq('cliente_id', client.id)
+        .order('created_at', { ascending: false });
+      
       if (error) {
         console.error('Erro ao buscar documentos:', error);
-        // Fallback para busca direta se a função não existir
-        const { data: fallbackData, error: fallbackError } = await (supabase as any)
-          .from('cliente_documentos')
-          .select('*')
-          .eq('empresa_id', userProfile.empresa_id)
-          .eq('cliente_id', client.id)
-          .order('created_at', { ascending: false });
-        
-        if (!fallbackError) {
-          setDocuments(fallbackData || []);
-        } else {
-          setDocuments([]);
-        }
+        setDocuments([]);
       } else {
         setDocuments(data || []);
       }
