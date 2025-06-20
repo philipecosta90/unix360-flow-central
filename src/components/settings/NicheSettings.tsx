@@ -72,7 +72,10 @@ export const NicheSettings = () => {
   const [config, setConfig] = useState<NicheConfig>({
     ...NICHE_TEMPLATES.fitness,
     leadStages: [...NICHE_TEMPLATES.fitness.leadStages],
-    customFields: [...NICHE_TEMPLATES.fitness.customFields],
+    customFields: NICHE_TEMPLATES.fitness.customFields.map(field => ({
+      ...field,
+      options: field.options ? [...field.options] : undefined
+    })),
     metrics: [...NICHE_TEMPLATES.fitness.metrics]
   });
   const [newStage, setNewStage] = useState('');
@@ -86,7 +89,10 @@ export const NicheSettings = () => {
       setConfig({
         ...template,
         leadStages: [...template.leadStages],
-        customFields: [...template.customFields],
+        customFields: template.customFields.map(field => ({
+          ...field,
+          options: field.options ? [...field.options] : undefined
+        })),
         metrics: [...template.metrics]
       });
     }

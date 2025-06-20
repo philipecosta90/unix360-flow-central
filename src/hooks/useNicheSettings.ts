@@ -46,7 +46,7 @@ export const useNicheSettings = () => {
       }
 
       if (data?.configuracoes_nicho) {
-        setSettings(data.configuracoes_nicho as NicheSettings);
+        setSettings(data.configuracoes_nicho as unknown as NicheSettings);
       }
     } catch (err) {
       console.error('Erro inesperado:', err);
@@ -68,7 +68,7 @@ export const useNicheSettings = () => {
     const { error } = await supabase
       .from('empresas')
       .update({
-        configuracoes_nicho: newSettings
+        configuracoes_nicho: newSettings as any
       })
       .eq('id', userProfile.empresa_id);
 
