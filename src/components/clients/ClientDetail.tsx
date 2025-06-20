@@ -1,10 +1,16 @@
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Calendar, Tag } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File } from "lucide-react";
+import { InteractionDialog } from "./InteractionDialog";
+import { DocumentUploadDialog } from "./DocumentUploadDialog";
+import { FinancialTransactionDialog } from "./FinancialTransactionDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Cliente {
   id: string;
@@ -24,7 +30,73 @@ interface ClientDetailProps {
   onBack: () => void;
 }
 
+interface Interaction {
+  id: string;
+  tipo: string;
+  titulo: string;
+  descricao?: string;
+  data_interacao: string;
+  created_at: string;
+}
+
 export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
+  const { userProfile } = useAuth();
+  const [showInteractionDialog, setShowInteractionDialog] = useState(false);
+  const [showDocumentDialog, setShowDocumentDialog] = useState(false);
+  const [showFinancialDialog, setShowFinancialDialog] = useState(false);
+  const [interactions, setInteractions] = useState<Interaction[]>([]);
+  const [documents] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loadingInteractions, setLoadingInteractions] = useState(false);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+
+  const fetchInteractions = async () => {
+    if (!userProfile?.empresa_id) return;
+    
+    try {
+      setLoadingInteractions(true);
+      const { data, error } = await supabase
+        .from('cs_interacoes')
+        .select('*')
+        .eq('empresa_id', userProfile.empresa_id)
+        .eq('cliente_id', client.id)
+        .order('data_interacao', { ascending: false });
+
+      if (error) throw error;
+      setInteractions(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar interações:', error);
+    } finally {
+      setLoadingInteractions(false);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    if (!userProfile?.empresa_id) return;
+    
+    try {
+      setLoadingTransactions(true);
+      const { data, error } = await supabase
+        .from('financeiro_lancamentos')
+        .select('*')
+        .eq('empresa_id', userProfile.empresa_id)
+        .ilike('descricao', `%${client.id}%`)
+        .order('data', { ascending: false });
+
+      if (error) throw error;
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar transações:', error);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInteractions();
+    fetchTransactions();
+  }, [client.id, userProfile?.empresa_id]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ativo": return "bg-green-100 text-green-800";
@@ -42,6 +114,26 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
       case "prospecto": return "Prospecto";
       case "inativo": return "Inativo";
       default: return status;
+    }
+  };
+
+  const getInteractionIcon = (tipo: string) => {
+    switch (tipo) {
+      case 'call': return Phone;
+      case 'email': return Mail;
+      case 'meeting': return Calendar;
+      case 'feedback': return MessageCircle;
+      default: return Activity;
+    }
+  };
+
+  const getInteractionColor = (tipo: string) => {
+    switch (tipo) {
+      case 'call': return 'text-blue-600 bg-blue-100';
+      case 'email': return 'text-green-600 bg-green-100';
+      case 'meeting': return 'text-purple-600 bg-purple-100';
+      case 'feedback': return 'text-yellow-600 bg-yellow-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -200,16 +292,72 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
         <TabsContent value="interacoes">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Histórico de Interações</CardTitle>
+              <Button 
+                onClick={() => setShowInteractionDialog(true)}
+                className="bg-[#43B26D] hover:bg-[#37A05B]"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Registrar Interação
+              </Button>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">Nenhuma interação registrada ainda</p>
-                <Button className="bg-[#43B26D] hover:bg-[#37A05B]">
-                  Registrar Interação
-                </Button>
+              <div className="space-y-4">
+                {loadingInteractions ? (
+                  <p>Carregando interações...</p>
+                ) : interactions.length > 0 ? (
+                  <div className="space-y-4">
+                    {interactions.map((interacao) => {
+                      const IconComponent = getInteractionIcon(interacao.tipo);
+                      const colorClass = getInteractionColor(interacao.tipo);
+                      
+                      return (
+                        <div key={interacao.id} className="flex items-start space-x-4 p-4 border rounded-lg">
+                          <div className={`p-2 rounded-full ${colorClass}`}>
+                            <IconComponent className="h-4 w-4" />
+                          </div>
+                          
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium text-gray-900">{interacao.titulo}</h4>
+                              <span className="text-sm text-gray-500">
+                                {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
+                              </span>
+                            </div>
+                            
+                            {interacao.descricao && (
+                              <p className="text-sm text-gray-600 mt-1">{interacao.descricao}</p>
+                            )}
+                            
+                            <div className="flex items-center space-x-4 mt-2">
+                              <span className="text-xs text-gray-500 capitalize">
+                                {interacao.tipo === 'call' ? 'Ligação' :
+                                 interacao.tipo === 'email' ? 'E-mail' :
+                                 interacao.tipo === 'meeting' ? 'Reunião' :
+                                 interacao.tipo === 'feedback' ? 'Feedback' : 'Outro'}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {new Date(interacao.created_at).toLocaleString('pt-BR')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-4">Nenhuma interação registrada ainda</p>
+                    <Button 
+                      onClick={() => setShowInteractionDialog(true)}
+                      className="bg-[#43B26D] hover:bg-[#37A05B]"
+                    >
+                      Registrar Interação
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -217,36 +365,118 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
         <TabsContent value="documentos">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Documentos</CardTitle>
+              <Button 
+                onClick={() => setShowDocumentDialog(true)}
+                className="bg-[#43B26D] hover:bg-[#37A05B]"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Documento
+              </Button>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">Nenhum documento encontrado</p>
-                <Button className="bg-[#43B26D] hover:bg-[#37A05B]">
-                  Adicionar Documento
-                </Button>
-              </div>
+              {documents.length > 0 ? (
+                <div className="space-y-2">
+                  {documents.map((doc, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
+                      <File className="w-5 h-5 text-gray-400" />
+                      <span className="font-medium">{doc.name}</span>
+                      <span className="text-sm text-gray-500">
+                        {new Date(doc.uploadDate).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <File className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-4">Nenhum documento encontrado</p>
+                  <Button 
+                    onClick={() => setShowDocumentDialog(true)}
+                    className="bg-[#43B26D] hover:bg-[#37A05B]"
+                  >
+                    Adicionar Documento
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="financeiro">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Histórico Financeiro</CardTitle>
+              <Button 
+                onClick={() => setShowFinancialDialog(true)}
+                className="bg-[#43B26D] hover:bg-[#37A05B]"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Movimentação
+              </Button>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">Nenhuma movimentação financeira registrada</p>
-                <Button className="bg-[#43B26D] hover:bg-[#37A05B]">
-                  Adicionar Movimentação
-                </Button>
+              <div className="space-y-4">
+                {loadingTransactions ? (
+                  <p>Carregando movimentações...</p>
+                ) : transactions.length > 0 ? (
+                  <div className="space-y-4">
+                    {transactions.map((transaction) => (
+                      <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{transaction.descricao}</h4>
+                          <p className="text-sm text-gray-600">
+                            {transaction.categoria} • {new Date(transaction.data).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`font-medium ${transaction.tipo === 'receita' ? 'text-green-600' : 'text-red-600'}`}>
+                            {transaction.tipo === 'receita' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </p>
+                          <p className="text-xs text-gray-500 capitalize">{transaction.tipo}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 mb-4">Nenhuma movimentação financeira registrada</p>
+                    <Button 
+                      onClick={() => setShowFinancialDialog(true)}
+                      className="bg-[#43B26D] hover:bg-[#37A05B]"
+                    >
+                      Adicionar Movimentação
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <InteractionDialog
+        open={showInteractionDialog}
+        onOpenChange={setShowInteractionDialog}
+        clientId={client.id}
+        onInteractionAdded={fetchInteractions}
+      />
+
+      <DocumentUploadDialog
+        open={showDocumentDialog}
+        onOpenChange={setShowDocumentDialog}
+        clientId={client.id}
+        onDocumentAdded={() => {}}
+      />
+
+      <FinancialTransactionDialog
+        open={showFinancialDialog}
+        onOpenChange={setShowFinancialDialog}
+        clientId={client.id}
+        onTransactionAdded={fetchTransactions}
+      />
     </div>
   );
 };

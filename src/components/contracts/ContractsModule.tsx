@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,8 @@ import { ContractDetailDialog } from "./ContractDetailDialog";
 import { EditContractDialog } from "./EditContractDialog";
 import { AddContractDialog } from "./AddContractDialog";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Contract {
   id: number;
@@ -23,11 +25,11 @@ interface Contract {
 
 export const ContractsModule = () => {
   const { toast } = useToast();
+  const { userProfile } = useAuth();
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
-
   const [contracts, setContracts] = useState<Contract[]>([
     {
       id: 1,
@@ -114,6 +116,29 @@ export const ContractsModule = () => {
 
   const handleAddContract = () => {
     setShowAddDialog(true);
+  };
+
+  const handleContractAdded = (newContract: Omit<Contract, 'id'>) => {
+    const contractWithId = {
+      ...newContract,
+      id: Math.max(...contracts.map(c => c.id)) + 1
+    };
+    setContracts(prev => [contractWithId, ...prev]);
+    setShowAddDialog(false);
+    toast({
+      title: "Contrato adicionado",
+      description: "O contrato foi criado com sucesso.",
+    });
+  };
+
+  const handleContractUpdated = (updatedContract: Contract) => {
+    setContracts(prev => prev.map(c => c.id === updatedContract.id ? updatedContract : c));
+    setShowEditDialog(false);
+    setSelectedContract(null);
+    toast({
+      title: "Contrato atualizado",
+      description: "O contrato foi atualizado com sucesso.",
+    });
   };
 
   return (
@@ -284,11 +309,13 @@ export const ContractsModule = () => {
         contract={selectedContract}
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
+        onContractUpdated={handleContractUpdated}
       />
 
       <AddContractDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
+        onContractAdded={handleContractAdded}
       />
     </>
   );

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,7 @@ export const Sidebar = () => {
     },
     {
       icon: Heart,
-      label: "Customer Success",
+      label: "Sucesso do Cliente",
       path: "/cs",
       isActive: location.pathname === "/cs",
     },
