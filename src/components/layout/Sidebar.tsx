@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,8 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
-  Heart
+  Heart,
+  Settings
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
@@ -72,9 +72,15 @@ export const Sidebar = () => {
     },
     {
       icon: Heart,
-      label: "Sucesso do Cliente",
+      label: "Customer Success",
       path: "/cs",
       isActive: location.pathname === "/cs",
+    },
+    {
+      icon: Settings,
+      label: "Configurações",
+      path: "/configuracoes",
+      isActive: location.pathname === "/configuracoes",
     },
   ];
 
