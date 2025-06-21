@@ -44,7 +44,7 @@ export const LoginFormTab = ({
       return;
     }
 
-    // Validate input with proper type checking
+    // Validate input using Zod's SafeParseReturnType
     const validation = validateAndSanitize(loginForm, loginFormSchema);
     if (!validation.success) {
       setValidationErrors(validation.error.errors.map(err => err.message));

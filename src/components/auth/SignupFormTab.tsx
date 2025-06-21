@@ -34,7 +34,7 @@ export const SignupFormTab = ({
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate input with proper type checking
+    // Validate input using Zod's SafeParseReturnType
     const validation = validateAndSanitize(signupForm, signupFormSchema);
     if (!validation.success) {
       setValidationErrors(validation.error.errors.map(err => err.message));

@@ -81,24 +81,10 @@ export const signupFormSchema = z.object({
   path: ["confirmPassword"],
 });
 
-// Validation helper
+// Updated validation helper using Zod's SafeParseReturnType
 export const validateAndSanitize = <T>(
   data: unknown,
   schema: z.ZodSchema<T>
-): { success: true; data: T } | { success: false; errors: string[] } => {
-  try {
-    const result = schema.parse(data);
-    return { success: true, data: result };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        errors: error.errors.map(err => err.message)
-      };
-    }
-    return {
-      success: false,
-      errors: ['Erro de validação desconhecido']
-    };
-  }
+): z.SafeParseReturnType<unknown, T> => {
+  return schema.safeParse(data);
 };
