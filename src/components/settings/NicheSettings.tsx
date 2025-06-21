@@ -101,11 +101,14 @@ export const NicheSettings = () => {
     if (niche !== 'custom') {
       const template = NICHE_TEMPLATES[niche];
       setConfig({
-        ...template,
+        name: template.name,
         leadStages: [...template.leadStages],
         customFields: template.customFields.map(field => ({
-          ...field,
-          options: field.type === 'select' && field.options ? [...field.options] : undefined
+          id: field.id,
+          name: field.name,
+          type: field.type,
+          options: field.type === 'select' && field.options ? [...field.options] : undefined,
+          required: field.required
         })),
         metrics: [...template.metrics]
       });
