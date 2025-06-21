@@ -47,6 +47,7 @@ export const LoginFormTab = ({
     // Validate input with proper type checking
     const validation = validateAndSanitize(loginForm, loginFormSchema);
     if (!validation.success) {
+      const { errors } = validation as { success: false; errors: string[] };
       setValidationErrors(validation.errors);
       return;
     }
