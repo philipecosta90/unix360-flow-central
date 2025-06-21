@@ -97,7 +97,11 @@ export const LoginFormTab = ({
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setLoginForm(prev => ({ ...prev, [field]: sanitizeInput(value) }));
+    const sanitizedValue = field === 'password' 
+      ? value // Don't sanitize passwords
+      : sanitizeInput(value);
+    
+    setLoginForm(prev => ({ ...prev, [field]: sanitizedValue }));
     setValidationErrors([]);
   };
 
