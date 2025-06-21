@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { prospectFormSchema, sanitizeInput, sanitizeHtml } from "@/utils/inputValidation";
+import { z } from "zod";
 
 interface CRMProspect {
   id: string;
@@ -51,20 +54,11 @@ interface EditProspectDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-interface ProspectFormData {
-  nome: string;
-  email: string;
-  telefone: string;
-  empresa_cliente: string;
-  cargo: string;
+type ProspectFormData = z.infer<typeof prospectFormSchema> & {
   stage: string;
-  valor_estimado: string;
-  origem: string;
-  tags: string;
   responsavel_id: string;
   proximo_followup: string;
-  observacoes: string;
-}
+};
 
 export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspectDialogProps) => {
   const { userProfile } = useAuth();
@@ -73,6 +67,11 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ProspectFormData>({
+    resolver: zodResolver(prospectFormSchema.extend({
+      stage: z.string(),
+      responsavel_id: z.string(),
+      proximo_followup: z.string(),
+    })),
     defaultValues: {
       nome: "",
       email: "",
@@ -148,24 +147,25 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
 
   const updateProspectMutation = useMutation({
     mutationFn: async (data: ProspectFormData) => {
-      const tags = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+      // Sanitize all inputs
+      const sanitizedData = {
+        nome: sanitizeInput(data.nome),
+        email: data.email ? sanitizeInput(data.email) : null,
+        telefone: data.telefone ? sanitizeInput(data.telefone) : null,
+        empresa_cliente: data.empresa_cliente ? sanitizeInput(data.empresa_cliente) : null,
+        cargo: data.cargo ? sanitizeInput(data.cargo) : null,
+        stage: data.stage === "none" ? null : data.stage,
+        valor_estimado: data.valor_estimado ? parseFloat(data.valor_estimado) : null,
+        origem: data.origem ? sanitizeInput(data.origem) : null,
+        tags: data.tags ? data.tags.split(',').map(tag => sanitizeInput(tag)).filter(Boolean) : [],
+        responsavel_id: data.responsavel_id === "none" ? null : data.responsavel_id,
+        proximo_followup: data.proximo_followup || null,
+        observacoes: data.observacoes ? sanitizeHtml(data.observacoes) : null,
+      };
       
       const { error } = await supabase
         .from('crm_prospects')
-        .update({
-          nome: data.nome,
-          email: data.email || null,
-          telefone: data.telefone || null,
-          empresa_cliente: data.empresa_cliente || null,
-          cargo: data.cargo || null,
-          stage: data.stage === "none" ? null : data.stage,
-          valor_estimado: data.valor_estimado ? parseFloat(data.valor_estimado) : null,
-          origem: data.origem || null,
-          tags,
-          responsavel_id: data.responsavel_id === "none" ? null : data.responsavel_id,
-          proximo_followup: data.proximo_followup || null,
-          observacoes: data.observacoes || null,
-        })
+        .update(sanitizedData)
         .eq('id', prospect.id);
 
       if (error) throw error;
@@ -245,7 +245,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                   <FormItem>
                     <FormLabel>Nome *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nome do prospect" />
+                      <Input {...field} placeholder="Nome do prospect" maxLength={100} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -259,7 +259,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" placeholder="email@exemplo.com" />
+                      <Input {...field} type="email" placeholder="email@exemplo.com" maxLength={255} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -273,7 +273,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                   <FormItem>
                     <FormLabel>Telefone</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="(11) 99999-9999" />
+                      <Input {...field} placeholder="(11) 99999-9999" maxLength={20} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -287,7 +287,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                   <FormItem>
                     <FormLabel>Empresa</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nome da empresa" />
+                      <Input {...field} placeholder="Nome da empresa" maxLength={200} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -301,7 +301,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                   <FormItem>
                     <FormLabel>Cargo</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Cargo do prospect" />
+                      <Input {...field} placeholder="Cargo do prospect" maxLength={100} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -355,7 +355,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                   <FormItem>
                     <FormLabel>Origem</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Site, LinkedIn, Indicação..." />
+                      <Input {...field} placeholder="Site, LinkedIn, Indicação..." maxLength={100} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -410,7 +410,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                 <FormItem>
                   <FormLabel>Tags</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Tag1, Tag2, Tag3..." />
+                    <Input {...field} placeholder="Tag1, Tag2, Tag3..." maxLength={200} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -424,7 +424,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                 <FormItem>
                   <FormLabel>Observações</FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="Observações sobre o prospect..." />
+                    <Textarea {...field} placeholder="Observações sobre o prospect..." maxLength={1000} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

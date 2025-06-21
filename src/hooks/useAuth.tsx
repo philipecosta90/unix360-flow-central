@@ -44,28 +44,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (error) {
-        console.error('Erro ao buscar perfil:', error);
+        // Log error securely without exposing sensitive information
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Erro ao buscar perfil:', error);
+        }
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Erro inesperado ao buscar perfil:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Erro inesperado ao buscar perfil:', error);
+      }
       return null;
     }
   };
 
   useEffect(() => {
-    // Configurar listener de mudanças de autenticação
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Auth state changed:', event, session?.user?.id);
+        }
         
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Buscar perfil do usuário com dados da empresa
+          // Defer profile fetching to avoid blocking auth state changes
           setTimeout(async () => {
             const profile = await fetchUserProfile(session.user.id);
             setUserProfile(profile);
@@ -78,7 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Verificar sessão inicial
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -97,9 +104,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Erro ao fazer logout:', error);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Erro ao fazer logout:', error);
+        }
+        throw new Error('Erro ao fazer logout');
+      }
+    } catch (error) {
+      throw error;
     }
   };
 

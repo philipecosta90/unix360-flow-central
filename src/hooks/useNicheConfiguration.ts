@@ -18,7 +18,10 @@ export const useNicheConfiguration = () => {
 
   useEffect(() => {
     if (settings && !isLoading) {
-      console.log('Carregando configurações salvas:', settings);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Carregando configurações salvas:', settings);
+      }
+      
       setSelectedNiche(settings.niche_type as keyof typeof NICHE_TEMPLATES || 'fitness');
       
       // Properly type the customFields when loading from settings
@@ -40,7 +43,10 @@ export const useNicheConfiguration = () => {
   }, [settings, isLoading]);
 
   const handleNicheChange = (niche: keyof typeof NICHE_TEMPLATES | 'custom') => {
-    console.log('Mudando nicho para:', niche);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Mudando nicho para:', niche);
+    }
+    
     setSelectedNiche(niche);
     if (niche !== 'custom') {
       const template = NICHE_TEMPLATES[niche];
