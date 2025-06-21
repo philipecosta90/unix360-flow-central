@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return newData;
       }
 
-      console.log='Perfil carregado com sucesso:', data);
+      console.log('Perfil carregado com sucesso:', data);
       return data;
     } catch (error) {
       console.error('Erro inesperado ao buscar perfil:', error);
