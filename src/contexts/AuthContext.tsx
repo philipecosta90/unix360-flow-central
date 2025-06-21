@@ -4,6 +4,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContextType, UserProfile } from "@/types/auth";
 import { fetchUserProfile } from "@/services/profileService";
+import { securityMonitor } from "@/utils/securityMonitor";
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -28,23 +29,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('Configurando listener de autenticação...');
-    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
-        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer profile fetching to avoid blocking auth state changes
-          setTimeout(async () => {
+          // Log successful login
+          await securityMonitor.logLoginAttempt(session.user.email || '', true);
+          
+          // Fetch user profile with proper error handling
+          try {
             const profile = await fetchUserProfile(session.user.id);
             setUserProfile(profile);
-            setLoading(false);
-          }, 100); // Small delay to prevent blocking
+          } catch (error) {
+            console.error('Erro ao carregar perfil:', error);
+            setUserProfile(null);
+          }
+          setLoading(false);
         } else {
           setUserProfile(null);
           setLoading(false);
@@ -54,13 +57,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Sessão existente encontrada:', !!session);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
         fetchUserProfile(session.user.id).then(profile => {
           setUserProfile(profile);
+          setLoading(false);
+        }).catch(error => {
+          console.error('Erro ao carregar perfil:', error);
+          setUserProfile(null);
           setLoading(false);
         });
       } else {
@@ -69,7 +75,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => {
-      console.log('Removendo listener de autenticação');
       subscription.unsubscribe();
     };
   }, []);
@@ -78,10 +83,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Erro ao fazer logout:', error);
         throw new Error('Erro ao fazer logout');
       }
-      console.log('Logout realizado com sucesso');
+      
+      // Clear sensitive data from localStorage
+      localStorage.removeItem('security_events');
+      
+      // Reset state
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
     } catch (error) {
       throw error;
     }
