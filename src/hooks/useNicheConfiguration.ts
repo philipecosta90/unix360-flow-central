@@ -20,7 +20,22 @@ export const useNicheConfiguration = () => {
     if (settings && !isLoading) {
       console.log('Carregando configurações salvas:', settings);
       setSelectedNiche(settings.niche_type as keyof typeof NICHE_TEMPLATES || 'fitness');
-      setConfig(settings.config);
+      
+      // Properly type the customFields when loading from settings
+      const typedConfig: NicheConfig = {
+        name: settings.config.name,
+        leadStages: [...settings.config.leadStages],
+        customFields: settings.config.customFields.map(field => ({
+          id: field.id,
+          name: field.name,
+          type: field.type as 'text' | 'number' | 'date' | 'select',
+          options: field.type === 'select' && field.options ? [...field.options] : undefined,
+          required: field.required
+        })),
+        metrics: [...settings.config.metrics]
+      };
+      
+      setConfig(typedConfig);
     }
   }, [settings, isLoading]);
 
