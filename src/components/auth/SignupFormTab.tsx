@@ -36,7 +36,7 @@ export const SignupFormTab = ({
     
     // Validate input with proper type checking
     const validation = validateAndSanitize(signupForm, signupFormSchema);
-    if ("errors" in validation) {
+    if (!validation.success) {
       setValidationErrors(validation.errors);
       return;
     }
