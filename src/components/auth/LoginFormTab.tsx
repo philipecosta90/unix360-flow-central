@@ -61,16 +61,17 @@ export const LoginFormTab = ({
       });
 
       if (error) {
-        setLoginAttempts(prev => prev + 1);
+        const newAttempts = loginAttempts + 1;
+        setLoginAttempts(newAttempts);
         
-        if (loginAttempts + 1 >= MAX_LOGIN_ATTEMPTS) {
+        if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
           onAccountLockout();
           return;
         }
 
         toast({
           title: "Erro no login",
-          description: `Credenciais inválidas. Tentativas restantes: ${MAX_LOGIN_ATTEMPTS - loginAttempts - 1}`,
+          description: `Credenciais inválidas. Tentativas restantes: ${MAX_LOGIN_ATTEMPTS - newAttempts}`,
           variant: "destructive",
         });
         return;
