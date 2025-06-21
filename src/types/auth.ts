@@ -9,7 +9,7 @@ export interface UserProfile {
   cargo?: string;
   telefone?: string;
   empresa_id: string;
-  nivel_permissao: 'admin' | 'editor' | 'visualizacao';
+  nivel_permissao: 'admin' | 'editor' | 'visualizacao' | 'operacional';
   ativo: boolean;
   created_at: string;
   updated_at: string;
