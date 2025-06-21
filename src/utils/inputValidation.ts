@@ -85,6 +85,6 @@ export const signupFormSchema = z.object({
 export const validateAndSanitize = <T>(
   data: unknown,
   schema: z.ZodSchema<T>
-): z.SafeParseReturnType<unknown, T> => {
+): z.SafeParseReturnType<T, T> => {
   return schema.safeParse(data);
 };
