@@ -34,15 +34,18 @@ export const SignupFormTab = ({
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Clear previous validation errors
+    setValidationErrors([]);
+    
     // Validate input using Zod's SafeParseReturnType
     const validation = validateAndSanitize(signupForm, signupFormSchema);
     if (!validation.success) {
-      setValidationErrors(validation.error.errors.map(err => err.message));
+      const errorMessages = validation.error.errors.map(err => err.message);
+      setValidationErrors(errorMessages);
       return;
     }
 
     setIsLoading(true);
-    setValidationErrors([]);
 
     try {
       const redirectUrl = `${window.location.origin}/dashboard`;
@@ -61,10 +64,17 @@ export const SignupFormTab = ({
       });
 
       if (error) {
+        console.error('Signup error:', error);
         if (error.message.includes('already registered')) {
           toast({
             title: "Email já cadastrado",
             description: "Este email já está registrado. Tente fazer login.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes('Password')) {
+          toast({
+            title: "Senha inválida",
+            description: "A senha não atende aos critérios de segurança.",
             variant: "destructive",
           });
         } else {
@@ -78,15 +88,19 @@ export const SignupFormTab = ({
       }
 
       if (data.user) {
+        setValidationErrors([]); // Clear validation errors on success
         toast({
           title: "Cadastro realizado!",
           description: "Verifique seu email para confirmar a conta.",
         });
+        
+        // If user is immediately logged in (session exists), redirect
         if (data.session) {
           navigate("/dashboard", { replace: true });
         }
       }
     } catch (error) {
+      console.error('Unexpected signup error:', error);
       toast({
         title: "Erro inesperado",
         description: "Tente novamente mais tarde.",
@@ -97,12 +111,14 @@ export const SignupFormTab = ({
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof typeof signupForm, value: string) => {
     const sanitizedValue = field === 'password' || field === 'confirmPassword' 
       ? value // Don't sanitize passwords
       : sanitizeInput(value);
     
     setSignupForm(prev => ({ ...prev, [field]: sanitizedValue }));
+    
+    // Clear validation errors when user starts typing
     setValidationErrors([]);
   };
 
@@ -116,6 +132,7 @@ export const SignupFormTab = ({
           placeholder="Seu nome completo"
           value={signupForm.nome}
           onChange={(e) => handleInputChange('nome', e.target.value)}
+          disabled={isLoading}
           maxLength={100}
           required
         />
@@ -128,6 +145,7 @@ export const SignupFormTab = ({
           placeholder="Nome da sua empresa"
           value={signupForm.nomeEmpresa}
           onChange={(e) => handleInputChange('nomeEmpresa', e.target.value)}
+          disabled={isLoading}
           maxLength={200}
           required
         />
@@ -140,6 +158,7 @@ export const SignupFormTab = ({
           placeholder="00.000.000/0000-00"
           value={signupForm.cnpj}
           onChange={(e) => handleInputChange('cnpj', e.target.value)}
+          disabled={isLoading}
           maxLength={18}
         />
       </div>
@@ -151,6 +170,7 @@ export const SignupFormTab = ({
           placeholder="seu@email.com"
           value={signupForm.email}
           onChange={(e) => handleInputChange('email', e.target.value)}
+          disabled={isLoading}
           maxLength={255}
           required
         />
@@ -163,6 +183,7 @@ export const SignupFormTab = ({
           placeholder="Crie uma senha forte"
           value={signupForm.password}
           onChange={(e) => handleInputChange('password', e.target.value)}
+          disabled={isLoading}
           maxLength={128}
           required
         />
@@ -176,6 +197,7 @@ export const SignupFormTab = ({
           placeholder="Confirme sua senha"
           value={signupForm.confirmPassword}
           onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+          disabled={isLoading}
           maxLength={128}
           required
         />

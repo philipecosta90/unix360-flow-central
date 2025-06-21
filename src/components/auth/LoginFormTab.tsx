@@ -44,15 +44,18 @@ export const LoginFormTab = ({
       return;
     }
 
+    // Clear previous validation errors
+    setValidationErrors([]);
+
     // Validate input using Zod's SafeParseReturnType
     const validation = validateAndSanitize(loginForm, loginFormSchema);
     if (!validation.success) {
-      setValidationErrors(validation.error.errors.map(err => err.message));
+      const errorMessages = validation.error.errors.map(err => err.message);
+      setValidationErrors(errorMessages);
       return;
     }
 
     setIsLoading(true);
-    setValidationErrors([]);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -79,6 +82,7 @@ export const LoginFormTab = ({
 
       if (data.user) {
         setLoginAttempts(0); // Reset on successful login
+        setValidationErrors([]); // Clear validation errors on success
         toast({
           title: "Login realizado com sucesso!",
           description: "Bem-vindo ao UniX360!",
@@ -86,6 +90,7 @@ export const LoginFormTab = ({
         navigate("/dashboard", { replace: true });
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Erro inesperado",
         description: "Tente novamente mais tarde.",
@@ -96,12 +101,14 @@ export const LoginFormTab = ({
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof typeof loginForm, value: string) => {
     const sanitizedValue = field === 'password' 
       ? value // Don't sanitize passwords
       : sanitizeInput(value);
     
     setLoginForm(prev => ({ ...prev, [field]: sanitizedValue }));
+    
+    // Clear validation errors when user starts typing
     setValidationErrors([]);
   };
 
@@ -115,7 +122,7 @@ export const LoginFormTab = ({
           placeholder="seu@email.com"
           value={loginForm.email}
           onChange={(e) => handleInputChange('email', e.target.value)}
-          disabled={isLockedOut}
+          disabled={isLockedOut || isLoading}
           maxLength={255}
           required
         />
@@ -128,7 +135,7 @@ export const LoginFormTab = ({
           placeholder="Sua senha"
           value={loginForm.password}
           onChange={(e) => handleInputChange('password', e.target.value)}
-          disabled={isLockedOut}
+          disabled={isLockedOut || isLoading}
           maxLength={128}
           required
         />
