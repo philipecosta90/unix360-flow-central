@@ -43,7 +43,7 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
             <Input
               id="startDate"
               type="date"
-              value={(filters.startDate ?? "").toString()}
+              value={filters.startDate}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
             />
           </div>
@@ -53,7 +53,7 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
             <Input
               id="endDate"
               type="date"
-              value={(filters.endDate ?? "").toString()}
+              value={filters.endDate}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
             />
           </div>
@@ -61,7 +61,7 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
           <div className="space-y-2">
             <Label htmlFor="client">Cliente</Label>
             <Select 
-              value={filters.clientId === "" ? "none" : (filters.clientId ?? "none").toString()} 
+              value={filters.clientId === "" ? "none" : filters.clientId} 
               onValueChange={(value) => handleFilterChange('clientId', value)}
             >
               <SelectTrigger>
@@ -71,7 +71,7 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
                 <SelectItem value="none">Todos os clientes</SelectItem>
                 {prospects.map((prospect) => (
                   <SelectItem key={prospect.id} value={prospect.id}>
-                    {(prospect.nome ?? "Cliente sem nome").toString()}
+                    {prospect.nome}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -81,7 +81,7 @@ export const TasksFilters = ({ filters, onFiltersChange }: TasksFiltersProps) =>
           <div className="flex items-center space-x-2 mt-6">
             <Checkbox
               id="includeCompleted"
-              checked={filters.includeCompleted ?? false}
+              checked={filters.includeCompleted}
               onCheckedChange={(checked) => handleFilterChange('includeCompleted', checked)}
             />
             <Label htmlFor="includeCompleted">Incluir Concluídas</Label>
