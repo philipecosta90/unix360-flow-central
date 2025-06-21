@@ -1,137 +1,16 @@
 
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  userProfile: any | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  userProfile: null,
-  loading: true,
-  signOut: async () => {},
-});
+import { AuthContext } from "@/contexts/AuthContext";
+import { UserProfile } from "@/types/auth";
+import { fetchUserProfile } from "@/services/profileService";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [userProfile, setUserProfile] = useState<any | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      console.log('Buscando perfil para usuário:', userId);
-      
-      // Use maybeSingle() instead of single() to avoid PGRST116 error when no data exists
-      const { data, error } = await supabase
-        .from('perfis')
-        .select(`
-          *,
-          empresas (
-            id,
-            nome,
-            cnpj,
-            email,
-            telefone,
-            endereco,
-            configuracoes_nicho
-          )
-        `)
-        .eq('user_id', userId)
-        .maybeSingle(); // This prevents the PGRST116 error
-
-      if (error) {
-        console.error('Erro ao buscar perfil:', error);
-        return null;
-      }
-
-      if (!data) {
-        console.log('Perfil não encontrado para o usuário. Tentando criar automaticamente...');
-        // Try to create a profile automatically if none exists
-        await createDefaultProfile(userId);
-        // Try to fetch again after creating
-        const { data: newData } = await supabase
-          .from('perfis')
-          .select(`
-            *,
-            empresas (
-              id,
-              nome,
-              cnpj,
-              email,
-              telefone,
-              endereco,
-              configuracoes_nicho
-            )
-          `)
-          .eq('user_id', userId)
-          .maybeSingle();
-        
-        return newData;
-      }
-
-      console.log('Perfil carregado com sucesso:', data);
-      return data;
-    } catch (error) {
-      console.error('Erro inesperado ao buscar perfil:', error);
-      return null;
-    }
-  };
-
-  const createDefaultProfile = async (userId: string) => {
-    try {
-      // Get user info from auth
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Check if default company exists, if not create one
-      let { data: defaultCompany } = await supabase
-        .from('empresas')
-        .select('id')
-        .limit(1)
-        .maybeSingle();
-
-      if (!defaultCompany) {
-        const { data: newCompany } = await supabase
-          .from('empresas')
-          .insert({
-            nome: 'Empresa Padrão',
-            email: user.email || 'contato@empresa.com'
-          })
-          .select('id')
-          .single();
-        
-        defaultCompany = newCompany;
-      }
-
-      if (defaultCompany) {
-        // Create profile for user
-        const { error: profileError } = await supabase
-          .from('perfis')
-          .insert({
-            user_id: userId,
-            empresa_id: defaultCompany.id,
-            nome: user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário',
-            nivel_permissao: 'admin'
-          });
-
-        if (profileError) {
-          console.error('Erro ao criar perfil padrão:', profileError);
-        } else {
-          console.log('Perfil padrão criado com sucesso');
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao criar perfil padrão:', error);
-    }
-  };
 
   useEffect(() => {
     console.log('Configurando listener de autenticação...');
