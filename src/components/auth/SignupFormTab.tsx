@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { validateAndSanitize, signupFormSchema, sanitizeInput } from "@/utils/inputValidation";
-import type { ValidationResult } from "@/utils/inputValidation";
 
 interface SignupFormTabProps {
   isLoading: boolean;
@@ -36,8 +35,7 @@ export const SignupFormTab = ({
     e.preventDefault();
     
     // Validate input with proper type checking
-    const validation: ValidationResult<typeof signupForm> =
-  validateAndSanitize(signupForm, signupFormSchema);
+    const validation = validateAndSanitize(signupForm, signupFormSchema);
     if (!validation.success) {
       setValidationErrors(validation.errors);
       return;

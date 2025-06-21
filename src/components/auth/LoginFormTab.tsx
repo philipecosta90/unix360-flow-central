@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { validateAndSanitize, loginFormSchema, sanitizeInput } from "@/utils/inputValidation";
-import type { ValidationResult } from "@/utils/inputValidation";
 
 interface LoginFormTabProps {
   isLoading: boolean;
@@ -46,8 +45,7 @@ export const LoginFormTab = ({
     }
 
     // Validate input with proper type checking
-    const validation: ValidationResult<{ email: string; password: string }> =
-  validateAndSanitize(loginForm, loginFormSchema);
+    const validation = validateAndSanitize(loginForm, loginFormSchema);
     if (!validation.success) {
       setValidationErrors(validation.errors);
       return;
