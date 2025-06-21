@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,7 +105,7 @@ export const NicheSettings = () => {
         customFields: template.customFields.map(field => ({
           id: field.id,
           name: field.name,
-          type: field.type,
+          type: field.type as 'text' | 'number' | 'date' | 'select',
           options: field.type === 'select' && field.options ? [...field.options] : undefined,
           required: field.required
         })),
