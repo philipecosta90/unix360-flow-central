@@ -34,7 +34,7 @@ export const SignupFormTab = ({
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate input
+    // Validate input with proper type checking
     const validation = validateAndSanitize(signupForm, signupFormSchema);
     if (!validation.success) {
       setValidationErrors(validation.errors);
