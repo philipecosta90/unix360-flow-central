@@ -38,10 +38,9 @@ export const SignupFormTab = ({
     setValidationErrors([]);
     
     // Validate input using Zod's SafeParseReturnType
-    const validation = validateAndSanitize(signupForm, signupFormSchema);
-    if (!validation.success) {
-      const errorMessages = validation.error.errors.map(err => err.message);
-      setValidationErrors(errorMessages);
+    const result = validateAndSanitize(signupForm, signupFormSchema);
+   if (!result.success) {
+      setValidationErrors(result.error.errors.map(err => err.message));
       return;
     }
 

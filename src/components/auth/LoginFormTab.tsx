@@ -48,10 +48,9 @@ export const LoginFormTab = ({
     setValidationErrors([]);
 
     // Validate input using Zod's SafeParseReturnType
-    const validation = validateAndSanitize(loginForm, loginFormSchema);
-    if (!validation.success) {
-      const errorMessages = validation.error.errors.map(err => err.message);
-      setValidationErrors(errorMessages);
+    const result = validateAndSanitize(loginForm, loginFormSchema);
+    if (!result.success) {
+      setValidationErrors(result.error.errors.map(err => err.message));
       return;
     }
 
