@@ -37,7 +37,7 @@ export const useCRMProspects = (filters: CRMFilters) => {
     queryFn: async () => {
       if (!userProfile?.empresa_id) return [];
       
-      console.log('🔍 Buscando prospects do CRM com filtros:', filters);
+      console.log('🔍 Buscando prospects do CRM com filtros (incluindo Fechado):', filters);
       
       let query = supabase
         .from('crm_prospects')
@@ -77,11 +77,15 @@ export const useCRMProspects = (filters: CRMFilters) => {
         throw error;
       }
 
-      console.log('✅ Prospects encontrados:', data?.length || 0);
+      console.log('✅ Prospects encontrados (incluindo Fechado):', data?.length || 0);
       console.log('📊 Prospects por stage:', data?.reduce((acc: any, p: any) => {
         acc[p.stage] = (acc[p.stage] || 0) + 1;
         return acc;
       }, {}) || {});
+      
+      // Verificar especificamente quantos prospects "Fechado" foram encontrados
+      const fechadoCount = data?.filter(p => p.stage.toLowerCase() === 'fechado').length || 0;
+      console.log('🎯 Prospects na etapa Fechado:', fechadoCount);
       
       return data as CRMProspect[];
     },

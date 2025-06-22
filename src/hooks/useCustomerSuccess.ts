@@ -64,11 +64,11 @@ export const useCustomerSuccess = () => {
         const npsMedian = npsData?.length ? 
           npsData.reduce((acc, curr) => acc + curr.nota, 0) / npsData.length : 0;
 
-        // Identificar clientes em risco com base na última interação real
+        // CORREÇÃO: Identificar clientes em risco com critério de 7 dias (não 30)
         const agora = new Date();
-        const trintaDiasAtras = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const seteDiasAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         
-        console.log('📅 Calculando clientes em risco. Data limite:', trintaDiasAtras.toISOString());
+        console.log('📅 Calculando clientes em risco (7 dias). Data limite:', seteDiasAtras.toISOString());
         
         // Criar mapa da última interação de cada cliente
         const ultimaInteracaoMap = new Map<string, Date>();
@@ -82,7 +82,7 @@ export const useCustomerSuccess = () => {
 
         console.log('🗺️ Mapa de últimas interações:', Object.fromEntries(ultimaInteracaoMap));
 
-        // Identificar clientes em risco
+        // Identificar clientes em risco (mais de 7 dias sem interação)
         const clientesEmRisco = clientes?.filter(cliente => {
           const ultimaInteracao = ultimaInteracaoMap.get(cliente.id);
           
@@ -91,11 +91,11 @@ export const useCustomerSuccess = () => {
             const dataCriacao = new Date(cliente.created_at);
             const diasSemInteracao = Math.floor((agora.getTime() - dataCriacao.getTime()) / (1000 * 60 * 60 * 24));
             console.log(`👤 Cliente ${cliente.nome}: sem interação, criado há ${diasSemInteracao} dias`);
-            return diasSemInteracao > 30;
+            return diasSemInteracao > 7; // CORREÇÃO: Mudança de 30 para 7 dias
           }
           
           const diasSemInteracao = Math.floor((agora.getTime() - ultimaInteracao.getTime()) / (1000 * 60 * 60 * 24));
-          const emRisco = diasSemInteracao > 30;
+          const emRisco = diasSemInteracao > 7; // CORREÇÃO: Mudança de 30 para 7 dias
           
           console.log(`👤 Cliente ${cliente.nome}: última interação há ${diasSemInteracao} dias - ${emRisco ? 'EM RISCO' : 'OK'}`);
           
@@ -121,7 +121,7 @@ export const useCustomerSuccess = () => {
           };
         });
 
-        console.log('⚠️ Clientes em risco identificados:');
+        console.log('⚠️ Clientes em risco identificados (7+ dias):');
         clientesRiscoDetalhes.forEach(cliente => {
           console.log(`  - ${cliente.nome}: ${cliente.diasSemInteracao} dias sem interação`);
         });
@@ -134,10 +134,10 @@ export const useCustomerSuccess = () => {
           interacoesRecentes: interacoes || [],
           onboardings: onboardings || [],
           clientes: clientes || [],
-          clientesRiscoDetalhes
+          clientesRiscoDetalhes // CORREÇÃO: Garantir que este campo esteja sempre presente
         };
 
-        console.log('✅ Dashboard CS processado:', {
+        console.log('✅ Dashboard CS processado (critério 7 dias):', {
           totalClientes: resultado.totalClientes,
           clientesEmRisco: resultado.clientesEmRisco,
           percentualOnboarding: resultado.percentualOnboarding.toFixed(1) + '%'

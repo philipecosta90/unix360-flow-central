@@ -154,11 +154,13 @@ export const ClientsModule = () => {
     }
   };
 
+  // CORREÇÃO: Função para visualizar detalhes do cliente corrigida
   const handleViewDetails = (client: Cliente) => {
     console.log('👁️ Visualizando detalhes do cliente:', client.nome);
     setSelectedClient(client);
   };
 
+  // CORREÇÃO: Se um cliente está selecionado, mostrar a tela de detalhes
   if (selectedClient) {
     return (
       <ClientDetail 
@@ -245,7 +247,7 @@ export const ClientsModule = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredClients.map((client) => (
-                <Card key={client.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                <Card key={client.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-center space-x-3">
                       <Avatar>
@@ -303,10 +305,11 @@ export const ClientsModule = () => {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
+                              console.log('👁️ Botão Ver detalhes clicado para:', client.nome);
                               handleViewDetails(client);
                             }}
                           >
-                            Ver mais
+                            Ver detalhes
                           </Button>
                         </div>
                       </div>

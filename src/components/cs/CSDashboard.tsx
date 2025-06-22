@@ -76,30 +76,56 @@ export const CSDashboard = () => {
         })}
       </div>
 
-      {/* Clientes em Risco */}
+      {/* CORREÇÃO: Painel de Clientes em Risco reimplementado */}
       {csData?.clientesRiscoDetalhes && csData.clientesRiscoDetalhes.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-red-600 flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
-              Clientes em Risco
+              Alunos em Risco (7+ dias sem interação)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {csData.clientesRiscoDetalhes.slice(0, 5).map((cliente, index) => (
+              {csData.clientesRiscoDetalhes.map((cliente, index) => (
                 <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-200">
                   <div>
                     <p className="font-medium text-gray-900">{cliente.nome}</p>
                     <p className="text-sm text-gray-600">{cliente.email}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-red-600 font-medium">Sem interação há mais de 30 dias</p>
-                    <p className="text-xs text-gray-500">Necessita follow-up</p>
+                    <p className="text-sm text-red-600 font-medium">
+                      {cliente.diasSemInteracao} dias sem interação
+                    </p>
+                    <p className="text-xs text-gray-500">Necessita follow-up urgente</p>
                   </div>
                 </div>
               ))}
+              {csData.clientesRiscoDetalhes.length > 5 && (
+                <div className="text-center pt-2">
+                  <p className="text-sm text-gray-500">
+                    E mais {csData.clientesRiscoDetalhes.length - 5} clientes em risco...
+                  </p>
+                </div>
+              )}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Caso não haja clientes em risco, mostrar uma mensagem positiva */}
+      {csData?.clientesRiscoDetalhes && csData.clientesRiscoDetalhes.length === 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-green-600 flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              Parabéns! Nenhum cliente em risco
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600">
+              Todos os seus clientes tiveram interações nos últimos 7 dias. Continue com o excelente trabalho!
+            </p>
           </CardContent>
         </Card>
       )}
