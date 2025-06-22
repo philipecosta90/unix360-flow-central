@@ -245,11 +245,7 @@ export const ClientsModule = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredClients.map((client) => (
-                <Card 
-                  key={client.id} 
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleViewDetails(client)}
-                >
+                <Card key={client.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader className="pb-3">
                     <div className="flex items-center space-x-3">
                       <Avatar>
@@ -309,9 +305,8 @@ export const ClientsModule = () => {
                               e.stopPropagation();
                               handleViewDetails(client);
                             }}
-                            className="text-[#43B26D] hover:text-[#37A05B] hover:bg-green-50"
                           >
-                            Ver detalhes
+                            Ver mais
                           </Button>
                         </div>
                       </div>

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,11 +64,11 @@ export const useCustomerSuccess = () => {
         const npsMedian = npsData?.length ? 
           npsData.reduce((acc, curr) => acc + curr.nota, 0) / npsData.length : 0;
 
-        // Identificar clientes em risco com base na última interação (7 dias)
+        // Identificar clientes em risco com base na última interação real
         const agora = new Date();
-        const seteDiasAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const trintaDiasAtras = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         
-        console.log('📅 Calculando clientes em risco. Data limite (7 dias):', seteDiasAtras.toISOString());
+        console.log('📅 Calculando clientes em risco. Data limite:', trintaDiasAtras.toISOString());
         
         // Criar mapa da última interação de cada cliente
         const ultimaInteracaoMap = new Map<string, Date>();
@@ -83,7 +82,7 @@ export const useCustomerSuccess = () => {
 
         console.log('🗺️ Mapa de últimas interações:', Object.fromEntries(ultimaInteracaoMap));
 
-        // Identificar clientes em risco (7 dias sem interação)
+        // Identificar clientes em risco
         const clientesEmRisco = clientes?.filter(cliente => {
           const ultimaInteracao = ultimaInteracaoMap.get(cliente.id);
           
@@ -92,11 +91,11 @@ export const useCustomerSuccess = () => {
             const dataCriacao = new Date(cliente.created_at);
             const diasSemInteracao = Math.floor((agora.getTime() - dataCriacao.getTime()) / (1000 * 60 * 60 * 24));
             console.log(`👤 Cliente ${cliente.nome}: sem interação, criado há ${diasSemInteracao} dias`);
-            return diasSemInteracao > 7; // Mudança para 7 dias
+            return diasSemInteracao > 30;
           }
           
           const diasSemInteracao = Math.floor((agora.getTime() - ultimaInteracao.getTime()) / (1000 * 60 * 60 * 24));
-          const emRisco = diasSemInteracao > 7; // Mudança para 7 dias
+          const emRisco = diasSemInteracao > 30;
           
           console.log(`👤 Cliente ${cliente.nome}: última interação há ${diasSemInteracao} dias - ${emRisco ? 'EM RISCO' : 'OK'}`);
           
@@ -122,7 +121,7 @@ export const useCustomerSuccess = () => {
           };
         });
 
-        console.log('⚠️ Clientes em risco identificados (7 dias):');
+        console.log('⚠️ Clientes em risco identificados:');
         clientesRiscoDetalhes.forEach(cliente => {
           console.log(`  - ${cliente.nome}: ${cliente.diasSemInteracao} dias sem interação`);
         });
@@ -138,7 +137,7 @@ export const useCustomerSuccess = () => {
           clientesRiscoDetalhes
         };
 
-        console.log('✅ Dashboard CS processado (7 dias de risco):', {
+        console.log('✅ Dashboard CS processado:', {
           totalClientes: resultado.totalClientes,
           clientesEmRisco: resultado.clientesEmRisco,
           percentualOnboarding: resultado.percentualOnboarding.toFixed(1) + '%'
