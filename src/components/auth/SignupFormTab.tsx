@@ -40,7 +40,7 @@ export const SignupFormTab = ({
     // Validate input using Zod's SafeParseReturnType
     const result = validateAndSanitize(signupForm, signupFormSchema);
    if (!result.success) {
-      setValidationErrors(result.error.errors.map(err => err.message));
+      setValidationErrors(result.error.issues.map(err => err.message));
       return;
     }
 
