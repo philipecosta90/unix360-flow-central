@@ -76,26 +76,33 @@ export const CSDashboard = () => {
         })}
       </div>
 
-      {/* Clientes em Risco */}
+      {/* Clientes em Risco - Painel reimplementado */}
       {csData?.clientesRiscoDetalhes && csData.clientesRiscoDetalhes.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-red-600 flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
-              Clientes em Risco
+              Alunos em Risco (Mais de 7 dias sem interação)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {csData.clientesRiscoDetalhes.slice(0, 5).map((cliente, index) => (
+              {csData.clientesRiscoDetalhes.slice(0, 10).map((cliente, index) => (
                 <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-200">
                   <div>
                     <p className="font-medium text-gray-900">{cliente.nome}</p>
                     <p className="text-sm text-gray-600">{cliente.email}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-red-600 font-medium">Sem interação há mais de 30 dias</p>
-                    <p className="text-xs text-gray-500">Necessita follow-up</p>
+                    <p className="text-sm text-red-600 font-medium">
+                      {cliente.diasSemInteracao} dias sem interação
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {cliente.ultimaInteracao 
+                        ? `Última: ${new Date(cliente.ultimaInteracao).toLocaleDateString('pt-BR')}`
+                        : 'Nenhuma interação registrada'
+                      }
+                    </p>
                   </div>
                 </div>
               ))}

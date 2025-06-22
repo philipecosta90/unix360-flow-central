@@ -33,9 +33,9 @@ export const useCRMStages = () => {
         throw error;
       }
 
-      // Se não há stages, criar os padrões incluindo "fechado"
+      // Se não há stages, criar os padrões incluindo "Fechado"
       if (!stages || stages.length === 0) {
-        console.log('📝 Criando stages padrão...');
+        console.log('📝 Criando stages padrão incluindo Fechado...');
         
         const defaultStages = [
           { nome: 'Lead', ordem: 1, cor: '#3B82F6' },
@@ -61,11 +61,37 @@ export const useCRMStages = () => {
           throw insertError;
         }
 
-        console.log('✅ Stages padrão criados:', newStages);
+        console.log('✅ Stages padrão criados com Fechado:', newStages);
         stages = newStages;
       }
 
-      console.log('✅ Stages carregados:', stages);
+      // Verificar se a etapa "Fechado" existe, se não, criar
+      const temFechado = stages.some(stage => stage.nome.toLowerCase() === 'fechado');
+      if (!temFechado) {
+        console.log('📝 Adicionando stage Fechado...');
+        
+        const maxOrdem = Math.max(...stages.map(s => s.ordem), 0);
+        const { data: fechadoStage, error: fechadoError } = await supabase
+          .from('crm_stages')
+          .insert({
+            nome: 'Fechado',
+            ordem: maxOrdem + 1,
+            cor: '#10B981',
+            empresa_id: userProfile.empresa_id,
+            ativo: true
+          })
+          .select('*')
+          .single();
+
+        if (fechadoError) {
+          console.error('❌ Erro ao criar stage Fechado:', fechadoError);
+        } else {
+          stages.push(fechadoStage);
+          console.log('✅ Stage Fechado adicionado:', fechadoStage);
+        }
+      }
+
+      console.log('✅ Stages carregados (incluindo Fechado):', stages);
       return stages as CRMStage[];
     },
     enabled: !!userProfile?.empresa_id,
