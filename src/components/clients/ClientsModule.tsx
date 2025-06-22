@@ -43,6 +43,8 @@ export const ClientsModule = () => {
 
     try {
       setLoading(true);
+      console.log('🔍 Buscando clientes para empresa:', userProfile.empresa_id);
+      
       const { data, error } = await supabase
         .from('clientes')
         .select('*')
@@ -50,9 +52,11 @@ export const ClientsModule = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('✅ Clientes carregados:', data?.length || 0);
       setClients(data || []);
     } catch (error) {
-      console.error('Erro ao buscar clientes:', error);
+      console.error('❌ Erro ao buscar clientes:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os clientes.",
@@ -150,11 +154,19 @@ export const ClientsModule = () => {
     }
   };
 
+  const handleViewDetails = (client: Cliente) => {
+    console.log('👁️ Visualizando detalhes do cliente:', client.nome);
+    setSelectedClient(client);
+  };
+
   if (selectedClient) {
     return (
       <ClientDetail 
         client={selectedClient} 
-        onBack={() => setSelectedClient(null)} 
+        onBack={() => {
+          console.log('⬅️ Voltando da visualização de detalhes');
+          setSelectedClient(null);
+        }} 
       />
     );
   }
@@ -278,14 +290,21 @@ export const ClientsModule = () => {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => setEditingClient(client)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log('✏️ Editando cliente:', client.nome);
+                              setEditingClient(client);
+                            }}
                           >
                             Editar
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => setSelectedClient(client)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDetails(client);
+                            }}
                           >
                             Ver mais
                           </Button>

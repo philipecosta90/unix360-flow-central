@@ -37,6 +37,8 @@ export const useCRMProspects = (filters: CRMFilters) => {
     queryFn: async () => {
       if (!userProfile?.empresa_id) return [];
       
+      console.log('🔍 Buscando prospects do CRM com filtros:', filters);
+      
       let query = supabase
         .from('crm_prospects')
         .select('*')
@@ -70,7 +72,17 @@ export const useCRMProspects = (filters: CRMFilters) => {
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao buscar prospects:', error);
+        throw error;
+      }
+
+      console.log('✅ Prospects encontrados:', data?.length || 0);
+      console.log('📊 Prospects por stage:', data?.reduce((acc: any, p: any) => {
+        acc[p.stage] = (acc[p.stage] || 0) + 1;
+        return acc;
+      }, {}) || {});
+      
       return data as CRMProspect[];
     },
     enabled: !!userProfile?.empresa_id,
