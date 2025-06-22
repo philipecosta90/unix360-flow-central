@@ -16,13 +16,30 @@ const Index = () => {
   const { user, loading, signOut } = useAuth();
   const location = useLocation();
 
+  console.log('📄 Index component render:', {
+    user: user ? 'Present' : 'Null',
+    loading,
+    pathname: location.pathname
+  });
+
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    console.log('⏳ Still loading...');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#43B26D] mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
+    console.log('👤 No user, showing AuthPage');
     return <AuthPage />;
   }
+
+  console.log('✅ User authenticated, rendering dashboard');
 
   const renderContent = () => {
     switch (location.pathname) {

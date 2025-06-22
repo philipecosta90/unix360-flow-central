@@ -29,26 +29,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🚀 Inicializando AuthProvider...');
+    
+    let isMounted = true;
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔄 Auth state changed:', event, session ? 'Session exists' : 'No session');
+        
+        if (!isMounted) {
+          console.log('🚫 Component unmounted, ignoring auth change');
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Log successful login
-          await securityMonitor.logLoginAttempt(session.user.email || '', true);
+          console.log('👤 User logged in, fetching profile...');
           
-          // Fetch user profile with proper error handling
-          try {
-            const profile = await fetchUserProfile(session.user.id);
-            setUserProfile(profile);
-          } catch (error) {
-            console.error('Erro ao carregar perfil:', error);
-            setUserProfile(null);
-          }
-          setLoading(false);
+          // Log successful login (but don't await to avoid blocking)
+          securityMonitor.logLoginAttempt(session.user.email || '', true).catch(console.error);
+          
+          // Use setTimeout to defer profile fetching and avoid blocking auth flow
+          setTimeout(async () => {
+            if (!isMounted) return;
+            
+            try {
+              console.log('🔍 Fetching user profile...');
+              const profile = await fetchUserProfile(session.user.id);
+              
+              if (isMounted) {
+                console.log('👤 Profile loaded:', profile ? 'Success' : 'Failed');
+                setUserProfile(profile);
+                setLoading(false);
+              }
+            } catch (error) {
+              console.error('💥 Error loading profile:', error);
+              if (isMounted) {
+                setUserProfile(null);
+                setLoading(false);
+              }
+            }
+          }, 0);
         } else {
+          console.log('👋 User logged out');
           setUserProfile(null);
           setLoading(false);
         }
@@ -56,31 +82,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log('🔍 Checking for existing session...');
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('📋 Initial session check:', session ? 'Found' : 'Not found', error);
+      
+      if (!isMounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserProfile(session.user.id).then(profile => {
-          setUserProfile(profile);
-          setLoading(false);
-        }).catch(error => {
-          console.error('Erro ao carregar perfil:', error);
-          setUserProfile(null);
-          setLoading(false);
-        });
+        console.log('👤 Existing user found, fetching profile...');
+        
+        // Use setTimeout to avoid blocking initial render
+        setTimeout(async () => {
+          if (!isMounted) return;
+          
+          try {
+            const profile = await fetchUserProfile(session.user.id);
+            
+            if (isMounted) {
+              setUserProfile(profile);
+              setLoading(false);
+            }
+          } catch (error) {
+            console.error('💥 Error loading initial profile:', error);
+            if (isMounted) {
+              setUserProfile(null);
+              setLoading(false);
+            }
+          }
+        }, 0);
       } else {
+        setLoading(false);
+      }
+    }).catch(error => {
+      console.error('💥 Error checking initial session:', error);
+      if (isMounted) {
         setLoading(false);
       }
     });
 
     return () => {
+      console.log('🧹 Cleaning up AuthProvider...');
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const signOut = async () => {
     try {
+      console.log('🚪 Signing out...');
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw new Error('Erro ao fazer logout');
@@ -93,10 +145,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       setSession(null);
       setUserProfile(null);
+      
+      console.log('✅ Signed out successfully');
     } catch (error) {
+      console.error('💥 Error signing out:', error);
       throw error;
     }
   };
+
+  // Add timeout fallback to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('⏰ Loading took too long, forcing completion');
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   return (
     <AuthContext.Provider value={{

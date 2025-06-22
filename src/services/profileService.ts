@@ -4,9 +4,15 @@ import { UserProfile } from "@/types/auth";
 
 export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
-    console.log('Buscando perfil para usuário:', userId);
+    console.log('🔍 Iniciando busca do perfil para usuário:', userId);
+    console.log('🔍 Cliente Supabase inicializado:', !!supabase);
+    
+    // Log da sessão atual
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log('🔍 Sessão atual:', session ? 'Ativa' : 'Inativa', sessionError ? `Erro: ${sessionError.message}` : '');
     
     // Use maybeSingle() instead of single() to avoid PGRST116 error when no data exists
+    console.log('🔍 Executando query no Supabase...');
     const { data, error } = await supabase
       .from('perfis')
       .select(`
@@ -22,19 +28,27 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         )
       `)
       .eq('user_id', userId)
-      .maybeSingle(); // This prevents the PGRST116 error
+      .maybeSingle();
+
+    console.log('🔍 Resposta da query:', { data, error });
 
     if (error) {
-      console.error('Erro ao buscar perfil:', error);
+      console.error('❌ Erro ao buscar perfil:', error);
       return null;
     }
 
     if (!data) {
-      console.log('Perfil não encontrado para o usuário. Tentando criar automaticamente...');
+      console.log('⚠️ Perfil não encontrado. Tentando criar automaticamente...');
       // Try to create a profile automatically if none exists
-      await createDefaultProfile(userId);
+      const success = await createDefaultProfile(userId);
+      if (!success) {
+        console.error('❌ Falha ao criar perfil padrão');
+        return null;
+      }
+      
       // Try to fetch again after creating
-      const { data: newData } = await supabase
+      console.log('🔄 Tentando buscar perfil novamente após criação...');
+      const { data: newData, error: newError } = await supabase
         .from('perfis')
         .select(`
           *,
@@ -51,32 +65,50 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         .eq('user_id', userId)
         .maybeSingle();
       
+      console.log('🔍 Segunda tentativa:', { data: newData, error: newError });
+      
+      if (newError) {
+        console.error('❌ Erro na segunda tentativa:', newError);
+        return null;
+      }
+      
       return newData;
     }
 
-    console.log('Perfil carregado com sucesso:', data);
+    console.log('✅ Perfil carregado com sucesso:', data);
     return data;
   } catch (error) {
-    console.error('Erro inesperado ao buscar perfil:', error);
+    console.error('💥 Erro inesperado ao buscar perfil:', error);
     return null;
   }
 };
 
-export const createDefaultProfile = async (userId: string): Promise<void> => {
+export const createDefaultProfile = async (userId: string): Promise<boolean> => {
   try {
+    console.log('🏗️ Criando perfil padrão para usuário:', userId);
+    
     // Get user info from auth
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log('🔍 Dados do usuário auth:', user ? 'Encontrado' : 'Não encontrado', userError);
+    
+    if (!user) {
+      console.error('❌ Usuário não encontrado no auth');
+      return false;
+    }
 
     // Check if default company exists, if not create one
-    let { data: defaultCompany } = await supabase
+    console.log('🏢 Verificando empresa padrão...');
+    let { data: defaultCompany, error: companyError } = await supabase
       .from('empresas')
       .select('id')
       .limit(1)
       .maybeSingle();
 
+    console.log('🏢 Empresa padrão:', defaultCompany, companyError);
+
     if (!defaultCompany) {
-      const { data: newCompany } = await supabase
+      console.log('🏗️ Criando empresa padrão...');
+      const { data: newCompany, error: createCompanyError } = await supabase
         .from('empresas')
         .insert({
           nome: 'Empresa Padrão',
@@ -85,27 +117,45 @@ export const createDefaultProfile = async (userId: string): Promise<void> => {
         .select('id')
         .single();
       
+      console.log('🏢 Nova empresa criada:', newCompany, createCompanyError);
+      
+      if (createCompanyError) {
+        console.error('❌ Erro ao criar empresa:', createCompanyError);
+        return false;
+      }
+      
       defaultCompany = newCompany;
     }
 
     if (defaultCompany) {
       // Create profile for user
+      console.log('👤 Criando perfil do usuário...');
+      const profileData = {
+        user_id: userId,
+        empresa_id: defaultCompany.id,
+        nome: user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário',
+        nivel_permissao: 'admin' as const
+      };
+      
+      console.log('👤 Dados do perfil a ser criado:', profileData);
+      
       const { error: profileError } = await supabase
         .from('perfis')
-        .insert({
-          user_id: userId,
-          empresa_id: defaultCompany.id,
-          nome: user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário',
-          nivel_permissao: 'admin'
-        });
+        .insert(profileData);
 
       if (profileError) {
-        console.error('Erro ao criar perfil padrão:', profileError);
+        console.error('❌ Erro ao criar perfil padrão:', profileError);
+        return false;
       } else {
-        console.log('Perfil padrão criado com sucesso');
+        console.log('✅ Perfil padrão criado com sucesso');
+        return true;
       }
     }
+    
+    console.error('❌ Não foi possível obter empresa padrão');
+    return false;
   } catch (error) {
-    console.error('Erro ao criar perfil padrão:', error);
+    console.error('💥 Erro inesperado ao criar perfil padrão:', error);
+    return false;
   }
 };
