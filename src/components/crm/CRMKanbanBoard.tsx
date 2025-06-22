@@ -35,7 +35,8 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
   const [showProspectDetail, setShowProspectDetail] = useState(false);
 
   const getProspectsByStage = (stageId: string) => {
-    return prospects.filter(prospect => prospect.stage === stageId);
+    return prospects.filter(prospect => 
+      prospect.stage?.toLowerCase() === stageId.toLowerCase());
   };
 
   const getTotalValueByStage = (stageId: string) => {
