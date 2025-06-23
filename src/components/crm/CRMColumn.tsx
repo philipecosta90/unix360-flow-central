@@ -37,12 +37,13 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
     return colorMap[color] || 'bg-gray-50 border-gray-200';
   };
 
-  console.log(`🔍 CRMColumn "${stage.nome}" - Renderizando TODOS os ${prospects.length} prospects:`, 
+  console.log(`🔍 CRMColumn "${stage.nome}" - Total de ${prospects.length} prospects para renderizar`);
+  console.log(`📊 Lista completa de prospects na coluna "${stage.nome}":`, 
     prospects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
 
   return (
     <div className="min-w-[320px] max-w-[320px] flex-shrink-0">
-      <Card className={`${getBackgroundColor(stage.cor)} border-2 ${isOver ? 'ring-2 ring-blue-400' : ''} flex flex-col`} style={{ height: 'calc(100vh - 250px)' }}>
+      <Card className={`${getBackgroundColor(stage.cor)} border-2 ${isOver ? 'ring-2 ring-blue-400' : ''} flex flex-col h-full`}>
         <CardHeader className="pb-3 flex-shrink-0">
           <CardTitle className="text-sm font-medium flex items-center justify-between">
             {stage.nome}
@@ -54,10 +55,10 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
         </CardHeader>
         
         <CardContent className="flex-1 p-0 overflow-hidden">
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full w-full">
             <div 
               ref={setNodeRef}
-              className="space-y-3 p-4"
+              className="space-y-3 p-4 min-h-full"
             >
               <SortableContext items={prospects.map(p => p.id)} strategy={verticalListSortingStrategy}>
                 {prospects.map((prospect, index) => {

@@ -36,37 +36,19 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
 
   console.log('🔍 CRMKanbanBoard - Total prospects carregados:', prospects.length);
   console.log('🔍 CRMKanbanBoard - Stages disponíveis:', stages.map(s => ({ id: s.id, nome: s.nome })));
-  console.log('🔍 CRMKanbanBoard - Prospects por stage (valores únicos):', [...new Set(prospects.map(p => p.stage))]);
-  console.log('🔍 CRMKanbanBoard - Detalhes dos prospects:', prospects.map(p => ({ 
-    id: p.id, 
-    nome: p.nome, 
-    stage: p.stage,
-    stageType: typeof p.stage 
-  })));
 
-  const getProspectsByStage = (stageId: string, stageName: string) => {
-    // Filtrar prospects que correspondem ao ID ou nome da stage
-    // Isso resolve a inconsistência entre armazenamento e exibição
-    const stageProspects = prospects.filter(prospect => {
-      const matchesId = prospect.stage === stageId;
-      const matchesName = prospect.stage === stageName;
-      const matches = matchesId || matchesName;
-      
-      if (matches) {
-        console.log(`✅ Prospect "${prospect.nome}" corresponde à stage "${stageName}" (ID: ${stageId})`);
-      }
-      
-      return matches;
-    });
-
-    console.log(`🎯 Stage "${stageName}" (ID: ${stageId}) - Total de ${stageProspects.length} prospects:`,
+  const getProspectsByStage = (stageId: string) => {
+    // Filtrar prospects que correspondem ao ID da stage
+    const stageProspects = prospects.filter(prospect => prospect.stage === stageId);
+    
+    console.log(`🎯 Stage ID "${stageId}" - Total de ${stageProspects.length} prospects encontrados:`,
       stageProspects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
 
     return stageProspects;
   };
 
-  const getTotalValueByStage = (stageId: string, stageName: string) => { 
-    return getProspectsByStage(stageId, stageName).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
+  const getTotalValueByStage = (stageId: string) => { 
+    return getProspectsByStage(stageId).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
   };
 
   const handleProspectClick = (prospectId: string) => {
@@ -85,11 +67,11 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
+        <div className="flex gap-4 overflow-x-auto pb-4" style={{ height: 'calc(100vh - 200px)' }}>
           <SortableContext items={stages.map(s => s.id)} strategy={horizontalListSortingStrategy}>
             {stages.map((stage) => {
-              const stageProspects = getProspectsByStage(stage.id, stage.nome);
-              const stageValue = getTotalValueByStage(stage.id, stage.nome);
+              const stageProspects = getProspectsByStage(stage.id);
+              const stageValue = getTotalValueByStage(stage.id);
               
               console.log(`📊 Renderizando stage "${stage.nome}" (ID: ${stage.id}) com ${stageProspects.length} prospects`);
               
