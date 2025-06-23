@@ -34,6 +34,7 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
   const [selectedProspectId, setSelectedProspectId] = useState<string | null>(null);
   const [showProspectDetail, setShowProspectDetail] = useState(false);
 
+  console.log('🔍 CRMKanbanBoard - Total prospects carregados:', prospects.length);
   console.log('🔍 CRMKanbanBoard - Stages disponíveis:', stages.map(s => ({ id: s.id, nome: s.nome })));
   console.log('🔍 CRMKanbanBoard - Prospects por stage:', prospects.reduce((acc: any, p: any) => {
     acc[p.stage] = (acc[p.stage] || 0) + 1;
@@ -52,7 +53,7 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
     // Usa o que encontrou (prioriza por nome para compatibilidade)
     const stageProspects = prospectsByName.length > 0 ? prospectsByName : prospectsByStageId;
     
-    console.log(`🎯 Stage "${stageName}" (ID: ${stageId}) tem ${stageProspects.length} prospects:`, 
+    console.log(`🎯 Stage "${stageName}" (ID: ${stageId}) - TODOS os ${stageProspects.length} prospects:`, 
       stageProspects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
     
     return stageProspects;
@@ -84,7 +85,7 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
               const stageProspects = getProspectsByStage(stage.id, stage.nome);
               const stageValue = getTotalValueByStage(stage.id, stage.nome);
               
-              console.log(`📊 Renderizando stage "${stage.nome}" com ${stageProspects.length} prospects`);
+              console.log(`📊 Renderizando stage "${stage.nome}" com TODOS os ${stageProspects.length} prospects para exibição`);
               
               return (
                 <CRMColumn

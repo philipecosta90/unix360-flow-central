@@ -3,6 +3,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { CRMCard } from "./CRMCard";
 import { CRMProspect } from "@/types/crm";
 
@@ -36,6 +37,9 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
     return colorMap[color] || 'bg-gray-50 border-gray-200';
   };
 
+  console.log(`🔍 CRMColumn "${stage.nome}" - Renderizando ${prospects.length} prospects:`, 
+    prospects.map(p => ({ id: p.id, nome: p.nome })));
+
   return (
     <div className="min-w-[320px] max-w-[320px] flex-shrink-0">
       <Card className={`${getBackgroundColor(stage.cor)} border-2 ${isOver ? 'ring-2 ring-blue-400' : ''} h-full flex flex-col`}>
@@ -48,25 +52,33 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
             R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </div>
         </CardHeader>
-        <CardContent 
-          ref={setNodeRef}
-          className="flex-1 overflow-y-auto max-h-[calc(100vh-300px)] space-y-3 min-h-[200px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-        >
-          <SortableContext items={prospects.map(p => p.id)} strategy={verticalListSortingStrategy}>
-            {prospects.map((prospect) => (
-              <CRMCard 
-                key={prospect.id} 
-                prospect={prospect} 
-                onProspectClick={onProspectClick}
-              />
-            ))}
-          </SortableContext>
-          
-          {prospects.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <p className="text-sm">Nenhum prospect nesta etapa</p>
+        
+        <CardContent className="flex-1 p-0 overflow-hidden">
+          <ScrollArea className="h-[calc(100vh-280px)] px-4">
+            <div 
+              ref={setNodeRef}
+              className="space-y-3 py-2"
+            >
+              <SortableContext items={prospects.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                {prospects.map((prospect, index) => {
+                  console.log(`📋 Renderizando prospect ${index + 1}/${prospects.length}: ${prospect.nome} (ID: ${prospect.id})`);
+                  return (
+                    <CRMCard 
+                      key={prospect.id} 
+                      prospect={prospect} 
+                      onProspectClick={onProspectClick}
+                    />
+                  );
+                })}
+              </SortableContext>
+              
+              {prospects.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm">Nenhum prospect nesta etapa</p>
+                </div>
+              )}
             </div>
-          )}
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>
