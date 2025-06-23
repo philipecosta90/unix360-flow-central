@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,8 +86,8 @@ export const CRMFilters = ({ filters, onFiltersChange }: CRMFiltersProps) => {
   });
 
   const updateFilters = (key: string, value: any) => {
-    // Convert "none" back to empty string for filtering logic
-    const filterValue = value === "none" ? "" : value;
+    // Convert "todos" back to empty string for filtering logic
+    const filterValue = value === "todos" ? "" : value;
     onFiltersChange({ ...filters, [key]: filterValue });
   };
 
@@ -159,12 +158,12 @@ export const CRMFilters = ({ filters, onFiltersChange }: CRMFiltersProps) => {
                 <label className="text-sm font-medium text-gray-700 mb-2 block">
                   Etapa
                 </label>
-                <Select value={filters.stage || "none"} onValueChange={(value) => updateFilters('stage', value)}>
+                <Select value={filters.stage || "todos"} onValueChange={(value) => updateFilters('stage', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todas as etapas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Todas as etapas</SelectItem>
+                    <SelectItem value="todos">Todas as etapas</SelectItem>
                     {stages.map((stage) => (
                       <SelectItem key={stage.id} value={stage.id}>
                         {stage.nome}
@@ -179,12 +178,12 @@ export const CRMFilters = ({ filters, onFiltersChange }: CRMFiltersProps) => {
                 <label className="text-sm font-medium text-gray-700 mb-2 block">
                   Responsável
                 </label>
-                <Select value={filters.responsavel || "none"} onValueChange={(value) => updateFilters('responsavel', value)}>
+                <Select value={filters.responsavel || "todos"} onValueChange={(value) => updateFilters('responsavel', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todos os responsáveis" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Todos os responsáveis</SelectItem>
+                    <SelectItem value="todos">Todos os responsáveis</SelectItem>
                     {teamMembers.map((member) => (
                       <SelectItem key={member.id} value={member.id}>
                         {member.nome} {member.sobrenome}

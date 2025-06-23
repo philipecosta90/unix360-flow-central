@@ -27,7 +27,7 @@ export const ContractsFilters = ({
           className="pl-10"
         />
       </div>
-      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+      <Select value={statusFilter || "todos"} onValueChange={onStatusFilterChange}>
         <SelectTrigger className="w-48">
           <SelectValue placeholder="Filtrar por status" />
         </SelectTrigger>

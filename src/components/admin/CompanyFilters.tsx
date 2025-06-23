@@ -28,12 +28,12 @@ export const CompanyFilters = ({
         />
       </div>
       
-      <Select value={selectedPlan} onValueChange={onPlanChange}>
+      <Select value={selectedPlan || "todos"} onValueChange={onPlanChange}>
         <SelectTrigger className="w-full sm:w-48">
           <SelectValue placeholder="Filtrar por plano" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Todos os planos</SelectItem>
+          <SelectItem value="todos">Todos os planos</SelectItem>
           <SelectItem value="gratuito">Gratuito</SelectItem>
           <SelectItem value="pro">Pro</SelectItem>
           <SelectItem value="enterprise">Enterprise</SelectItem>

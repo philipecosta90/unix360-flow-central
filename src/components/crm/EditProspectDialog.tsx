@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,11 +77,11 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
       telefone: "",
       empresa_cliente: "",
       cargo: "",
-      stage: "none",
+      stage: "default",
       valor_estimado: "",
       origem: "",
       tags: "",
-      responsavel_id: "none",
+      responsavel_id: "default",
       proximo_followup: "",
       observacoes: "",
     },
@@ -97,11 +96,11 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
         telefone: prospect.telefone || "",
         empresa_cliente: prospect.empresa_cliente || "",
         cargo: prospect.cargo || "",
-        stage: prospect.stage || "none",
+        stage: prospect.stage || "default",
         valor_estimado: prospect.valor_estimado?.toString() || "",
         origem: prospect.origem || "",
         tags: prospect.tags?.join(", ") || "",
-        responsavel_id: prospect.responsavel_id || "none",
+        responsavel_id: prospect.responsavel_id || "default",
         proximo_followup: prospect.proximo_followup || "",
         observacoes: prospect.observacoes || "",
       });
@@ -154,11 +153,11 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
         telefone: data.telefone ? sanitizeInput(data.telefone) : null,
         empresa_cliente: data.empresa_cliente ? sanitizeInput(data.empresa_cliente) : null,
         cargo: data.cargo ? sanitizeInput(data.cargo) : null,
-        stage: data.stage === "none" ? null : data.stage,
+        stage: data.stage === "default" ? null : data.stage,
         valor_estimado: data.valor_estimado ? parseFloat(data.valor_estimado) : null,
         origem: data.origem ? sanitizeInput(data.origem) : null,
         tags: data.tags ? data.tags.split(',').map(tag => sanitizeInput(tag)).filter(Boolean) : [],
-        responsavel_id: data.responsavel_id === "none" ? null : data.responsavel_id,
+        responsavel_id: data.responsavel_id === "default" ? null : data.responsavel_id,
         proximo_followup: data.proximo_followup || null,
         observacoes: data.observacoes ? sanitizeHtml(data.observacoes) : null,
       };
@@ -321,7 +320,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Selecione a etapa</SelectItem>
+                        <SelectItem value="default">Selecione a etapa</SelectItem>
                         {stages.map((stage) => (
                           <SelectItem key={stage.id} value={stage.id}>
                             {stage.nome}
@@ -375,7 +374,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Selecione o responsável</SelectItem>
+                        <SelectItem value="default">Selecione o responsável</SelectItem>
                         {teamMembers.map((member) => (
                           <SelectItem key={member.id} value={member.id}>
                             {member.nome} {member.sobrenome}
