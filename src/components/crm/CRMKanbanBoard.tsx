@@ -40,18 +40,26 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
     return acc;
   }, {}));
 
-  const getProspectsByStage = (stageName: string) => {
-    const stageProspects = prospects.filter(prospect => 
+  const getProspectsByStage = (stageId: string, stageName: string) => {
+    // Primeiro tenta encontrar por nome da stage (formato antigo)
+    const prospectsByName = prospects.filter(prospect => 
       prospect.stage?.toLowerCase() === stageName.toLowerCase());
     
-    console.log(`🎯 Stage "${stageName}" tem ${stageProspects.length} prospects:`, 
+    // Se não encontrou por nome, tenta por ID da stage (formato novo)
+    const prospectsByStageId = prospects.filter(prospect => 
+      prospect.stage === stageId);
+    
+    // Usa o que encontrou (prioriza por nome para compatibilidade)
+    const stageProspects = prospectsByName.length > 0 ? prospectsByName : prospectsByStageId;
+    
+    console.log(`🎯 Stage "${stageName}" (ID: ${stageId}) tem ${stageProspects.length} prospects:`, 
       stageProspects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
     
     return stageProspects;
   };
 
-  const getTotalValueByStage = (stageName: string) => {
-    return getProspectsByStage(stageName).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
+  const getTotalValueByStage = (stageId: string, stageName: string) => {
+    return getProspectsByStage(stageId, stageName).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
   };
 
   const handleProspectClick = (prospectId: string) => {
@@ -73,8 +81,8 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
           <SortableContext items={stages.map(s => s.id)} strategy={horizontalListSortingStrategy}>
             {stages.map((stage) => {
-              const stageProspects = getProspectsByStage(stage.nome);
-              const stageValue = getTotalValueByStage(stage.nome);
+              const stageProspects = getProspectsByStage(stage.id, stage.nome);
+              const stageValue = getTotalValueByStage(stage.id, stage.nome);
               
               console.log(`📊 Renderizando stage "${stage.nome}" com ${stageProspects.length} prospects`);
               

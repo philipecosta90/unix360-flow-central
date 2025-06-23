@@ -39,6 +39,7 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
       
       console.log('🔄 Movendo prospect:', { prospectId, newStageId, newStageName });
       
+      // Atualizar usando o NOME da stage para manter compatibilidade
       const { error } = await supabase
         .from('crm_prospects')
         .update({ stage: newStageName })
@@ -94,7 +95,10 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
     const prospect = prospects.find(p => p.id === prospectId);
     const targetStage = stages.find(s => s.id === newStageId);
     
-    if (!prospect || !targetStage || prospect.stage === targetStage.nome) return;
+    if (!prospect || !targetStage) return;
+
+    // Verificar se o prospect já está na stage de destino (por nome)
+    if (prospect.stage === targetStage.nome) return;
 
     console.log('🎯 Finalizando drag:', { 
       prospect: prospect.nome, 
