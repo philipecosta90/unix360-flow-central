@@ -10,6 +10,7 @@ import { TasksModule } from "@/components/tasks/TasksModule";
 import { ClientsModule } from "@/components/clients/ClientsModule";
 import { ContractsModule } from "@/components/contracts/ContractsModule";
 import { CSModule } from "@/components/cs/CSModule";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { 
   BarChart3, 
   Users, 
@@ -83,6 +84,8 @@ const Index = () => {
         return <CSModule />;
       case '/sucesso-cliente':
         return <CSModule />;
+      case '/admin':
+        return <AdminDashboard />;
       case '/dashboard':
       case '/':
       default:

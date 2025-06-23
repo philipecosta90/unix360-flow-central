@@ -2,10 +2,9 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
-import { Header } from "@/components/layout/Header";
 
 const Admin = () => {
-  const { user, userProfile, loading, signOut } = useAuth();
+  const { user, userProfile, loading } = useAuth();
 
   console.log('🔐 Admin page render:', {
     user: user ? 'Present' : 'Null',
@@ -46,18 +45,7 @@ const Admin = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header 
-        user={user} 
-        onLogout={signOut}
-        onToggleSidebar={() => {}}
-      />
-      <main className="p-6 overflow-y-auto">
-        <AdminDashboard />
-      </main>
-    </div>
-  );
+  return <AdminDashboard />;
 };
 
 export default Admin;
