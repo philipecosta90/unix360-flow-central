@@ -34,13 +34,24 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
   const [selectedProspectId, setSelectedProspectId] = useState<string | null>(null);
   const [showProspectDetail, setShowProspectDetail] = useState(false);
 
-  const getProspectsByStage = (stageId: string) => {
-    return prospects.filter(prospect => 
-      prospect.stage?.toLowerCase() === stageId.toLowerCase());
+  console.log('🔍 CRMKanbanBoard - Stages disponíveis:', stages.map(s => ({ id: s.id, nome: s.nome })));
+  console.log('🔍 CRMKanbanBoard - Prospects por stage:', prospects.reduce((acc: any, p: any) => {
+    acc[p.stage] = (acc[p.stage] || 0) + 1;
+    return acc;
+  }, {}));
+
+  const getProspectsByStage = (stageName: string) => {
+    const stageProspects = prospects.filter(prospect => 
+      prospect.stage?.toLowerCase() === stageName.toLowerCase());
+    
+    console.log(`🎯 Stage "${stageName}" tem ${stageProspects.length} prospects:`, 
+      stageProspects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
+    
+    return stageProspects;
   };
 
-  const getTotalValueByStage = (stageId: string) => {
-    return getProspectsByStage(stageId).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
+  const getTotalValueByStage = (stageName: string) => {
+    return getProspectsByStage(stageName).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
   };
 
   const handleProspectClick = (prospectId: string) => {
@@ -62,8 +73,10 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
           <SortableContext items={stages.map(s => s.id)} strategy={horizontalListSortingStrategy}>
             {stages.map((stage) => {
-              const stageProspects = getProspectsByStage(stage.id);
-              const stageValue = getTotalValueByStage(stage.id);
+              const stageProspects = getProspectsByStage(stage.nome);
+              const stageValue = getTotalValueByStage(stage.nome);
+              
+              console.log(`📊 Renderizando stage "${stage.nome}" com ${stageProspects.length} prospects`);
               
               return (
                 <CRMColumn

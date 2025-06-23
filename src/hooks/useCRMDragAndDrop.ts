@@ -5,6 +5,7 @@ import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useCRMStages } from "@/hooks/useCRMStages";
 
 interface CRMProspect {
   id: string;
@@ -27,13 +28,20 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: stages = [] } = useCRMStages();
   const [activeProspect, setActiveProspect] = useState<CRMProspect | null>(null);
 
   const updateProspectMutation = useMutation({
-    mutationFn: async ({ prospectId, newStage }: { prospectId: string; newStage: string }) => {
+    mutationFn: async ({ prospectId, newStageId }: { prospectId: string; newStageId: string }) => {
+      // Encontrar o nome da etapa pelo ID
+      const targetStage = stages.find(stage => stage.id === newStageId);
+      const newStageName = targetStage?.nome || newStageId;
+      
+      console.log('🔄 Movendo prospect:', { prospectId, newStageId, newStageName });
+      
       const { error } = await supabase
         .from('crm_prospects')
-        .update({ stage: newStage })
+        .update({ stage: newStageName })
         .eq('id', prospectId);
 
       if (error) throw error;
@@ -44,10 +52,12 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
         .insert({
           prospect_id: prospectId,
           tipo: 'stage_change',
-          titulo: `Movido para ${newStage}`,
-          descricao: `Prospect movido para a etapa ${newStage}`,
+          titulo: `Movido para ${newStageName}`,
+          descricao: `Prospect movido para a etapa ${newStageName}`,
           created_by: userProfile?.id,
         });
+
+      console.log('✅ Prospect movido com sucesso para:', newStageName);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-prospects'] });
@@ -57,7 +67,7 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
       });
     },
     onError: (error) => {
-      console.error('Error updating prospect:', error);
+      console.error('❌ Erro ao mover prospect:', error);
       toast({
         title: "Erro",
         description: "Não foi possível mover o prospect.",
@@ -69,6 +79,7 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
   const handleDragStart = (event: DragStartEvent) => {
     const prospect = prospects.find(p => p.id === event.active.id);
     setActiveProspect(prospect || null);
+    console.log('🎯 Iniciando drag do prospect:', prospect?.nome);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -78,12 +89,20 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
     if (!over) return;
 
     const prospectId = active.id as string;
-    const newStage = over.id as string;
+    const newStageId = over.id as string;
 
     const prospect = prospects.find(p => p.id === prospectId);
-    if (!prospect || prospect.stage === newStage) return;
+    const targetStage = stages.find(s => s.id === newStageId);
+    
+    if (!prospect || !targetStage || prospect.stage === targetStage.nome) return;
 
-    updateProspectMutation.mutate({ prospectId, newStage });
+    console.log('🎯 Finalizando drag:', { 
+      prospect: prospect.nome, 
+      from: prospect.stage, 
+      to: targetStage.nome 
+    });
+
+    updateProspectMutation.mutate({ prospectId, newStageId });
   };
 
   return {
