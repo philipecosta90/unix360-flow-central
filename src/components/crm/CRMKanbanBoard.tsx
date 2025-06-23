@@ -4,9 +4,10 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  closestCorners,
+  closestCenter,
+  pointerWithin,
+  rectIntersection,
 } from "@dnd-kit/core";
-import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { CRMColumn } from "./CRMColumn";
 import { CRMCard } from "./CRMCard";
 import { CRMKanbanLoadingSkeleton } from "./CRMKanbanLoadingSkeleton";
@@ -36,18 +37,11 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
 
   console.log('🔍 CRMKanbanBoard - Total prospects carregados:', prospects.length);
   console.log('🔍 CRMKanbanBoard - Stages disponíveis:', stages.map(s => ({ id: s.id, nome: s.nome })));
-  console.log('🎯 DnD Context - Verificando handlers:', { 
-    handleDragStart: typeof handleDragStart, 
-    handleDragEnd: typeof handleDragEnd 
-  });
 
   const getProspectsByStage = (stageId: string) => {
-    // Filtrar prospects que correspondem ao ID da stage
     const stageProspects = prospects.filter(prospect => prospect.stage === stageId);
-    
     console.log(`🎯 Stage ID "${stageId}" - Total de ${stageProspects.length} prospects encontrados:`,
       stageProspects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
-
     return stageProspects;
   };
 
@@ -67,42 +61,36 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
   return (
     <>
       <DndContext
-        collisionDetection={closestCorners}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
-          <SortableContext items={stages.map(s => s.id)} strategy={horizontalListSortingStrategy}>
-            {stages.map((stage) => {
-              const stageProspects = getProspectsByStage(stage.id);
-              const stageValue = getTotalValueByStage(stage.id);
-              
-              console.log(`📊 Renderizando stage "${stage.nome}" (ID: ${stage.id}) com ${stageProspects.length} prospects`);
-              console.log(`🎯 DnD - Stage "${stage.nome}" droppable ID:`, stage.id);
-              
-              return (
-                <CRMColumn
-                  key={stage.id}
-                  stage={stage}
-                  prospects={stageProspects}
-                  totalValue={stageValue}
-                  onProspectClick={handleProspectClick}
-                />
-              );
-            })}
-          </SortableContext>
+        <div className="flex gap-6 overflow-x-auto pb-4 min-h-[calc(100vh-250px)]">
+          {stages.map((stage) => {
+            const stageProspects = getProspectsByStage(stage.id);
+            const stageValue = getTotalValueByStage(stage.id);
+            
+            console.log(`📊 Renderizando stage "${stage.nome}" (ID: ${stage.id}) com ${stageProspects.length} prospects`);
+            
+            return (
+              <CRMColumn
+                key={stage.id}
+                stage={stage}
+                prospects={stageProspects}
+                totalValue={stageValue}
+                onProspectClick={handleProspectClick}
+              />
+            );
+          })}
         </div>
 
         <DragOverlay>
           {activeProspect ? (
-            <div className="opacity-50">
-              <CRMCard prospect={activeProspect} isDragging />
-            </div>
+            <CRMCard prospect={activeProspect} isDragging />
           ) : null}
         </DragOverlay>
       </DndContext>
 
-      {/* Prospect Detail Modal */}
       {selectedProspectId && (
         <CRMProspectDetail
           prospectId={selectedProspectId}

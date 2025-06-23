@@ -28,19 +28,16 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging || isSortableDragging ? 0.8 : 1,
-    cursor: isSortableDragging ? 'grabbing' : 'grab',
   };
 
   console.log(`🎯 DnD Card "${prospect.nome}" - isDragging:`, isSortableDragging, 'sortable ID:', prospect.id);
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't open detail if clicking on edit button or drag handle
     if ((e.target as HTMLElement).closest('[data-edit-button]') || 
         (e.target as HTMLElement).closest('[data-drag-handle]')) {
       return;
     }
     
-    // Use onProspectClick if provided, otherwise use local state
     if (onProspectClick) {
       onProspectClick(prospect.id);
     } else {
@@ -53,28 +50,21 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
     setShowEditDialog(true);
   };
 
-  const handleDragHandleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    console.log(`🎯 Drag handle clicked for prospect: ${prospect.nome}`);
-  };
-
   return (
     <>
       <Card 
         ref={setNodeRef}
         style={style}
-        className={`bg-white shadow-sm hover:shadow-md transition-shadow relative mb-3 flex-shrink-0 ${
+        className={`bg-white shadow-sm hover:shadow-md transition-shadow relative mb-3 cursor-grab active:cursor-grabbing ${
           isSortableDragging ? 'shadow-lg ring-2 ring-blue-400 z-50' : ''
         }`}
         onClick={handleCardClick}
         {...attributes}
+        {...listeners}
       >
-        {/* Drag Handle - separate from main card content */}
         <div
           data-drag-handle
-          className="absolute top-2 right-2 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100 z-10"
-          onClick={handleDragHandleClick}
-          {...listeners}
+          className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 z-10 pointer-events-none"
         >
           <GripVertical className="h-3 w-3 text-gray-400" />
         </div>
@@ -93,7 +83,6 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
         onOpenChange={setShowEditDialog}
       />
 
-      {/* Only show local detail drawer if onProspectClick is not provided */}
       {!onProspectClick && (
         <CRMProspectDetail
           prospectId={prospect.id}
