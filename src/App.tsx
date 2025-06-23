@@ -14,16 +14,8 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    const removeLovableBadge = () => {
-      document
-        .querySelectorAll('[class*="lovable"], [data-testid="lovable-editor-button"], iframe[src*="lovable"]')
-        .forEach((el) => el.remove());
-    };
-
-    // Remove imediatamente e depois a cada segundo
-    removeLovableBadge();
-    const interval = setInterval(removeLovableBadge, 1000);
-    return () => clearInterval(interval);
+    const badge = document.querySelector("a.lovable-badge");
+    if (badge) badge.remove();
   }, []);
 
   return (
@@ -32,9 +24,7 @@ const App = () => {
         <AuthProvider>
           <style>
             {`
-              div[class*="lovable-badge"], 
-              iframe[src*="lovable"], 
-              [data-testid="lovable-editor-button"] {
+              a.lovable-badge {
                 display: none !important;
               }
             `}
@@ -65,4 +55,3 @@ const App = () => {
 };
 
 export default App;
-
