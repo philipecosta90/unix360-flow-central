@@ -36,6 +36,10 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
 
   console.log('🔍 CRMKanbanBoard - Total prospects carregados:', prospects.length);
   console.log('🔍 CRMKanbanBoard - Stages disponíveis:', stages.map(s => ({ id: s.id, nome: s.nome })));
+  console.log('🎯 DnD Context - Verificando handlers:', { 
+    handleDragStart: typeof handleDragStart, 
+    handleDragEnd: typeof handleDragEnd 
+  });
 
   const getProspectsByStage = (stageId: string) => {
     // Filtrar prospects que correspondem ao ID da stage
@@ -67,13 +71,14 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4" style={{ height: 'calc(100vh - 200px)' }}>
+        <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
           <SortableContext items={stages.map(s => s.id)} strategy={horizontalListSortingStrategy}>
             {stages.map((stage) => {
               const stageProspects = getProspectsByStage(stage.id);
               const stageValue = getTotalValueByStage(stage.id);
               
               console.log(`📊 Renderizando stage "${stage.nome}" (ID: ${stage.id}) com ${stageProspects.length} prospects`);
+              console.log(`🎯 DnD - Stage "${stage.nome}" droppable ID:`, stage.id);
               
               return (
                 <CRMColumn
@@ -89,7 +94,11 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         </div>
 
         <DragOverlay>
-          {activeProspect ? <CRMCard prospect={activeProspect} isDragging /> : null}
+          {activeProspect ? (
+            <div className="opacity-50">
+              <CRMCard prospect={activeProspect} isDragging />
+            </div>
+          ) : null}
         </DragOverlay>
       </DndContext>
 

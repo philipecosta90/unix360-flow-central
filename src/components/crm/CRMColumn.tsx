@@ -40,10 +40,11 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
   console.log(`🔍 CRMColumn "${stage.nome}" - Total de ${prospects.length} prospects para renderizar`);
   console.log(`📊 Lista completa de prospects na coluna "${stage.nome}":`, 
     prospects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
+  console.log(`🎯 DnD Column "${stage.nome}" - isOver:`, isOver, 'droppable ID:', stage.id);
 
   return (
     <div className="min-w-[320px] max-w-[320px] flex-shrink-0">
-      <Card className={`${getBackgroundColor(stage.cor)} border-2 ${isOver ? 'ring-2 ring-blue-400' : ''} flex flex-col h-full`}>
+      <Card className={`${getBackgroundColor(stage.cor)} border-2 ${isOver ? 'ring-2 ring-blue-400 bg-blue-100' : ''} flex flex-col h-full`}>
         <CardHeader className="pb-3 flex-shrink-0">
           <CardTitle className="text-sm font-medium flex items-center justify-between">
             {stage.nome}
@@ -58,11 +59,13 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
           <ScrollArea className="h-full w-full">
             <div 
               ref={setNodeRef}
-              className="space-y-3 p-4 min-h-full"
+              className="space-y-3 p-4 min-h-[200px]"
+              style={{ minHeight: 'calc(100% - 16px)' }}
             >
               <SortableContext items={prospects.map(p => p.id)} strategy={verticalListSortingStrategy}>
                 {prospects.map((prospect, index) => {
                   console.log(`📋 Renderizando prospect ${index + 1}/${prospects.length}: "${prospect.nome}" (ID: ${prospect.id}) na stage "${stage.nome}"`);
+                  console.log(`🎯 DnD Prospect - sortable ID:`, prospect.id);
                   return (
                     <CRMCard 
                       key={prospect.id} 
@@ -76,6 +79,7 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
               {prospects.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <p className="text-sm">Nenhum prospect nesta etapa</p>
+                  <p className="text-xs mt-1">Arraste prospects aqui</p>
                 </div>
               )}
             </div>

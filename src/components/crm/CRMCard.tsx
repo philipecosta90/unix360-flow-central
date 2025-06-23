@@ -27,8 +27,11 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging || isSortableDragging ? 0.5 : 1,
+    opacity: isDragging || isSortableDragging ? 0.8 : 1,
+    cursor: isSortableDragging ? 'grabbing' : 'grab',
   };
+
+  console.log(`🎯 DnD Card "${prospect.nome}" - isDragging:`, isSortableDragging, 'sortable ID:', prospect.id);
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't open detail if clicking on edit button or drag handle
@@ -50,12 +53,19 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
     setShowEditDialog(true);
   };
 
+  const handleDragHandleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log(`🎯 Drag handle clicked for prospect: ${prospect.nome}`);
+  };
+
   return (
     <>
       <Card 
         ref={setNodeRef}
         style={style}
-        className="bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer relative mb-3 flex-shrink-0"
+        className={`bg-white shadow-sm hover:shadow-md transition-shadow relative mb-3 flex-shrink-0 ${
+          isSortableDragging ? 'shadow-lg ring-2 ring-blue-400 z-50' : ''
+        }`}
         onClick={handleCardClick}
         {...attributes}
       >
@@ -63,6 +73,7 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
         <div
           data-drag-handle
           className="absolute top-2 right-2 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100 z-10"
+          onClick={handleDragHandleClick}
           {...listeners}
         >
           <GripVertical className="h-3 w-3 text-gray-400" />

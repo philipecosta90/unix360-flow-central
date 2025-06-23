@@ -88,14 +88,22 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
   });
 
   const handleDragStart = (event: DragStartEvent) => {
-    const prospect = prospects.find(p => p.id === event.active.id);
+    const prospectId = event.active.id as string;
+    const prospect = prospects.find(p => p.id === prospectId);
     setActiveProspect(prospect || null);
-    console.log('🎯 Iniciando drag do prospect:', prospect?.nome, 'da stage:', prospect?.stage);
+    console.log('🎯 Iniciando drag do prospect:', prospect?.nome, 'ID:', prospectId, 'da stage:', prospect?.stage);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveProspect(null);
+
+    console.log('🎯 DragEnd event:', { 
+      activeId: active.id, 
+      overId: over?.id,
+      activeType: typeof active.id,
+      overType: typeof over?.id
+    });
 
     if (!over) {
       console.log('❌ Drag cancelado - sem destino válido');
@@ -108,13 +116,18 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
     const prospect = prospects.find(p => p.id === prospectId);
     const targetStage = stages.find(s => s.id === newStageId);
     
+    console.log('🎯 Dados do drag:', {
+      prospect: prospect ? `${prospect.nome} (stage atual: ${prospect.stage})` : 'não encontrado',
+      targetStage: targetStage ? `${targetStage.nome} (ID: ${targetStage.id})` : 'não encontrado'
+    });
+    
     if (!prospect || !targetStage) {
       console.log('❌ Prospect ou stage não encontrados:', { prospect: !!prospect, targetStage: !!targetStage });
       return;
     }
 
     // Verificar se o prospect já está na stage de destino
-    const isAlreadyInStage = prospect.stage === targetStage.id || prospect.stage === targetStage.nome;
+    const isAlreadyInStage = prospect.stage === targetStage.id;
     if (isAlreadyInStage) {
       console.log('ℹ️ Prospect já está na stage de destino');
       return;
