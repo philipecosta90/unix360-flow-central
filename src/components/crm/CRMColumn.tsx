@@ -54,7 +54,7 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
         </CardHeader>
         
         <CardContent className="flex-1 p-0 overflow-hidden">
-          <ScrollArea className="h-[calc(100vh-280px)] px-4">
+          <ScrollArea className="flex-1 px-4">
             <div 
               ref={setNodeRef}
               className="space-y-3 py-2"
