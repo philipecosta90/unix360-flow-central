@@ -31,3 +31,14 @@ export const validateAndSanitize = <T>(
 ): z.SafeParseReturnType<T, T> => {
   return schema.safeParse(data);
 };
+
+    // Esquema de validação para formulário de prospect
+export const prospectFormSchema = z.object({
+  nome: z.string().min(1, "Nome é obrigatório"),
+  email: z.string().email("Email inválido").optional(),
+  telefone: z.string().optional(),
+  valor_estimado: z.number().nonnegative().optional(),
+  empresa_id: z.string().min(1, "Empresa é obrigatória"),
+  responsavel_id: z.string().optional(),
+  stage: z.string().min(1, "Stage é obrigatório")
+});
