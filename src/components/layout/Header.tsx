@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
@@ -9,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MobileMenu } from "./MobileMenu";
 
 interface HeaderProps {
   user: any;
@@ -17,6 +19,8 @@ interface HeaderProps {
 }
 
 export const Header = ({ user, onLogout, onToggleSidebar }: HeaderProps) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   const safeName = (user?.name ?? "").toString();
   const safeEmail = (user?.email ?? "").toString();
   const safeCompany = (user?.company ?? "").toString();
@@ -25,14 +29,10 @@ export const Header = ({ user, onLogout, onToggleSidebar }: HeaderProps) => {
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleSidebar}
-            className="lg:hidden"
-          >
-            ☰
-          </Button>
+          <MobileMenu 
+            isOpen={mobileMenuOpen} 
+            onOpenChange={setMobileMenuOpen} 
+          />
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
               Bem-vindo, {safeName || "Usuário"}
