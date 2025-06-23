@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -100,4 +101,19 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Remove Lovable badge and editor elements globally */
+div[class*="lovable-badge"], 
+iframe[src*="lovable"], 
+[data-testid="lovable-editor-button"],
+[class*="lovable-editor"],
+[data-lovable],
+div[style*="position: fixed"][style*="bottom: 16px"][style*="right: 16px"],
+div[style*="position: fixed"][style*="z-index: 9999"],
+div[style*="position: fixed"][style*="bottom"][style*="right"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
