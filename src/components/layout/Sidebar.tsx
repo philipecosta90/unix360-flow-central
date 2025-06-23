@@ -1,162 +1,121 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useLocation, Link } from "react-router-dom";
 import { 
-  LayoutDashboard, 
+  BarChart3, 
   Users, 
   DollarSign, 
   CheckSquare, 
+  FileText, 
   UserCheck, 
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  Heart,
-  Settings
+  Settings,
+  Shield  // New import for admin icon
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useFinancialTasks } from "@/hooks/useFinancialTasks";
 
 export const Sidebar = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  // Buscar tarefas vencidas para mostrar badge
-  const { stats } = useFinancialTasks();
-  const overdueCount = stats?.overdue || 0;
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
+  const { userProfile } = useAuth(); // Add this to get user profile
 
   const menuItems = [
-    {
-      icon: LayoutDashboard,
-      label: "Dashboard",
-      path: "/dashboard",
-      isActive: location.pathname === "/" || location.pathname === "/dashboard",
-    },
-    {
-      icon: Users,
-      label: "CRM",
-      path: "/crm",
-      isActive: location.pathname === "/crm",
-    },
-    {
-      icon: DollarSign,
-      label: "Financeiro",
-      path: "/financeiro",
-      isActive: location.pathname === "/financeiro",
-    },
-    {
-      icon: CheckSquare,
-      label: "Tarefas & Agenda",
-      path: "/tarefas",
-      isActive: location.pathname === "/tarefas",
-      badge: overdueCount > 0 ? overdueCount : undefined,
-    },
-    {
-      icon: UserCheck,
-      label: "Clientes",
-      path: "/clientes",
-      isActive: location.pathname === "/clientes",
-    },
-    {
-      icon: FileText,
-      label: "Contratos",
-      path: "/contratos",
-      isActive: location.pathname === "/contratos",
-    },
-    {
-      icon: Heart,
-      label: "Sucesso do Cliente",
-      path: "/cs",
-      isActive: location.pathname === "/cs",
-    },
-    {
-      icon: Settings,
-      label: "Configurações",
-      path: "/configuracoes",
-      isActive: location.pathname === "/configuracoes",
-    },
+    { icon: BarChart3, label: "Dashboard", path: "/dashboard" },
+    { icon: Users, label: "CRM", path: "/crm" },
+    { icon: DollarSign, label: "Financeiro", path: "/financeiro" },
+    { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
+    { icon: Users, label: "Clientes", path: "/clientes" },
+    { icon: FileText, label: "Contratos", path: "/contratos" },
+    { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
+    { icon: Settings, label: "Configurações", path: "/configuracoes" },
   ];
 
+  // Add admin menu item if user is admin
+  if (userProfile?.nivel_permissao === 'admin') {
+    menuItems.push({ icon: Shield, label: "Admin", path: "/admin" });
+  }
+
   return (
-    <div className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-64'
-    }`}>
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : ''}`}>
-            <div className="w-8 h-8 bg-[#43B26D] rounded-lg flex items-center justify-center text-white font-bold text-sm">
-              U
-            </div>
-            {!isCollapsed && (
-              <span className="ml-2 text-lg font-semibold text-gray-800">UniX360</span>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8 p-0"
-          >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
-        </div>
-      </div>
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" className="md:hidden h-8 w-8 p-0">
+          <span className="sr-only">Abrir menu</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu">
+            <line x1="4" x2="20" y1="12" y2="12" />
+            <line x1="4" x2="20" y1="6" y2="6" />
+            <line x1="4" x2="20" y1="18" y2="18" />
+          </svg>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-full sm:w-64 p-6 flex flex-col">
+        <SheetHeader className="mb-6 pl-0">
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>
+            Navegue pelas opções do sistema.
+          </SheetDescription>
+        </SheetHeader>
 
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
+        <div className="py-4">
           {menuItems.map((item) => (
-            <li key={item.path}>
-              <button
-                onClick={() => handleNavigation(item.path)}
-                className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors ${
-                  item.isActive
-                    ? 'bg-[#43B26D] text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                } ${isCollapsed ? 'justify-center' : ''}`}
-              >
-                <item.icon className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'}`} />
-                {!isCollapsed && (
-                  <div className="flex items-center justify-between w-full">
-                    <span>{item.label}</span>
-                    {item.badge && (
-                      <Badge 
-                        variant="destructive" 
-                        className="ml-2 h-5 w-5 flex items-center justify-center p-0 text-xs animate-pulse"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </button>
-            </li>
+            <Link
+              key={item.label}
+              to={item.path}
+              className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-100 transition-colors duration-200 ${location.pathname === item.path ? 'bg-gray-100 font-semibold' : ''}`}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.label}</span>
+            </Link>
           ))}
-        </ul>
-      </nav>
-
-      {!isCollapsed && (
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-[#43B26D] text-white">
-                {user?.email?.[0]?.toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="ml-3 flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.email || 'Usuário'}
-              </p>
-            </div>
-          </div>
         </div>
-      )}
-    </div>
+
+        <SheetHeader className="mt-auto mb-2 pl-0">
+          <SheetTitle>Minha Conta</SheetTitle>
+        </SheetHeader>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="pl-0 justify-start w-full font-normal">
+              <Avatar className="mr-2 h-8 w-8">
+                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                <AvatarFallback>SC</AvatarFallback>
+              </Avatar>
+              <span>{userProfile?.nome || 'Carregando...'}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              Perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              Configurações
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SheetContent>
+    </Sheet>
   );
 };
