@@ -15,6 +15,15 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
+        <style>
+    {`
+      div[class*="lovable-badge"], 
+      iframe[src*="lovable"], 
+      [data-testid="lovable-editor-button"] {
+        display: none !important;
+      }
+    `}
+  </style>
         <Toaster />
         <Sonner />
         <AuthDebug />
