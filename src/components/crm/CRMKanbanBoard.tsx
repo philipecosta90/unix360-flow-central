@@ -48,23 +48,7 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
     stageProspects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
 
   return stageProspects;
-};
-    // Primeiro tenta encontrar por nome da stage (formato antigo)
-    const prospectsByName = prospects.filter(prospect => 
-      prospect.stage?.toLowerCase() === stageName.toLowerCase());
-    
-    // Se não encontrou por nome, tenta por ID da stage (formato novo)
-    const prospectsByStageId = prospects.filter(prospect => 
-      prospect.stage === stageId);
-    
-    // Usa o que encontrou (prioriza por nome para compatibilidade)
-    const stageProspects = prospectsByName.length > 0 ? prospectsByName : prospectsByStageId;
-    
-    console.log(`🎯 Stage "${stageName}" (ID: ${stageId}) - TODOS os ${stageProspects.length} prospects:`, 
-      stageProspects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
-    
-    return stageProspects;
-  };
+ };
 
   const getTotalValueByStage = (stageId: string) => { 
     return getProspectsByStage(stageId).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
