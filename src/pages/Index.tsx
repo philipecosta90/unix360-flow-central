@@ -11,6 +11,8 @@ import { ClientsModule } from "@/components/clients/ClientsModule";
 import { ContractsModule } from "@/components/contracts/ContractsModule";
 import { CSModule } from "@/components/cs/CSModule";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import Settings from "./Settings";
+import Admin from "./Admin";
 import { 
   BarChart3, 
   Users, 
@@ -18,7 +20,7 @@ import {
   CheckSquare, 
   FileText, 
   UserCheck, 
-  Settings,
+  Settings as SettingsIcon,
   Shield
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -60,7 +62,7 @@ const Index = () => {
     { icon: Users, label: "Clientes", path: "/clientes" },
     { icon: FileText, label: "Contratos", path: "/contratos" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
-    { icon: Settings, label: "Configurações", path: "/configuracoes" },
+    { icon: SettingsIcon, label: "Configurações", path: "/configuracoes" },
   ];
 
   // Add admin menu item if user is admin
@@ -85,7 +87,9 @@ const Index = () => {
       case '/sucesso-cliente':
         return <CSModule />;
       case '/admin':
-        return <AdminDashboard />;
+        return <Admin />;
+      case '/configuracoes':
+        return <Settings />;
       case '/dashboard':
       case '/':
       default:

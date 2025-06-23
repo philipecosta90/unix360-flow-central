@@ -7,8 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthDebug } from "@/components/debug/AuthDebug";
 import Index from "./pages/Index";
-import Settings from "./pages/Settings";
-import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,8 +29,8 @@ const App = () => (
             <Route path="/contratos" element={<Index />} />
             <Route path="/cs" element={<Index />} />
             <Route path="/sucesso-cliente" element={<Index />} />
-            <Route path="/configuracoes" element={<Settings />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/configuracoes" element={<Index />} />
+            <Route path="/admin" element={<Index />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
