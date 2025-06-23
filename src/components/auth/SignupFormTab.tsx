@@ -1,213 +1,51 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { PasswordStrength } from "@/components/ui/password-strength";
-import { validateAndSanitize, signupFormSchema, sanitizeInput } from "@/utils/inputValidation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Lock, Mail, Shield } from "lucide-react";
 
-interface SignupFormTabProps {
-  isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
-  setValidationErrors: (errors: string[]) => void;
-}
-
-export const SignupFormTab = ({
-  isLoading,
-  setIsLoading,
-  setValidationErrors
-}: SignupFormTabProps) => {
-  const [signupForm, setSignupForm] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    nome: "",
-    nomeEmpresa: "",
-    cnpj: ""
-  });
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Clear previous validation errors
-    setValidationErrors([]);
-    
-    // Validate input using Zod's SafeParseReturnType
-    const result = validateAndSanitize(signupForm, signupFormSchema);
-   if (!result.success) {
-      setValidationErrors(result.error.issues.map(err => err.message));
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const redirectUrl = `${window.location.origin}/dashboard`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email: sanitizeInput(signupForm.email),
-        password: signupForm.password, // Don't sanitize password
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            nome: sanitizeInput(signupForm.nome),
-            nome_empresa: sanitizeInput(signupForm.nomeEmpresa),
-            cnpj: sanitizeInput(signupForm.cnpj)
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Signup error:', error);
-        if (error.message.includes('already registered')) {
-          toast({
-            title: "Email já cadastrado",
-            description: "Este email já está registrado. Tente fazer login.",
-            variant: "destructive",
-          });
-        } else if (error.message.includes('Password')) {
-          toast({
-            title: "Senha inválida",
-            description: "A senha não atende aos critérios de segurança.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Erro no cadastro",
-            description: "Não foi possível criar a conta. Tente novamente.",
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-
-      if (data.user) {
-        setValidationErrors([]); // Clear validation errors on success
-        toast({
-          title: "Cadastro realizado!",
-          description: "Verifique seu email para confirmar a conta.",
-        });
-        
-        // If user is immediately logged in (session exists), redirect
-        if (data.session) {
-          navigate("/dashboard", { replace: true });
-        }
-      }
-    } catch (error) {
-      console.error('Unexpected signup error:', error);
-      toast({
-        title: "Erro inesperado",
-        description: "Tente novamente mais tarde.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleInputChange = (field: keyof typeof signupForm, value: string) => {
-    const sanitizedValue = field === 'password' || field === 'confirmPassword' 
-      ? value // Don't sanitize passwords
-      : sanitizeInput(value);
-    
-    setSignupForm(prev => ({ ...prev, [field]: sanitizedValue }));
-    
-    // Clear validation errors when user starts typing
-    setValidationErrors([]);
-  };
-
+export const SignupFormTab = () => {
   return (
-    <form onSubmit={handleSignup} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="nome">Nome completo</Label>
-        <Input
-          id="nome"
-          type="text"
-          placeholder="Seu nome completo"
-          value={signupForm.nome}
-          onChange={(e) => handleInputChange('nome', e.target.value)}
-          disabled={isLoading}
-          maxLength={100}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="nomeEmpresa">Nome da empresa</Label>
-        <Input
-          id="nomeEmpresa"
-          type="text"
-          placeholder="Nome da sua empresa"
-          value={signupForm.nomeEmpresa}
-          onChange={(e) => handleInputChange('nomeEmpresa', e.target.value)}
-          disabled={isLoading}
-          maxLength={200}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="cnpj">CNPJ (opcional)</Label>
-        <Input
-          id="cnpj"
-          type="text"
-          placeholder="00.000.000/0000-00"
-          value={signupForm.cnpj}
-          onChange={(e) => handleInputChange('cnpj', e.target.value)}
-          disabled={isLoading}
-          maxLength={18}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="signupEmail">Email</Label>
-        <Input
-          id="signupEmail"
-          type="email"
-          placeholder="seu@email.com"
-          value={signupForm.email}
-          onChange={(e) => handleInputChange('email', e.target.value)}
-          disabled={isLoading}
-          maxLength={255}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="signupPassword">Senha</Label>
-        <Input
-          id="signupPassword"
-          type="password"
-          placeholder="Crie uma senha forte"
-          value={signupForm.password}
-          onChange={(e) => handleInputChange('password', e.target.value)}
-          disabled={isLoading}
-          maxLength={128}
-          required
-        />
-        <PasswordStrength password={signupForm.password} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmar senha</Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          placeholder="Confirme sua senha"
-          value={signupForm.confirmPassword}
-          onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-          disabled={isLoading}
-          maxLength={128}
-          required
-        />
-      </div>
-      <Button 
-        type="submit" 
-        className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
-        disabled={isLoading}
-      >
-        {isLoading ? "Cadastrando..." : "Cadastrar"}
-      </Button>
-    </form>
+    <Card className="w-full">
+      <CardHeader className="text-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Lock className="h-8 w-8 text-gray-400" />
+        </div>
+        <CardTitle className="text-xl">Acesso Restrito</CardTitle>
+        <CardDescription>
+          O cadastro público foi desabilitado
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-blue-900">Sistema por Convite</h4>
+              <p className="text-sm text-blue-700 mt-1">
+                O acesso ao UniX360 é restrito e controlado por administradores.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Mail className="h-5 w-5 text-gray-600 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-gray-900">Como obter acesso?</h4>
+              <p className="text-sm text-gray-600 mt-1">
+                Entre em contato com um administrador para solicitar um convite.
+                Você receberá um email com instruções para criar sua conta.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center pt-4">
+          <p className="text-sm text-gray-500">
+            Já possui uma conta? Use a aba "Entrar" para fazer login.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
