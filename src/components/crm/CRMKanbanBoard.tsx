@@ -41,7 +41,14 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
     return acc;
   }, {}));
 
-  const getProspectsByStage = (stageId: string, stageName: string) => {
+ const getProspectsByStage = (stageId: string) => {
+  const stageProspects = prospects.filter(prospect => prospect.stage === stageId);
+
+   console.log(`🎯 Stage ID "${stageId}" - ${stageProspects.length} prospects:`,
+    stageProspects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
+
+  return stageProspects;
+};
     // Primeiro tenta encontrar por nome da stage (formato antigo)
     const prospectsByName = prospects.filter(prospect => 
       prospect.stage?.toLowerCase() === stageName.toLowerCase());
@@ -59,9 +66,9 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
     return stageProspects;
   };
 
-  const getTotalValueByStage = (stageId: string, stageName: string) => {
-    return getProspectsByStage(stageId, stageName).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
-  };
+  const getTotalValueByStage = (stageId: string) => { 
+    return getProspectsByStage(stageId).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
+ };
 
   const handleProspectClick = (prospectId: string) => {
     setSelectedProspectId(prospectId);
@@ -82,8 +89,8 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
           <SortableContext items={stages.map(s => s.id)} strategy={horizontalListSortingStrategy}>
             {stages.map((stage) => {
-              const stageProspects = getProspectsByStage(stage.id, stage.nome);
-              const stageValue = getTotalValueByStage(stage.id, stage.nome);
+              const stageProspects = getProspectsByStage(stage.id);
+              const stageValue = getTotalValueByStage(stage.id);
               
               console.log(`📊 Renderizando stage "${stage.nome}" com TODOS os ${stageProspects.length} prospects para exibição`);
               
