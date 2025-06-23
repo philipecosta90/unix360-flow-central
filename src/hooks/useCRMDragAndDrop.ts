@@ -33,19 +33,27 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
 
   const updateProspectMutation = useMutation({
     mutationFn: async ({ prospectId, newStageId }: { prospectId: string; newStageId: string }) => {
-      // Encontrar o nome da etapa pelo ID
+      // Encontrar o nome da etapa pelo ID para garantir consistência
       const targetStage = stages.find(stage => stage.id === newStageId);
-      const newStageName = targetStage?.nome || newStageId;
+      const newStageValue = targetStage?.id || newStageId; // Usar ID da stage
       
-      console.log('🔄 Movendo prospect:', { prospectId, newStageId, newStageName });
+      console.log('🔄 Atualizando prospect no banco:', { 
+        prospectId, 
+        newStageId, 
+        targetStageName: targetStage?.nome,
+        valueToStore: newStageValue
+      });
       
-      // Atualizar usando o NOME da stage para manter compatibilidade
+      // Atualizar usando o ID da stage para manter consistência
       const { error } = await supabase
         .from('crm_prospects')
-        .update({ stage: newStageName })
+        .update({ stage: newStageValue })
         .eq('id', prospectId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao atualizar prospect:', error);
+        throw error;
+      }
 
       // Log stage change activity
       await supabase
@@ -53,15 +61,17 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
         .insert({
           prospect_id: prospectId,
           tipo: 'stage_change',
-          titulo: `Movido para ${newStageName}`,
-          descricao: `Prospect movido para a etapa ${newStageName}`,
+          titulo: `Movido para ${targetStage?.nome || newStageId}`,
+          descricao: `Prospect movido para a etapa ${targetStage?.nome || newStageId}`,
           created_by: userProfile?.id,
         });
 
-      console.log('✅ Prospect movido com sucesso para:', newStageName);
+      console.log('✅ Prospect atualizado com sucesso - novo stage:', newStageValue);
     },
     onSuccess: () => {
+      // Invalidar queries para recarregar dados
       queryClient.invalidateQueries({ queryKey: ['crm-prospects'] });
+      console.log('🔄 Queries invalidadas, recarregando dados...');
       toast({
         title: "Prospect atualizado",
         description: "O prospect foi movido para a nova etapa.",
@@ -80,14 +90,17 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
   const handleDragStart = (event: DragStartEvent) => {
     const prospect = prospects.find(p => p.id === event.active.id);
     setActiveProspect(prospect || null);
-    console.log('🎯 Iniciando drag do prospect:', prospect?.nome);
+    console.log('🎯 Iniciando drag do prospect:', prospect?.nome, 'da stage:', prospect?.stage);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveProspect(null);
 
-    if (!over) return;
+    if (!over) {
+      console.log('❌ Drag cancelado - sem destino válido');
+      return;
+    }
 
     const prospectId = active.id as string;
     const newStageId = over.id as string;
@@ -95,15 +108,23 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
     const prospect = prospects.find(p => p.id === prospectId);
     const targetStage = stages.find(s => s.id === newStageId);
     
-    if (!prospect || !targetStage) return;
+    if (!prospect || !targetStage) {
+      console.log('❌ Prospect ou stage não encontrados:', { prospect: !!prospect, targetStage: !!targetStage });
+      return;
+    }
 
-    // Verificar se o prospect já está na stage de destino (por nome)
-    if (prospect.stage === targetStage.nome) return;
+    // Verificar se o prospect já está na stage de destino
+    const isAlreadyInStage = prospect.stage === targetStage.id || prospect.stage === targetStage.nome;
+    if (isAlreadyInStage) {
+      console.log('ℹ️ Prospect já está na stage de destino');
+      return;
+    }
 
-    console.log('🎯 Finalizando drag:', { 
+    console.log('🎯 Executando drag-and-drop:', { 
       prospect: prospect.nome, 
       from: prospect.stage, 
-      to: targetStage.nome 
+      to: targetStage.nome,
+      toId: targetStage.id
     });
 
     updateProspectMutation.mutate({ prospectId, newStageId });
