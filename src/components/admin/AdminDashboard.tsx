@@ -42,7 +42,7 @@ export const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="companies" className="space-y-6">
-          <CompanyList searchTerm="" selectedPlan="todos" />
+          <CompanyList />
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">
