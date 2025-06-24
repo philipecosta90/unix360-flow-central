@@ -13,6 +13,45 @@ export const loginFormSchema = z.object({
     .max(128, "Senha muito longa")
 });
 
+// Esquema de validação para prospects
+export const prospectFormSchema = z.object({
+  nome: z.string()
+    .min(1, "Nome é obrigatório")
+    .max(100, "Nome muito longo"),
+  email: z.string()
+    .email("Email inválido")
+    .max(255, "Email muito longo")
+    .optional()
+    .or(z.literal("")),
+  telefone: z.string()
+    .max(20, "Telefone muito longo")
+    .optional()
+    .or(z.literal("")),
+  empresa_cliente: z.string()
+    .max(200, "Nome da empresa muito longo")
+    .optional()
+    .or(z.literal("")),
+  cargo: z.string()
+    .max(100, "Cargo muito longo")
+    .optional()
+    .or(z.literal("")),
+  valor_estimado: z.string()
+    .optional()
+    .or(z.literal("")),
+  origem: z.string()
+    .max(100, "Origem muito longa")
+    .optional()
+    .or(z.literal("")),
+  tags: z.string()
+    .max(200, "Tags muito longas")
+    .optional()
+    .or(z.literal("")),
+  observacoes: z.string()
+    .max(1000, "Observações muito longas")
+    .optional()
+    .or(z.literal(""))
+});
+
 // Função para sanitizar inputs
 export const sanitizeInput = (input: string): string => {
   if (typeof input !== 'string') return '';
@@ -20,6 +59,16 @@ export const sanitizeInput = (input: string): string => {
   // Remove caracteres perigosos e sanitiza HTML
   return DOMPurify.sanitize(input.trim(), { 
     ALLOWED_TAGS: [],
+    ALLOWED_ATTR: []
+  });
+};
+
+// Função para sanitizar HTML mantendo formatação básica
+export const sanitizeHtml = (input: string): string => {
+  if (typeof input !== 'string') return '';
+  
+  return DOMPurify.sanitize(input.trim(), {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u'],
     ALLOWED_ATTR: []
   });
 };
