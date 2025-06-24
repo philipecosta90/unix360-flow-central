@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { prospectFormSchema, sanitizeInput, sanitizeHtml } from "@/utils/inputValidation";
+import { prospectFormSchema } from "@/utils/inputValidation";
 import { z } from "zod";
 
 interface CRMProspect {

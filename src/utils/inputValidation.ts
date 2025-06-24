@@ -2,8 +2,28 @@
 import { z } from "zod";
 import DOMPurify from "dompurify";
 
-// Esquema de validação para login
-export const loginFormSchema = z.object({
+// Esquema de validação para prospect
+export const prospectFormSchema = z.object({
+  nome: z.string().min(1, "Nome é obrigatório"),
+  email: z.string().email("Email inválido").optional(),
+  telefone: z.string().optional(),
+  empresa_cliente: z.string().optional(),
+  cargo: z.string().optional(),
+  stage: z.string().min(1, "Stage é obrigatório"),
+  valor_estimado: z
+    .union([z.string(), z.number()])
+    .transform(val => typeof val === "string" ? parseFloat(val) : val)
+    .refine(val => !isNaN(val), "Valor estimado inválido")
+    .optional(),
+  origem: z.string().optional(),
+  tags: z.string().optional(),
+  responsavel_id: z.string().optional(),
+  proximo_followup: z.string().optional(),
+  observacoes: z.string().optional(),
+});
+
+// Esquema de validação para login (se necessário)
+export const loginSchema = z.object({
   email: z.string()
     .min(1, "Email é obrigatório")
     .email("Email inválido")
@@ -11,45 +31,6 @@ export const loginFormSchema = z.object({
   password: z.string()
     .min(1, "Senha é obrigatória")
     .max(128, "Senha muito longa")
-});
-
-// Esquema de validação para prospects
-export const prospectFormSchema = z.object({
-  nome: z.string()
-    .min(1, "Nome é obrigatório")
-    .max(100, "Nome muito longo"),
-  email: z.string()
-    .email("Email inválido")
-    .max(255, "Email muito longo")
-    .optional()
-    .or(z.literal("")),
-  telefone: z.string()
-    .max(20, "Telefone muito longo")
-    .optional()
-    .or(z.literal("")),
-  empresa_cliente: z.string()
-    .max(200, "Nome da empresa muito longo")
-    .optional()
-    .or(z.literal("")),
-  cargo: z.string()
-    .max(100, "Cargo muito longo")
-    .optional()
-    .or(z.literal("")),
-  valor_estimado: z.string()
-    .optional()
-    .or(z.literal("")),
-  origem: z.string()
-    .max(100, "Origem muito longa")
-    .optional()
-    .or(z.literal("")),
-  tags: z.string()
-    .max(200, "Tags muito longas")
-    .optional()
-    .or(z.literal("")),
-  observacoes: z.string()
-    .max(1000, "Observações muito longas")
-    .optional()
-    .or(z.literal(""))
 });
 
 // Função para sanitizar inputs
@@ -63,7 +44,7 @@ export const sanitizeInput = (input: string): string => {
   });
 };
 
-// Função para sanitizar HTML mantendo formatação básica
+// Função para sanitizar HTML
 export const sanitizeHtml = (input: string): string => {
   if (typeof input !== 'string') return '';
   
