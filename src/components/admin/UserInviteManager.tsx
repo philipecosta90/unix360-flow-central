@@ -22,37 +22,50 @@ export const UserInviteManager = () => {
     setIsLoading(true);
 
     try {
-      console.log('Sending invite request:', inviteForm);
+      console.log('🚀 Iniciando processo de convite:', inviteForm);
 
-      // Verify user is authenticated before making the request
-      const { data: { session } } = await supabase.auth.getSession();
+      // Verificar se o usuário está autenticado e obter o token JWT
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!session) {
-        throw new Error('Você precisa estar logado para enviar convites');
+      if (sessionError) {
+        console.error('❌ Erro ao obter sessão:', sessionError);
+        throw new Error('Erro ao verificar autenticação');
       }
 
-      console.log('User session found, calling invite function...');
+      if (!session || !session.access_token) {
+        console.error('❌ Usuário não autenticado ou token não encontrado');
+        throw new Error('Você precisa estar logado para enviar convites. Faça login novamente.');
+      }
 
-      // Call the edge function to invite user
+      console.log('✅ Usuário autenticado, token obtido');
+      console.log('🔑 Token JWT (primeiros 50 chars):', session.access_token.substring(0, 50) + '...');
+
+      // Chamar a edge function com o token JWT no header Authorization
       const { data, error } = await supabase.functions.invoke('invite-user', {
         body: {
           email: inviteForm.email,
           nome: inviteForm.nome,
           nivel_permissao: inviteForm.nivel_permissao
+        },
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      console.log('Invite response:', { data, error });
+      console.log('📡 Resposta da edge function:', { data, error });
 
       if (error) {
-        console.error('Error calling invite function:', error);
-        throw new Error(error.message || 'Failed to call invite function');
+        console.error('❌ Erro da edge function:', error);
+        throw new Error(error.message || 'Erro ao chamar função de convite');
       }
 
       if (!data?.success) {
-        console.error('Invite function returned error:', data?.error);
-        throw new Error(data?.error || 'Unknown error from invite function');
+        console.error('❌ Função retornou erro:', data?.error);
+        throw new Error(data?.error || 'Erro desconhecido na função de convite');
       }
+
+      console.log('✅ Convite enviado com sucesso');
 
       toast({
         title: "Convite enviado!",
@@ -67,12 +80,12 @@ export const UserInviteManager = () => {
       });
 
     } catch (error: any) {
-      console.error('Error inviting user:', error);
+      console.error('💥 Erro no processo de convite:', error);
       
       let errorMessage = "Não foi possível enviar o convite.";
       
-      if (error.message?.includes('estar logado')) {
-        errorMessage = "Você precisa estar logado para enviar convites.";
+      if (error.message?.includes('estar logado') || error.message?.includes('Faça login novamente')) {
+        errorMessage = "Você precisa estar logado para enviar convites. Faça login novamente.";
       } else if (error.message?.includes('Admin permission required')) {
         errorMessage = "Apenas administradores podem enviar convites.";
       } else if (error.message?.includes('Invalid or expired authentication')) {

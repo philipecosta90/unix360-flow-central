@@ -20,21 +20,31 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log('🚀 Iniciando processamento da função invite-user');
+
     // Get the authorization header
     const authHeader = req.headers.get('authorization');
+    console.log('🔍 Authorization header recebido:', authHeader ? 'Presente' : 'Ausente');
+    
     if (!authHeader) {
-      console.error('Missing authorization header');
+      console.error('❌ Authorization header não encontrado');
       throw new Error('Authorization header is required');
     }
 
     // Extract the JWT token
     const token = authHeader.replace('Bearer ', '');
     if (!token || token === authHeader) {
-      console.error('Invalid authorization header format');
+      console.error('❌ Formato do authorization header inválido:', authHeader.substring(0, 100));
       throw new Error('Invalid authorization header format');
     }
 
-    console.log('Authorization header found, validating token...');
+    // Verificar se o token parece ser um JWT (contém pontos)
+    if (!token.includes('.')) {
+      console.error('❌ Token não parece ser um JWT válido (sem pontos):', token.substring(0, 100));
+      throw new Error('Invalid JWT token format');
+    }
+
+    console.log('✅ Token JWT extraído com sucesso (primeiros 50 chars):', token.substring(0, 50) + '...');
 
     // Create Supabase client for user verification using the JWT token
     const supabase = createClient(
@@ -49,22 +59,25 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
+    console.log('🔐 Verificando token do usuário...');
+
     // Verify the user token and get user info
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError) {
-      console.error('Error verifying user token:', userError);
+      console.error('❌ Erro ao verificar token do usuário:', userError);
       throw new Error('Invalid or expired authentication token');
     }
 
     if (!user) {
-      console.error('No user found for provided token');
+      console.error('❌ Usuário não encontrado para o token fornecido');
       throw new Error('User not authenticated');
     }
 
-    console.log('User authenticated successfully:', user.id);
+    console.log('✅ Usuário autenticado com sucesso:', user.id);
 
     // Check if current user is admin
+    console.log('🔍 Verificando permissões do usuário...');
     const { data: userProfile, error: profileError } = await supabase
       .from('perfis')
       .select('nivel_permissao, empresa_id')
@@ -72,25 +85,28 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (profileError) {
-      console.error('Error getting user profile:', profileError);
+      console.error('❌ Erro ao buscar perfil do usuário:', profileError);
       throw new Error('User profile not found');
     }
 
+    console.log('👤 Perfil do usuário:', { nivel_permissao: userProfile.nivel_permissao, empresa_id: userProfile.empresa_id });
+
     if (userProfile.nivel_permissao !== 'admin') {
-      console.log('User permission level:', userProfile.nivel_permissao);
+      console.error('❌ Usuário não tem permissão de admin:', userProfile.nivel_permissao);
       throw new Error('Admin permission required to invite users');
     }
 
-    console.log('User is admin, proceeding with invite...');
+    console.log('✅ Usuário é admin, prosseguindo com o convite...');
 
     // Parse request body
     const { email, nome, nivel_permissao }: InviteRequest = await req.json();
 
     if (!email || !nome || !nivel_permissao) {
+      console.error('❌ Campos obrigatórios faltando:', { email: !!email, nome: !!nome, nivel_permissao: !!nivel_permissao });
       throw new Error('Missing required fields: email, nome, nivel_permissao');
     }
 
-    console.log('Inviting user:', { email, nome, nivel_permissao });
+    console.log('📧 Enviando convite para:', { email, nome, nivel_permissao });
 
     // Create Supabase admin client for privileged operations
     const supabaseAdmin = createClient(
@@ -118,14 +134,15 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     if (inviteError) {
-      console.error('Error inviting user:', inviteError);
+      console.error('❌ Erro ao enviar convite:', inviteError);
       throw new Error(`Failed to invite user: ${inviteError.message}`);
     }
 
-    console.log('User invited successfully:', inviteData);
+    console.log('✅ Convite enviado com sucesso:', inviteData.user?.id);
 
     // If user was invited successfully, create their profile
     if (inviteData.user) {
+      console.log('👤 Criando perfil do usuário convidado...');
       const { error: profileCreateError } = await supabaseAdmin
         .from('perfis')
         .insert({
@@ -136,11 +153,10 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
       if (profileCreateError) {
-        console.error('Error creating user profile:', profileCreateError);
-        // Don't throw here as the user was already invited
-        console.log('Profile creation failed but invite was successful');
+        console.error('❌ Erro ao criar perfil do usuário:', profileCreateError);
+        console.log('⚠️ Perfil não criado, mas convite foi enviado');
       } else {
-        console.log('User profile created successfully');
+        console.log('✅ Perfil do usuário criado com sucesso');
       }
     }
 
@@ -160,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error('Error in invite-user function:', error);
+    console.error('💥 Erro na função invite-user:', error);
     
     let statusCode = 500;
     let errorMessage = error.message || 'Unknown error occurred';
@@ -168,7 +184,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Set appropriate status codes based on error type
     if (errorMessage.includes('Authorization header is required') || 
         errorMessage.includes('Invalid or expired authentication token') ||
-        errorMessage.includes('User not authenticated')) {
+        errorMessage.includes('User not authenticated') ||
+        errorMessage.includes('Invalid authorization header format') ||
+        errorMessage.includes('Invalid JWT token format')) {
       statusCode = 401;
     } else if (errorMessage.includes('Admin permission required') || 
                errorMessage.includes('not allowed')) {
