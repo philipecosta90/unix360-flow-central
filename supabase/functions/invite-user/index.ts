@@ -110,7 +110,15 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('✅ Usuário é admin, prosseguindo com o convite...');
 
     // Parse request body
-    const { email, nome, nivel_permissao }: InviteRequest = await req.json();
+    let inviteData: InviteRequest;
+try {
+  inviteData = await req.json();
+} catch (e) {
+  console.error('❌ Corpo da requisição não é JSON válido:', e);
+  throw new Error('Invalid JSON body');
+}
+
+const { email, nome, nivel_permissao } = inviteData || {};
 
     if (!email || !nome || !nivel_permissao) {
       console.error('❌ Campos obrigatórios faltando:', { email: !!email, nome: !!nome, nivel_permissao: !!nivel_permissao });
