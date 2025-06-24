@@ -61,9 +61,8 @@ export const useUserInvite = () => {
       }
 
       console.log('✅ Usuário autenticado, token obtido');
-      console.log('🔑 Token JWT (primeiros 50 chars):', session.access_token.substring(0, 50) + '...');
 
-      // Preparar o corpo da requisição
+      // Preparar o corpo da requisição exatamente como esperado pela função
       const requestBody = {
         email: inviteForm.email.trim(),
         nome: inviteForm.nome.trim(),
@@ -72,9 +71,10 @@ export const useUserInvite = () => {
 
       console.log('📦 Enviando dados:', requestBody);
 
-      // Chamar a edge function com o token JWT no header Authorization
+      // Chamar a edge function com POST, JSON correto e headers adequados
       const { data, error } = await supabase.functions.invoke('invite-user', {
-        body: JSON.stringify(requestBody),
+        method: 'POST',
+        body: requestBody,
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
