@@ -22,6 +22,11 @@ interface InviteUserFormProps {
 const permissionLevels = ['admin', 'editor', 'visualizacao', 'operacional'] as const;
 
 export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit }: InviteUserFormProps) => {
+  // Verificar se todos os campos obrigatórios estão preenchidos
+  const isFormValid = inviteForm.email.trim() !== '' && 
+                     inviteForm.nome.trim() !== '' && 
+                     inviteForm.nivel_permissao !== '';
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -57,6 +62,7 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
           onValueChange={(value: "admin" | "editor" | "visualizacao" | "operacional") => 
             setInviteForm(prev => ({ ...prev, nivel_permissao: value }))
           }
+          disabled={isLoading}
         >
           <SelectTrigger>
             <SelectValue />
@@ -88,7 +94,7 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
       <Button 
         type="submit" 
         className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
-        disabled={isLoading}
+        disabled={isLoading || !isFormValid}
       >
         {isLoading ? (
           <>

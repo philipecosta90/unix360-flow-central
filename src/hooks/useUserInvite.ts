@@ -20,6 +20,28 @@ export const useUserInvite = () => {
 
   const handleInviteUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar campos obrigatórios
+    if (!inviteForm.email || !inviteForm.nome || !inviteForm.nivel_permissao) {
+      toast({
+        title: "Erro de validação",
+        description: "Todos os campos são obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteForm.email)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, insira um email válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -41,13 +63,18 @@ export const useUserInvite = () => {
       console.log('✅ Usuário autenticado, token obtido');
       console.log('🔑 Token JWT (primeiros 50 chars):', session.access_token.substring(0, 50) + '...');
 
+      // Preparar o corpo da requisição
+      const requestBody = {
+        email: inviteForm.email.trim(),
+        nome: inviteForm.nome.trim(),
+        nivel_permissao: inviteForm.nivel_permissao
+      };
+
+      console.log('📦 Enviando dados:', requestBody);
+
       // Chamar a edge function com o token JWT no header Authorization
       const { data, error } = await supabase.functions.invoke('invite-user', {
-        body: {
-          email: inviteForm.email,
-          nome: inviteForm.nome,
-          nivel_permissao: inviteForm.nivel_permissao
-        },
+        body: JSON.stringify(requestBody),
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
@@ -93,6 +120,8 @@ export const useUserInvite = () => {
         errorMessage = "Sua sessão expirou. Faça login novamente.";
       } else if (error.message?.includes('Missing required fields')) {
         errorMessage = "Todos os campos são obrigatórios.";
+      } else if (error.message?.includes('Invalid JSON')) {
+        errorMessage = "Erro interno no envio dos dados. Tente novamente.";
       } else if (error.message) {
         errorMessage = error.message;
       }

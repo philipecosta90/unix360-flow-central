@@ -111,14 +111,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Parse request body
     let inviteData: InviteRequest;
-try {
-  inviteData = await req.json();
-} catch (e) {
-  console.error('❌ Corpo da requisição não é JSON válido:', e);
-  throw new Error('Invalid JSON body');
-}
+    try {
+      const body = await req.text();
+      console.log('📄 Corpo da requisição recebido:', body);
+      
+      if (!body || body.trim() === '') {
+        throw new Error('Empty request body');
+      }
+      
+      inviteData = JSON.parse(body);
+      console.log('✅ JSON parseado com sucesso:', inviteData);
+    } catch (e) {
+      console.error('❌ Erro ao processar corpo da requisição:', e);
+      throw new Error('Invalid JSON body');
+    }
 
-const { email, nome, nivel_permissao } = inviteData || {};
+    const { email, nome, nivel_permissao } = inviteData || {};
 
     if (!email || !nome || !nivel_permissao) {
       console.error('❌ Campos obrigatórios faltando:', { email: !!email, nome: !!nome, nivel_permissao: !!nivel_permissao });
@@ -140,7 +148,7 @@ const { email, nome, nivel_permissao } = inviteData || {};
     );
 
     // Invite user using admin client
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    const { data: inviteResponse, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
       {
         data: {
@@ -148,7 +156,7 @@ const { email, nome, nivel_permissao } = inviteData || {};
           nivel_permissao: nivel_permissao,
           empresa_id: userProfile.empresa_id
         },
-        redirectTo: `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.supabase.co/dashboard`
+        redirectTo: `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.supabase.co/auth/v1/verify`
       }
     );
 
@@ -157,15 +165,15 @@ const { email, nome, nivel_permissao } = inviteData || {};
       throw new Error(`Failed to invite user: ${inviteError.message}`);
     }
 
-    console.log('✅ Convite enviado com sucesso:', inviteData.user?.id);
+    console.log('✅ Convite enviado com sucesso:', inviteResponse.user?.id);
 
     // If user was invited successfully, create their profile
-    if (inviteData.user) {
+    if (inviteResponse.user) {
       console.log('👤 Criando perfil do usuário convidado...');
       const { error: profileCreateError } = await supabaseAdmin
         .from('perfis')
         .insert({
-          user_id: inviteData.user.id,
+          user_id: inviteResponse.user.id,
           empresa_id: userProfile.empresa_id,
           nome: nome,
           nivel_permissao: nivel_permissao
@@ -183,7 +191,7 @@ const { email, nome, nivel_permissao } = inviteData || {};
       JSON.stringify({
         success: true,
         message: 'User invited successfully',
-        user: inviteData.user
+        user: inviteResponse.user
       }),
       {
         status: 200,
@@ -209,7 +217,9 @@ const { email, nome, nivel_permissao } = inviteData || {};
     } else if (errorMessage.includes('Admin permission required') || 
                errorMessage.includes('not allowed')) {
       statusCode = 403;
-    } else if (errorMessage.includes('Missing required fields')) {
+    } else if (errorMessage.includes('Missing required fields') ||
+               errorMessage.includes('Invalid JSON body') ||
+               errorMessage.includes('Empty request body')) {
       statusCode = 400;
     }
     
