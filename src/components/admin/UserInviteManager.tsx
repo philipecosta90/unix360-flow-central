@@ -24,6 +24,15 @@ export const UserInviteManager = () => {
     try {
       console.log('Sending invite request:', inviteForm);
 
+      // Verify user is authenticated before making the request
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Você precisa estar logado para enviar convites');
+      }
+
+      console.log('User session found, calling invite function...');
+
       // Call the edge function to invite user
       const { data, error } = await supabase.functions.invoke('invite-user', {
         body: {
@@ -62,10 +71,12 @@ export const UserInviteManager = () => {
       
       let errorMessage = "Não foi possível enviar o convite.";
       
-      if (error.message?.includes('not allowed')) {
-        errorMessage = "Você não tem permissão para convidar usuários. Apenas administradores podem enviar convites.";
-      } else if (error.message?.includes('admin permission required')) {
-        errorMessage = "Permissão de administrador necessária para enviar convites.";
+      if (error.message?.includes('estar logado')) {
+        errorMessage = "Você precisa estar logado para enviar convites.";
+      } else if (error.message?.includes('Admin permission required')) {
+        errorMessage = "Apenas administradores podem enviar convites.";
+      } else if (error.message?.includes('Invalid or expired authentication')) {
+        errorMessage = "Sua sessão expirou. Faça login novamente.";
       } else if (error.message?.includes('Missing required fields')) {
         errorMessage = "Todos os campos são obrigatórios.";
       } else if (error.message) {

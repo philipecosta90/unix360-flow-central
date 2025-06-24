@@ -23,22 +23,20 @@ const handler = async (req: Request): Promise<Response> => {
     // Get the authorization header
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
-      throw new Error('Missing authorization header');
+      console.error('Missing authorization header');
+      throw new Error('Authorization header is required');
     }
 
-    // Create Supabase client with service role key for admin operations
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+    // Extract the JWT token
+    const token = authHeader.replace('Bearer ', '');
+    if (!token || token === authHeader) {
+      console.error('Invalid authorization header format');
+      throw new Error('Invalid authorization header format');
+    }
 
-    // Create regular client to verify current user
+    console.log('Authorization header found, validating token...');
+
+    // Create Supabase client for user verification using the JWT token
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -51,14 +49,20 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    // Get current user from JWT token
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error('Error getting user:', userError);
+    // Verify the user token and get user info
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError) {
+      console.error('Error verifying user token:', userError);
+      throw new Error('Invalid or expired authentication token');
+    }
+
+    if (!user) {
+      console.error('No user found for provided token');
       throw new Error('User not authenticated');
     }
 
-    console.log('Current user ID:', user.id);
+    console.log('User authenticated successfully:', user.id);
 
     // Check if current user is admin
     const { data: userProfile, error: profileError } = await supabase
@@ -74,7 +78,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (userProfile.nivel_permissao !== 'admin') {
       console.log('User permission level:', userProfile.nivel_permissao);
-      throw new Error('User not allowed - admin permission required');
+      throw new Error('Admin permission required to invite users');
     }
 
     console.log('User is admin, proceeding with invite...');
@@ -87,6 +91,18 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log('Inviting user:', { email, nome, nivel_permissao });
+
+    // Create Supabase admin client for privileged operations
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
 
     // Invite user using admin client
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
@@ -146,13 +162,28 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('Error in invite-user function:', error);
     
+    let statusCode = 500;
+    let errorMessage = error.message || 'Unknown error occurred';
+
+    // Set appropriate status codes based on error type
+    if (errorMessage.includes('Authorization header is required') || 
+        errorMessage.includes('Invalid or expired authentication token') ||
+        errorMessage.includes('User not authenticated')) {
+      statusCode = 401;
+    } else if (errorMessage.includes('Admin permission required') || 
+               errorMessage.includes('not allowed')) {
+      statusCode = 403;
+    } else if (errorMessage.includes('Missing required fields')) {
+      statusCode = 400;
+    }
+    
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Unknown error occurred'
+        error: errorMessage
       }),
       {
-        status: error.message.includes('not allowed') ? 403 : 500,
+        status: statusCode,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,
