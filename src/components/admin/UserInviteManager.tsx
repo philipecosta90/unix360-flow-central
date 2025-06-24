@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,26 +22,27 @@ export const UserInviteManager = () => {
     setIsLoading(true);
 
     try {
-      // Criar usuário via Admin API do Supabase
-      const { data, error } = await supabase.auth.admin.inviteUserByEmail(
-        inviteForm.email,
-        {
-          data: {
-            nome: inviteForm.nome,
-            nivel_permissao: inviteForm.nivel_permissao
-          },
-          redirectTo: `${window.location.origin}/dashboard`
+      console.log('Sending invite request:', inviteForm);
+
+      // Call the edge function to invite user
+      const { data, error } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email: inviteForm.email,
+          nome: inviteForm.nome,
+          nivel_permissao: inviteForm.nivel_permissao
         }
-      );
+      });
+
+      console.log('Invite response:', { data, error });
 
       if (error) {
-        console.error('Erro ao convidar usuário:', error);
-        toast({
-          title: "Erro ao enviar convite",
-          description: error.message || "Não foi possível enviar o convite.",
-          variant: "destructive",
-        });
-        return;
+        console.error('Error calling invite function:', error);
+        throw new Error(error.message || 'Failed to call invite function');
+      }
+
+      if (!data?.success) {
+        console.error('Invite function returned error:', data?.error);
+        throw new Error(data?.error || 'Unknown error from invite function');
       }
 
       toast({
@@ -57,11 +57,24 @@ export const UserInviteManager = () => {
         nivel_permissao: "operacional"
       });
 
-    } catch (error) {
-      console.error('Erro inesperado:', error);
+    } catch (error: any) {
+      console.error('Error inviting user:', error);
+      
+      let errorMessage = "Não foi possível enviar o convite.";
+      
+      if (error.message?.includes('not allowed')) {
+        errorMessage = "Você não tem permissão para convidar usuários. Apenas administradores podem enviar convites.";
+      } else if (error.message?.includes('admin permission required')) {
+        errorMessage = "Permissão de administrador necessária para enviar convites.";
+      } else if (error.message?.includes('Missing required fields')) {
+        errorMessage = "Todos os campos são obrigatórios.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
-        title: "Erro inesperado",
-        description: "Tente novamente mais tarde.",
+        title: "Erro ao enviar convite",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
