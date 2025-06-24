@@ -25,7 +25,7 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
   // Verificar se todos os campos obrigatórios estão preenchidos
   const isFormValid = inviteForm.email.trim() !== '' && 
                      inviteForm.nome.trim() !== '' && 
-                     inviteForm.nivel_permissao !== '';
+                     inviteForm.nivel_permissao;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
