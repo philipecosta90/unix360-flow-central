@@ -22,7 +22,7 @@ export const prospectFormSchema = z.object({
   observacoes: z.string().optional(),
 });
 
-// Esquema de validação para login (se necessário)
+// Esquema de validação para login
 export const loginSchema = z.object({
   email: z.string()
     .min(1, "Email é obrigatório")

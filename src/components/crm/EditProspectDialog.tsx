@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { prospectFormSchema } from "@/utils/inputValidation";
+import { prospectFormSchema, sanitizeInput, sanitizeHtml } from "@/utils/inputValidation";
 import { z } from "zod";
 
 interface CRMProspect {
@@ -78,7 +78,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
       empresa_cliente: "",
       cargo: "",
       stage: "default",
-      valor_estimado: "",
+      valor_estimado: 0, // Changed from string to number
       origem: "",
       tags: "",
       responsavel_id: "default",
@@ -97,7 +97,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
         empresa_cliente: prospect.empresa_cliente || "",
         cargo: prospect.cargo || "",
         stage: prospect.stage || "default",
-        valor_estimado: prospect.valor_estimado?.toString() || "",
+        valor_estimado: prospect.valor_estimado || 0, // Changed to number
         origem: prospect.origem || "",
         tags: prospect.tags?.join(", ") || "",
         responsavel_id: prospect.responsavel_id || "default",
@@ -154,7 +154,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
         empresa_cliente: data.empresa_cliente ? sanitizeInput(data.empresa_cliente) : null,
         cargo: data.cargo ? sanitizeInput(data.cargo) : null,
         stage: data.stage === "default" ? null : data.stage,
-        valor_estimado: data.valor_estimado ? parseFloat(data.valor_estimado) : null,
+        valor_estimado: typeof data.valor_estimado === 'number' ? data.valor_estimado : (data.valor_estimado ? parseFloat(data.valor_estimado.toString()) : null),
         origem: data.origem ? sanitizeInput(data.origem) : null,
         tags: data.tags ? data.tags.split(',').map(tag => sanitizeInput(tag)).filter(Boolean) : [],
         responsavel_id: data.responsavel_id === "default" ? null : data.responsavel_id,

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { validateAndSanitize, loginFormSchema, sanitizeInput } from "@/utils/inputValidation";
+import { validateAndSanitize, loginSchema, sanitizeInput } from "@/utils/inputValidation";
 
 interface LoginFormTabProps {
   isLoading: boolean;
@@ -48,7 +47,7 @@ export const LoginFormTab = ({
     setValidationErrors([]);
 
     // Validate input using Zod's SafeParseReturnType
-    const result = validateAndSanitize(loginForm, loginFormSchema);
+    const result = validateAndSanitize(loginForm, loginSchema);
     if (!result.success) {
       setValidationErrors(result.error.issues.map(err => err.message));
       return;
