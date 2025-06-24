@@ -31,10 +31,13 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
   const { data: stages = [] } = useCRMStages();
   const [activeProspect, setActiveProspect] = useState<CRMProspect | null>(null);
 
+  // Safe check for prospects array
+  const safeProspects = Array.isArray(prospects) ? prospects : [];
+
   const updateProspectMutation = useMutation({
     mutationFn: async ({ prospectId, newStageId }: { prospectId: string; newStageId: string }) => {
       // Encontrar o nome da etapa pelo ID para garantir consistência
-      const targetStage = stages.find(stage => stage.id === newStageId);
+      const targetStage = stages.find(stage => stage && stage.id === newStageId);
       const newStageValue = targetStage?.id || newStageId; // Usar ID da stage
       
       console.log('🔄 Atualizando prospect no banco:', { 
@@ -56,15 +59,17 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
       }
 
       // Log stage change activity
-      await supabase
-        .from('crm_atividades')
-        .insert({
-          prospect_id: prospectId,
-          tipo: 'stage_change',
-          titulo: `Movido para ${targetStage?.nome || newStageId}`,
-          descricao: `Prospect movido para a etapa ${targetStage?.nome || newStageId}`,
-          created_by: userProfile?.id,
-        });
+      if (userProfile?.id) {
+        await supabase
+          .from('crm_atividades')
+          .insert({
+            prospect_id: prospectId,
+            tipo: 'stage_change',
+            titulo: `Movido para ${targetStage?.nome || newStageId}`,
+            descricao: `Prospect movido para a etapa ${targetStage?.nome || newStageId}`,
+            created_by: userProfile.id,
+          });
+      }
 
       console.log('✅ Prospect atualizado com sucesso - novo stage:', newStageValue);
     },
@@ -89,7 +94,7 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
 
   const handleDragStart = (event: DragStartEvent) => {
     const prospectId = event.active.id as string;
-    const prospect = prospects.find(p => p.id === prospectId);
+    const prospect = safeProspects.find(p => p && p.id === prospectId);
     setActiveProspect(prospect || null);
     console.log('🎯 Iniciando drag do prospect:', prospect?.nome, 'ID:', prospectId, 'da stage:', prospect?.stage);
   };
@@ -113,8 +118,8 @@ export const useCRMDragAndDrop = (prospects: CRMProspect[]) => {
     const prospectId = active.id as string;
     const newStageId = over.id as string;
 
-    const prospect = prospects.find(p => p.id === prospectId);
-    const targetStage = stages.find(s => s.id === newStageId);
+    const prospect = safeProspects.find(p => p && p.id === prospectId);
+    const targetStage = stages.find(s => s && s.id === newStageId);
     
     console.log('🎯 Dados do drag:', {
       prospect: prospect ? `${prospect.nome} (stage atual: ${prospect.stage})` : 'não encontrado',

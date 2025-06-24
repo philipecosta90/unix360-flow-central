@@ -27,12 +27,14 @@ export const TasksModule = () => {
   const { settings: nicheSettings, isLoading: nicheLoading } = useNicheSettings();
 
   const filteredTasks = useMemo(() => {
-    if (!tasks) return [];
+    if (!tasks || !Array.isArray(tasks)) return [];
 
     return tasks.filter(task => {
+      if (!task) return false;
+      
       // Filtro de data
-      if (filters.startDate && task.vencimento < filters.startDate) return false;
-      if (filters.endDate && task.vencimento > filters.endDate) return false;
+      if (filters.startDate && task.vencimento && task.vencimento < filters.startDate) return false;
+      if (filters.endDate && task.vencimento && task.vencimento > filters.endDate) return false;
       
       // Filtro de tarefas concluídas
       if (!filters.includeCompleted && task.concluida) return false;
@@ -45,9 +47,9 @@ export const TasksModule = () => {
   }, [tasks, filters]);
 
   const overdueCount = useMemo(() => {
-    if (!tasks) return 0;
+    if (!tasks || !Array.isArray(tasks)) return 0;
     const today = new Date().toISOString().split('T')[0];
-    return tasks.filter(task => !task.concluida && task.vencimento < today).length;
+    return tasks.filter(task => task && !task.concluida && task.vencimento && task.vencimento < today).length;
   }, [tasks]);
 
   // Configurações específicas do nicho
@@ -88,7 +90,7 @@ export const TasksModule = () => {
         </Button>
       </div>
 
-      <TasksStats stats={stats} />
+      {stats && <TasksStats stats={stats} />}
 
       {/* Card de Configurações do Nicho */}
       {nicheConfig && (
@@ -101,14 +103,14 @@ export const TasksModule = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Campos Personalizados */}
-            {nicheConfig.customFields && nicheConfig.customFields.length > 0 && (
+            {nicheConfig.customFields && Array.isArray(nicheConfig.customFields) && nicheConfig.customFields.length > 0 && (
               <div>
                 <h4 className="font-medium mb-2">Campos Personalizados Disponíveis:</h4>
                 <div className="flex flex-wrap gap-2">
-                  {nicheConfig.customFields.map((field) => (
-                    <Badge key={field.id} variant="outline">
-                      {field.name} ({field.type})
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                  {nicheConfig.customFields.map((field, index) => (
+                    <Badge key={field?.id || index} variant="outline">
+                      {field?.name || 'Campo'} ({field?.type || 'text'})
+                      {field?.required && <span className="text-red-500 ml-1">*</span>}
                     </Badge>
                   ))}
                 </div>
@@ -116,13 +118,13 @@ export const TasksModule = () => {
             )}
 
             {/* Métricas */}
-            {nicheConfig.metrics && nicheConfig.metrics.length > 0 && (
+            {nicheConfig.metrics && Array.isArray(nicheConfig.metrics) && nicheConfig.metrics.length > 0 && (
               <div>
                 <h4 className="font-medium mb-2">Métricas de Acompanhamento:</h4>
                 <div className="flex flex-wrap gap-2">
                   {nicheConfig.metrics.map((metric, index) => (
                     <Badge key={index} variant="secondary">
-                      {metric}
+                      {metric || 'Métrica'}
                     </Badge>
                   ))}
                 </div>

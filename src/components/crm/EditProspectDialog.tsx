@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,7 +79,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
       empresa_cliente: "",
       cargo: "",
       stage: "default",
-      valor_estimado: 0, // Changed from string to number
+      valor_estimado: 0,
       origem: "",
       tags: "",
       responsavel_id: "default",
@@ -97,7 +98,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
         empresa_cliente: prospect.empresa_cliente || "",
         cargo: prospect.cargo || "",
         stage: prospect.stage || "default",
-        valor_estimado: prospect.valor_estimado || 0, // Changed to number
+        valor_estimado: prospect.valor_estimado || 0,
         origem: prospect.origem || "",
         tags: prospect.tags?.join(", ") || "",
         responsavel_id: prospect.responsavel_id || "default",
@@ -121,7 +122,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
         .order('ordem');
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!userProfile?.empresa_id && open,
   });
@@ -139,7 +140,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
         .eq('ativo', true);
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!userProfile?.empresa_id && open,
   });
@@ -154,7 +155,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
         empresa_cliente: data.empresa_cliente ? sanitizeInput(data.empresa_cliente) : null,
         cargo: data.cargo ? sanitizeInput(data.cargo) : null,
         stage: data.stage === "default" ? null : data.stage,
-        valor_estimado: typeof data.valor_estimado === 'number' ? data.valor_estimado : (data.valor_estimado ? parseFloat(data.valor_estimado.toString()) : null),
+        valor_estimado: typeof data.valor_estimado === 'number' ? data.valor_estimado : (typeof data.valor_estimado === 'string' && data.valor_estimado ? parseFloat(data.valor_estimado) : null),
         origem: data.origem ? sanitizeInput(data.origem) : null,
         tags: data.tags ? data.tags.split(',').map(tag => sanitizeInput(tag)).filter(Boolean) : [],
         responsavel_id: data.responsavel_id === "default" ? null : data.responsavel_id,
@@ -321,7 +322,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="default">Selecione a etapa</SelectItem>
-                        {stages.map((stage) => (
+                        {stages && stages.length > 0 && stages.map((stage) => (
                           <SelectItem key={stage.id} value={stage.id}>
                             {stage.nome}
                           </SelectItem>
@@ -375,7 +376,7 @@ export const EditProspectDialog = ({ prospect, open, onOpenChange }: EditProspec
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="default">Selecione o responsável</SelectItem>
-                        {teamMembers.map((member) => (
+                        {teamMembers && teamMembers.length > 0 && teamMembers.map((member) => (
                           <SelectItem key={member.id} value={member.id}>
                             {member.nome} {member.sobrenome}
                           </SelectItem>

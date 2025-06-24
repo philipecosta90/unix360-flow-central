@@ -5,8 +5,6 @@ import {
   DragOverlay,
   DragStartEvent,
   closestCenter,
-  pointerWithin,
-  rectIntersection,
 } from "@dnd-kit/core";
 import { CRMColumn } from "./CRMColumn";
 import { CRMCard } from "./CRMCard";
@@ -35,21 +33,28 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
   const [selectedProspectId, setSelectedProspectId] = useState<string | null>(null);
   const [showProspectDetail, setShowProspectDetail] = useState(false);
 
-  console.log('🔍 CRMKanbanBoard - Total prospects carregados:', prospects.length);
-  console.log('🔍 CRMKanbanBoard - Stages disponíveis:', stages.map(s => ({ id: s.id, nome: s.nome })));
+  // Safe checks for arrays
+  const safeStages = Array.isArray(stages) ? stages : [];
+  const safeProspects = Array.isArray(prospects) ? prospects : [];
+
+  console.log('🔍 CRMKanbanBoard - Total prospects carregados:', safeProspects.length);
+  console.log('🔍 CRMKanbanBoard - Stages disponíveis:', safeStages.map(s => ({ id: s?.id, nome: s?.nome })));
 
   const getProspectsByStage = (stageId: string) => {
-    const stageProspects = prospects.filter(prospect => prospect.stage === stageId);
+    if (!stageId) return [];
+    const stageProspects = safeProspects.filter(prospect => prospect && prospect.stage === stageId);
     console.log(`🎯 Stage ID "${stageId}" - Total de ${stageProspects.length} prospects encontrados:`,
-      stageProspects.map(p => ({ id: p.id, nome: p.nome, stage: p.stage })));
+      stageProspects.map(p => ({ id: p?.id, nome: p?.nome, stage: p?.stage })));
     return stageProspects;
   };
 
   const getTotalValueByStage = (stageId: string) => { 
-    return getProspectsByStage(stageId).reduce((total, prospect) => total + (prospect.valor_estimado || 0), 0);
+    const stageProspects = getProspectsByStage(stageId);
+    return stageProspects.reduce((total, prospect) => total + (prospect?.valor_estimado || 0), 0);
   };
 
   const handleProspectClick = (prospectId: string) => {
+    if (!prospectId) return;
     setSelectedProspectId(prospectId);
     setShowProspectDetail(true);
   };
@@ -66,7 +71,9 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-6 overflow-x-auto pb-4 min-h-[calc(100vh-250px)]">
-          {stages.map((stage) => {
+          {safeStages.map((stage) => {
+            if (!stage || !stage.id) return null;
+            
             const stageProspects = getProspectsByStage(stage.id);
             const stageValue = getTotalValueByStage(stage.id);
             

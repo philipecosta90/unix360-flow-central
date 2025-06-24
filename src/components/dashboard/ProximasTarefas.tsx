@@ -46,7 +46,10 @@ export const ProximasTarefas = () => {
     );
   }
 
-  if (!proximasTarefas?.length) {
+  // Safe check for tasks array
+  const safeTasks = Array.isArray(proximasTarefas) ? proximasTarefas : [];
+
+  if (!safeTasks.length) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">Nenhuma tarefa próxima</p>
@@ -55,36 +58,50 @@ export const ProximasTarefas = () => {
   }
 
   const formatarDataVencimento = (vencimento: string) => {
-    const data = new Date(vencimento);
-    const hoje = new Date();
-    const diffTime = data.getTime() - hoje.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (!vencimento) return "Sem data";
+    
+    try {
+      const data = new Date(vencimento);
+      const hoje = new Date();
+      const diffTime = data.getTime() - hoje.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return "Hoje";
-    if (diffDays === 1) return "Amanhã";
-    if (diffDays <= 7) return `Em ${diffDays} dias`;
-    return data.toLocaleDateString('pt-BR');
+      if (diffDays === 0) return "Hoje";
+      if (diffDays === 1) return "Amanhã";
+      if (diffDays <= 7) return `Em ${diffDays} dias`;
+      return data.toLocaleDateString('pt-BR');
+    } catch {
+      return "Data inválida";
+    }
   };
 
   const getPrioridade = (vencimento: string) => {
-    const data = new Date(vencimento);
-    const hoje = new Date();
-    const diffTime = data.getTime() - hoje.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (!vencimento) return { label: "Normal", color: "bg-green-100 text-green-600" };
+    
+    try {
+      const data = new Date(vencimento);
+      const hoje = new Date();
+      const diffTime = data.getTime() - hoje.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays <= 1) return { label: "Urgente", color: "bg-red-100 text-red-600" };
-    if (diffDays <= 3) return { label: "Alta", color: "bg-orange-100 text-orange-600" };
-    return { label: "Normal", color: "bg-green-100 text-green-600" };
+      if (diffDays <= 1) return { label: "Urgente", color: "bg-red-100 text-red-600" };
+      if (diffDays <= 3) return { label: "Alta", color: "bg-orange-100 text-orange-600" };
+      return { label: "Normal", color: "bg-green-100 text-green-600" };
+    } catch {
+      return { label: "Normal", color: "bg-green-100 text-green-600" };
+    }
   };
 
   return (
     <>
-      {proximasTarefas.map((task, index) => {
+      {safeTasks.map((task, index) => {
+        if (!task) return null;
+        
         const prioridade = getPrioridade(task.vencimento);
         return (
-          <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+          <div key={task.id || index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
             <div>
-              <p className="text-sm font-medium text-gray-900">{task.descricao}</p>
+              <p className="text-sm font-medium text-gray-900">{task.descricao || 'Tarefa sem descrição'}</p>
               <p className="text-xs text-gray-600">{formatarDataVencimento(task.vencimento)}</p>
             </div>
             <Badge className={`px-2 py-1 text-xs rounded-full ${prioridade.color}`}>

@@ -72,7 +72,9 @@ export const ClientsModule = () => {
   }, [userProfile?.empresa_id]);
 
   const filteredClients = clients.filter(client => {
-    const matchesSearch = client.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    if (!client) return false;
+    
+    const matchesSearch = client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          client.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "todos" || client.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -99,12 +101,14 @@ export const ClientsModule = () => {
   };
 
   const handleAddClient = async (clientData: any) => {
+    if (!clientData || !userProfile?.empresa_id) return;
+
     try {
       const { error } = await supabase
         .from('clientes')
         .insert([{
           ...clientData,
-          empresa_id: userProfile?.empresa_id,
+          empresa_id: userProfile.empresa_id,
         }]);
 
       if (error) throw error;
@@ -127,7 +131,7 @@ export const ClientsModule = () => {
   };
 
   const handleEditClient = async (clientData: any) => {
-    if (!editingClient) return;
+    if (!editingClient || !clientData) return;
 
     try {
       const { error } = await supabase
@@ -154,13 +158,13 @@ export const ClientsModule = () => {
     }
   };
 
-  // CORREÇÃO: Função para visualizar detalhes do cliente corrigida
   const handleViewDetails = (client: Cliente) => {
+    if (!client) return;
     console.log('👁️ Visualizando detalhes do cliente:', client.nome);
     setSelectedClient(client);
   };
 
-  // CORREÇÃO: Se um cliente está selecionado, mostrar a tela de detalhes
+  // Se um cliente está selecionado, mostrar a tela de detalhes
   if (selectedClient) {
     return (
       <ClientDetail 
@@ -198,7 +202,7 @@ export const ClientsModule = () => {
               <Input
                 placeholder="Buscar clientes..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value || "")}
                 className="pl-10"
               />
             </div>
@@ -246,77 +250,81 @@ export const ClientsModule = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredClients.map((client) => (
-                <Card key={client.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarFallback className="bg-[#43B26D] text-white">
-                          {client.nome.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{client.nome}</CardTitle>
-                        {client.email && (
-                          <p className="text-sm text-gray-600">{client.email}</p>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Badge className={getStatusColor(client.status)}>
-                          {getStatusLabel(client.status)}
-                        </Badge>
-                        {client.plano_contratado && (
-                          <span className="text-sm text-gray-600">{client.plano_contratado}</span>
-                        )}
-                      </div>
-                      
-                      {client.tags && client.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {client.tags.map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
+              {filteredClients.map((client) => {
+                if (!client || !client.id) return null;
+                
+                return (
+                  <Card key={client.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center space-x-3">
+                        <Avatar>
+                          <AvatarFallback className="bg-[#43B26D] text-white">
+                            {client.nome ? client.nome.split(' ').map(n => n[0]).join('').substring(0, 2) : 'CL'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <CardTitle className="text-lg">{client.nome || 'Nome não informado'}</CardTitle>
+                          {client.email && (
+                            <p className="text-sm text-gray-600">{client.email}</p>
+                          )}
                         </div>
-                      )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Badge className={getStatusColor(client.status)}>
+                            {getStatusLabel(client.status)}
+                          </Badge>
+                          {client.plano_contratado && (
+                            <span className="text-sm text-gray-600">{client.plano_contratado}</span>
+                          )}
+                        </div>
+                        
+                        {client.tags && Array.isArray(client.tags) && client.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {client.tags.map((tag, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
 
-                      <div className="flex items-center justify-between pt-2 border-t">
-                        <span className="text-sm text-gray-600">
-                          Criado em: {new Date(client.created_at).toLocaleDateString('pt-BR')}
-                        </span>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log('✏️ Editando cliente:', client.nome);
-                              setEditingClient(client);
-                            }}
-                          >
-                            Editar
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log('👁️ Botão Ver detalhes clicado para:', client.nome);
-                              handleViewDetails(client);
-                            }}
-                          >
-                            Ver detalhes
-                          </Button>
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-sm text-gray-600">
+                            Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '-'}
+                          </span>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('✏️ Editando cliente:', client.nome);
+                                setEditingClient(client);
+                              }}
+                            >
+                              Editar
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('👁️ Botão Ver detalhes clicado para:', client.nome);
+                                handleViewDetails(client);
+                              }}
+                            >
+                              Ver detalhes
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </>

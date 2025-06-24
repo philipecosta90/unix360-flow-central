@@ -32,9 +32,9 @@ export const TasksList = ({ tasks }: TasksListProps) => {
   });
 
   const formatDate = (dateString: string) => {
-    const dateSegura = (dateString ?? "").toString();
-    if (!dateSegura) return "-";
+    if (!dateString) return "-";
     try {
+      const dateSegura = dateString.toString();
       return new Date(dateSegura).toLocaleDateString('pt-BR');
     } catch {
       return "-";
@@ -43,8 +43,9 @@ export const TasksList = ({ tasks }: TasksListProps) => {
 
   const getClientName = (clientId: string | null) => {
     if (!clientId) return "Não vinculado";
-    const client = prospects.find(p => p.id === clientId);
-    return (client?.nome ?? "Cliente não encontrado").toString();
+    if (!prospects || prospects.length === 0) return "Cliente não encontrado";
+    const client = prospects.find(p => p && p.id === clientId);
+    return client?.nome || "Cliente não encontrado";
   };
 
   const getStatusBadge = (vencimento: string, concluida: boolean) => {
@@ -57,7 +58,15 @@ export const TasksList = ({ tasks }: TasksListProps) => {
       );
     }
 
-    const vencimentoSeguro = (vencimento ?? "").toString();
+    if (!vencimento) {
+      return (
+        <Badge className="bg-blue-100 text-blue-800">
+          Pendente
+        </Badge>
+      );
+    }
+
+    const vencimentoSeguro = vencimento.toString();
     const today = new Date().toISOString().split('T')[0];
     const isOverdue = vencimentoSeguro < today;
     const isDueToday = vencimentoSeguro === today;
@@ -90,7 +99,9 @@ export const TasksList = ({ tasks }: TasksListProps) => {
   const getRowClassName = (vencimento: string, concluida: boolean) => {
     if (concluida) return "opacity-60";
     
-    const vencimentoSeguro = (vencimento ?? "").toString();
+    if (!vencimento) return "";
+    
+    const vencimentoSeguro = vencimento.toString();
     const today = new Date().toISOString().split('T')[0];
     const isOverdue = vencimentoSeguro < today;
     const isDueToday = vencimentoSeguro === today;
@@ -108,6 +119,9 @@ export const TasksList = ({ tasks }: TasksListProps) => {
       console.error('Erro ao atualizar tarefa:', error);
     }
   };
+
+  // Safe check for tasks array
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
 
   return (
     <Card>
@@ -127,39 +141,43 @@ export const TasksList = ({ tasks }: TasksListProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tasks.length === 0 ? (
+              {safeTasks.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                     Nenhuma tarefa encontrada
                   </TableCell>
                 </TableRow>
               ) : (
-                tasks.map((task) => (
-                  <TableRow key={task.id} className={getRowClassName((task.vencimento ?? "").toString(), task.concluida)}>
-                    <TableCell className="font-medium">
-                      {formatDate(task.vencimento)}
-                    </TableCell>
-                    <TableCell className={task.concluida ? "line-through text-gray-500" : ""}>
-                      {(task.descricao ?? "Sem descrição").toString()}
-                    </TableCell>
-                    <TableCell>
-                      {getClientName(task.cliente_id)}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge((task.vencimento ?? "").toString(), task.concluida)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleComplete(task.id, !task.concluida)}
-                        className={task.concluida ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
-                      >
-                        {task.concluida ? "Reabrir" : "Concluir"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                safeTasks.map((task) => {
+                  if (!task || !task.id) return null;
+                  
+                  return (
+                    <TableRow key={task.id} className={getRowClassName(task.vencimento || "", task.concluida)}>
+                      <TableCell className="font-medium">
+                        {formatDate(task.vencimento)}
+                      </TableCell>
+                      <TableCell className={task.concluida ? "line-through text-gray-500" : ""}>
+                        {task.descricao || "Sem descrição"}
+                      </TableCell>
+                      <TableCell>
+                        {getClientName(task.cliente_id)}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(task.vencimento || "", task.concluida)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleComplete(task.id, !task.concluida)}
+                          className={task.concluida ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
+                        >
+                          {task.concluida ? "Reabrir" : "Concluir"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
