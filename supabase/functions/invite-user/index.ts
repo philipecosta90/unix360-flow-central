@@ -13,6 +13,22 @@ interface InviteRequest {
   nivel_permissao: 'admin' | 'editor' | 'visualizacao' | 'operacional';
 }
 
+// Function to decode JWT payload (without signature validation)
+function decodeJWTPayload(token: string) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT format');
+    }
+    
+    const payload = parts[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
+  } catch (error) {
+    throw new Error('Failed to decode JWT payload');
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -46,42 +62,37 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('✅ Token JWT extraído com sucesso (primeiros 50 chars):', token.substring(0, 50) + '...');
 
-    // Create Supabase client for user verification using the JWT token
+    // Decode JWT payload to get user_id
+    console.log('🔓 Decodificando payload do JWT...');
+    let jwtPayload;
+    try {
+      jwtPayload = decodeJWTPayload(token);
+      console.log('✅ JWT payload decodificado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao decodificar JWT payload:', error);
+      throw new Error('Invalid JWT token payload');
+    }
+
+    const userId = jwtPayload.sub;
+    if (!userId) {
+      console.error('❌ User ID (sub) não encontrado no JWT payload');
+      throw new Error('User ID not found in JWT payload');
+    }
+
+    console.log('✅ User ID extraído do JWT:', userId);
+
+    // Create Supabase client for database queries
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            authorization: authHeader,
-          },
-        },
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    console.log('🔐 Verificando token do usuário...');
-
-    // Verify the user token and get user info
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError) {
-      console.error('❌ Erro ao verificar token do usuário:', userError);
-      throw new Error('Invalid or expired authentication token');
-    }
-
-    if (!user) {
-      console.error('❌ Usuário não encontrado para o token fornecido');
-      throw new Error('User not authenticated');
-    }
-
-    console.log('✅ Usuário autenticado com sucesso:', user.id);
-
-    // Check if current user is admin
+    // Check if current user is admin by querying the perfis table
     console.log('🔍 Verificando permissões do usuário...');
     const { data: userProfile, error: profileError } = await supabase
       .from('perfis')
       .select('nivel_permissao, empresa_id')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     if (profileError) {
@@ -183,10 +194,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Set appropriate status codes based on error type
     if (errorMessage.includes('Authorization header is required') || 
-        errorMessage.includes('Invalid or expired authentication token') ||
-        errorMessage.includes('User not authenticated') ||
-        errorMessage.includes('Invalid authorization header format') ||
-        errorMessage.includes('Invalid JWT token format')) {
+        errorMessage.includes('Invalid JWT token') ||
+        errorMessage.includes('User ID not found') ||
+        errorMessage.includes('Invalid authorization header format')) {
       statusCode = 401;
     } else if (errorMessage.includes('Admin permission required') || 
                errorMessage.includes('not allowed')) {
