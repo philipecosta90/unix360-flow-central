@@ -60,7 +60,13 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>UniX360 - Menu</DrawerTitle>
+          <DrawerTitle className="flex items-center justify-center">
+            <img 
+              src="/lovable-uploads/c3f86d3c-ab5e-427b-9eec-04bd9a5ce8cd.png" 
+              alt="UniX360" 
+              className="w-[150px] h-auto"
+            />
+          </DrawerTitle>
         </DrawerHeader>
         <div className="px-4 pb-6">
           <nav className="space-y-2">
