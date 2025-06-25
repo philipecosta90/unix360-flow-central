@@ -117,9 +117,6 @@ div[style*="position: fixed"][style*="bottom"][style*="right"] {
   opacity: 0 !important;
   pointer-events: none !important;
 }
-.lovable-badge, 
-.edit-lovable, 
-[data-lovable], 
-a[href*="lovable.so"] {
+#lovable-badge {
   display: none !important;
 }
