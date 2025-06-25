@@ -3,10 +3,8 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Calendar as CalendarIcon, List, Settings } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, List } from "lucide-react";
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
-import { useNicheSettings } from "@/hooks/useNicheSettings";
 import { TasksFilters } from "./TasksFilters";
 import { TasksList } from "./TasksList";
 import { TasksCalendar } from "./TasksCalendar";
@@ -24,7 +22,6 @@ export const TasksModule = () => {
   });
 
   const { tasks, isLoading, stats } = useFinancialTasks();
-  const { settings: nicheSettings, isLoading: nicheLoading } = useNicheSettings();
 
   const filteredTasks = useMemo(() => {
     if (!tasks || !Array.isArray(tasks)) return [];
@@ -52,29 +49,24 @@ export const TasksModule = () => {
     return tasks.filter(task => task && !task.concluida && task.vencimento && task.vencimento < today).length;
   }, [tasks]);
 
-  // Configurações específicas do nicho
-  const nicheConfig = nicheSettings?.config;
-  const nicheType = nicheSettings?.niche_type || 'fitness';
-
-  if (isLoading || nicheLoading) {
+  if (isLoading) {
     return <div className="p-6">Carregando tarefas...</div>;
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Tarefas & Agenda</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Tarefas & Agenda</h1>
             {overdueCount > 0 && (
-              <Badge variant="destructive" className="animate-pulse">
+              <Badge variant="destructive" className="animate-pulse text-xs">
                 {overdueCount} vencida{overdueCount > 1 ? 's' : ''}
               </Badge>
             )}
           </div>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Gerencie suas tarefas e prazos
-            {nicheConfig?.name && ` - ${nicheConfig.name}`}
           </p>
         </div>
         
@@ -83,7 +75,7 @@ export const TasksModule = () => {
             setSelectedTask(null);
             setIsModalOpen(true);
           }}
-          className="bg-[#43B26D] hover:bg-[#37A05B]"
+          className="bg-[#43B26D] hover:bg-[#37A05B] w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
           Nova Tarefa
@@ -92,81 +84,35 @@ export const TasksModule = () => {
 
       {stats && <TasksStats stats={stats} />}
 
-      {/* Card de Configurações do Nicho */}
-      {nicheConfig && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Configurações do Nicho - {nicheConfig.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Campos Personalizados */}
-            {nicheConfig.customFields && Array.isArray(nicheConfig.customFields) && nicheConfig.customFields.length > 0 && (
-              <div>
-                <h4 className="font-medium mb-2">Campos Personalizados Disponíveis:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {nicheConfig.customFields.map((field, index) => (
-                    <Badge key={field?.id || index} variant="outline">
-                      {field?.name || 'Campo'} ({field?.type || 'text'})
-                      {field?.required && <span className="text-red-500 ml-1">*</span>}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Métricas */}
-            {nicheConfig.metrics && Array.isArray(nicheConfig.metrics) && nicheConfig.metrics.length > 0 && (
-              <div>
-                <h4 className="font-medium mb-2">Métricas de Acompanhamento:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {nicheConfig.metrics.map((metric, index) => (
-                    <Badge key={index} variant="secondary">
-                      {metric || 'Métrica'}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Dicas específicas do nicho */}
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
-                {nicheType === 'fitness' && "💪 Dica: Acompanhe a frequência de treinos e evolução dos alunos"}
-                {nicheType === 'consultoria' && "🎯 Dica: Monitore o progresso das sessões e resultados dos clientes"}
-                {nicheType === 'medical' && "🏥 Dica: Organize consultas de retorno e acompanhamento de tratamentos"}
-                {nicheType === 'dental' && "🦷 Dica: Controle prazos de tratamentos e retornos preventivos"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <TasksFilters 
         filters={filters} 
         onFiltersChange={setFilters} 
       />
 
-      <Tabs defaultValue="list" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="list" className="flex items-center gap-2">
+      <Tabs defaultValue="list" className="space-y-4 sm:space-y-6">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="list" className="flex items-center gap-2 flex-1 sm:flex-none">
             <List className="h-4 w-4" />
-            Lista
+            <span className="text-xs sm:text-sm">Lista</span>
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
+          <TabsTrigger value="calendar" className="flex items-center gap-2 flex-1 sm:flex-none">
             <CalendarIcon className="h-4 w-4" />
-            Calendário
+            <span className="text-xs sm:text-sm">Calendário</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="list">
+        <TabsContent value="list" className="space-y-4 sm:space-y-6">
           <TasksList tasks={filteredTasks} />
+          <div className="mt-6">
+            <TasksCalendar tasks={filteredTasks} />
+          </div>
         </TabsContent>
 
-        <TabsContent value="calendar">
+        <TabsContent value="calendar" className="space-y-4 sm:space-y-6">
           <TasksCalendar tasks={filteredTasks} />
+          <div className="mt-6">
+            <TasksList tasks={filteredTasks} />
+          </div>
         </TabsContent>
       </Tabs>
 
