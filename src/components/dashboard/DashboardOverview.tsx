@@ -18,12 +18,12 @@ export const DashboardOverview = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-2">Visão geral do seu negócio</p>
         </div>
 
         {/* Loading skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {[...Array(8)].map((_, index) => (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -111,22 +111,22 @@ export const DashboardOverview = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-2">Visão geral do seu negócio</p>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {kpis.map((kpi, index) => (
           <Card key={index} className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-xs sm:text-sm font-medium text-gray-600 leading-tight">
                 {kpi.title}
               </CardTitle>
-              <span className={`text-2xl ${kpi.color}`}>{kpi.icon}</span>
+              <span className={`text-xl sm:text-2xl ${kpi.color}`}>{kpi.icon}</span>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
+              <div className={`text-lg sm:text-2xl font-bold ${kpi.color} break-words`}>{kpi.value}</div>
               {kpi.title.includes("Mensal") && (
                 <p className="text-xs text-gray-500 mt-1">
                   Referente ao mês atual
@@ -140,7 +140,7 @@ export const DashboardOverview = () => {
       {/* Próximas Tarefas */}
       <Card>
         <CardHeader>
-          <CardTitle>Próximas Tarefas</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Próximas Tarefas</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

@@ -38,7 +38,7 @@ const Index = () => {
   if (loading) {
     console.log('⏳ Still loading...');
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#43B26D] mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando...</p>
@@ -98,9 +98,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex w-full">
-      {/* Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row w-full">
+      {/* Sidebar - Hidden on mobile, visible on desktop */}
+      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
         <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-white border-r border-gray-200">
           <div className="flex items-center flex-shrink-0 px-4">
             <h1 className="text-xl font-bold text-gray-900">UniX360</h1>
@@ -133,14 +133,14 @@ const Index = () => {
       </div>
 
       {/* Main content */}
-      <div className="flex flex-col flex-1 min-h-screen overflow-hidden">
+      <div className="flex flex-col flex-1 lg:ml-64 min-h-screen overflow-hidden">
         <Header 
           user={user} 
           onLogout={signOut}
           onToggleSidebar={() => {}}
         />
         <main className="flex-1 overflow-y-auto bg-gray-50">
-          <div className="p-6">
+          <div className="p-3 sm:p-4 lg:p-6">
             {renderContent()}
           </div>
         </main>

@@ -21,36 +21,36 @@ export const CRMModule = () => {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">CRM</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">CRM</h1>
           <p className="text-gray-600 mt-2">Gerencie seus prospects e oportunidades</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex rounded-lg border bg-gray-50 p-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="flex rounded-lg border bg-gray-50 p-1 w-full sm:w-auto">
             <Button
               variant={currentView === "kanban" ? "default" : "ghost"}
               size="sm"
               onClick={() => setCurrentView("kanban")}
-              className={currentView === "kanban" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}
+              className={`flex-1 sm:flex-none text-xs sm:text-sm ${currentView === "kanban" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}`}
             >
-              <Kanban className="w-4 h-4 mr-2" />
+              <Kanban className="w-4 h-4 mr-1 sm:mr-2" />
               Pipeline
             </Button>
             <Button
               variant={currentView === "dashboard" ? "default" : "ghost"}
               size="sm"
               onClick={() => setCurrentView("dashboard")}
-              className={currentView === "dashboard" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}
+              className={`flex-1 sm:flex-none text-xs sm:text-sm ${currentView === "dashboard" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}`}
             >
-              <BarChart3 className="w-4 h-4 mr-2" />
+              <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
               Dashboard
             </Button>
           </div>
           <Button 
             onClick={() => setShowAddDialog(true)}
-            className="bg-[#43B26D] hover:bg-[#37A05B]"
+            className="bg-[#43B26D] hover:bg-[#37A05B] w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Prospect
@@ -59,14 +59,16 @@ export const CRMModule = () => {
       </div>
 
       {currentView === "dashboard" ? (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <CRMDashboard />
           <CRMFollowupAlerts />
         </div>
       ) : (
         <>
           <CRMFilters filters={filters} onFiltersChange={setFilters} />
-          <CRMKanbanBoard filters={filters} />
+          <div className="overflow-x-auto">
+            <CRMKanbanBoard filters={filters} />
+          </div>
         </>
       )}
 
