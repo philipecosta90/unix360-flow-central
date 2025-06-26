@@ -1,5 +1,4 @@
 
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { Resend } from "npm:resend@2.0.0";
@@ -39,6 +38,8 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log('🚀 Iniciando processamento da função invite-user');
+    console.log('📋 Método da requisição:', req.method);
+    console.log('📋 Content-Type:', req.headers.get('content-type'));
 
     // Get the authorization header
     const authHeader = req.headers.get('authorization');
@@ -111,21 +112,42 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('✅ Usuário é admin, prosseguindo com o convite...');
 
-    // Parse request body
+    // Parse request body - FIXED: Handle both JSON and text properly
     let inviteData: InviteRequest;
     try {
-      const body = await req.text();
-      console.log('📄 Corpo da requisição recebido:', body);
+      const contentType = req.headers.get('content-type') || '';
+      console.log('📋 Content-Type da requisição:', contentType);
       
-      if (!body || body.trim() === '') {
-        throw new Error('Empty request body');
+      let requestBody;
+      
+      // Check if content-type indicates JSON
+      if (contentType.includes('application/json')) {
+        console.log('📄 Parseando como JSON diretamente...');
+        requestBody = await req.json();
+        console.log('✅ JSON parseado diretamente:', requestBody);
+      } else {
+        console.log('📄 Parseando como texto primeiro...');
+        const textBody = await req.text();
+        console.log('📄 Texto recebido:', textBody);
+        
+        if (!textBody || textBody.trim() === '') {
+          throw new Error('Empty request body');
+        }
+        
+        try {
+          requestBody = JSON.parse(textBody);
+          console.log('✅ JSON parseado do texto:', requestBody);
+        } catch (parseError) {
+          console.error('❌ Erro ao fazer parse do JSON:', parseError);
+          console.error('❌ Corpo que causou erro:', textBody);
+          throw new Error('Invalid JSON format in request body');
+        }
       }
       
-      inviteData = JSON.parse(body);
-      console.log('✅ JSON parseado com sucesso:', inviteData);
+      inviteData = requestBody;
     } catch (e) {
       console.error('❌ Erro ao processar corpo da requisição:', e);
-      throw new Error('Invalid JSON body');
+      throw new Error('Corpo da requisição inválido ou vazio');
     }
 
     const { email, nome, nivel_permissao } = inviteData || {};
@@ -204,7 +226,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       // Construir URL de convite personalizada
       const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '') || 'https://hfqzbljiwkrksmjyfdiy';
-      const inviteUrl = `${baseUrl}.supabase.co/auth/v1/verify?token=${inviteResponse.user?.email_confirm_token || 'token'}&type=invite&redirect_to=${encodeURIComponent(window?.location?.origin || 'https://id-preview--80384adc-3096-43a9-9362-e214605557ea.lovable.app/')}`;
+      const inviteUrl = `${baseUrl}.supabase.co/auth/v1/verify?token=${inviteResponse.user?.email_confirm_token || 'token'}&type=invite&redirect_to=${encodeURIComponent('https://id-preview--80384adc-3096-43a9-9362-e214605557ea.lovable.app/')}`;
       
       // Template HTML profissional e responsivo
       const htmlTemplate = `
@@ -360,7 +382,8 @@ const handler = async (req: Request): Promise<Response> => {
       statusCode = 403;
     } else if (errorMessage.includes('Missing required fields') ||
                errorMessage.includes('Invalid JSON body') ||
-               errorMessage.includes('Empty request body')) {
+               errorMessage.includes('Empty request body') ||
+               errorMessage.includes('Corpo da requisição inválido ou vazio')) {
       statusCode = 400;
     }
     
@@ -381,4 +404,3 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
-
