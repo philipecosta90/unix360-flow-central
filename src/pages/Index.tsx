@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
 import { AuthPage } from "@/components/auth/AuthPage";
@@ -97,18 +98,18 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row w-full">
-      {/* Sidebar - Hidden on mobile, visible on desktop */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-        <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-white border-r border-gray-200">
-          <div className="flex items-center flex-shrink-0 px-4">
-            <img 
-              src="/lovable-uploads/c3f86d3c-ab5e-427b-9eec-04bd9a5ce8cd.png" 
-              alt="UniX360" 
-              className="w-[150px] h-auto"
-            />
-          </div>
-          <div className="mt-8 flex-grow flex flex-col">
+    <div className="min-h-screen bg-gray-50 w-full">
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar - Desktop */}
+        <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:z-50">
+          <div className="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 overflow-y-auto">
+            <div className="flex items-center flex-shrink-0 px-4 mb-8">
+              <img 
+                src="/lovable-uploads/c3f86d3c-ab5e-427b-9eec-04bd9a5ce8cd.png" 
+                alt="UniX360" 
+                className="w-[150px] h-auto"
+              />
+            </div>
             <nav className="flex-1 px-2 pb-4 space-y-1">
               {menuItems.map((item) => (
                 <Link
@@ -133,20 +134,20 @@ const Index = () => {
             </nav>
           </div>
         </div>
-      </div>
 
-      {/* Main content */}
-      <div className="flex flex-col flex-1 lg:ml-64 min-h-screen overflow-hidden">
-        <Header 
-          user={user} 
-          onLogout={signOut}
-          onToggleSidebar={() => {}}
-        />
-        <main className="flex-1 overflow-y-auto bg-gray-50">
-          <div className="p-3 sm:p-4 lg:p-6">
-            {renderContent()}
-          </div>
-        </main>
+        {/* Main content area */}
+        <div className="flex flex-col flex-1 lg:ml-64 overflow-hidden">
+          <Header 
+            user={user} 
+            onLogout={signOut}
+            onToggleSidebar={() => {}}
+          />
+          <main className="flex-1 overflow-y-auto bg-gray-50">
+            <div className="p-3 sm:p-4 lg:p-6">
+              {renderContent()}
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );
