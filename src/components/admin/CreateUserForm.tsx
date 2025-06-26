@@ -64,7 +64,7 @@ export const CreateUserForm = () => {
               <Label htmlFor="nivel_permissao">Nível de Permissão</Label>
               <Select
                 value={createForm.nivel_permissao}
-                onValueChange={(value: "admin" | "editor" | "visualizacao" | "operacional") => 
+                onValueChange={(value: "admin" | "visualizacao" | "operacional") => 
                   setCreateForm({ ...createForm, nivel_permissao: value })
                 }
               >
@@ -74,7 +74,6 @@ export const CreateUserForm = () => {
                 <SelectContent>
                   <SelectItem value="operacional">Operacional</SelectItem>
                   <SelectItem value="visualizacao">Visualização</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>

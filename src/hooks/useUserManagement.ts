@@ -7,7 +7,7 @@ interface CreateUserForm {
   email: string;
   nome: string;
   senha: string;
-  nivel_permissao: "admin" | "editor" | "visualizacao" | "operacional";
+  nivel_permissao: "admin" | "visualizacao" | "operacional";
 }
 
 interface ChangePasswordForm {
