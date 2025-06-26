@@ -64,7 +64,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
             <img 
               src="/lovable-uploads/c3f86d3c-ab5e-427b-9eec-04bd9a5ce8cd.png" 
               alt="UniX360" 
-              className="w-[150px] h-auto"
+              className="w-37.5 h-auto"
             />
           </DrawerTitle>
         </DrawerHeader>

@@ -108,8 +108,7 @@ const Index = () => {
               <img 
                 src="/lovable-uploads/c3f86d3c-ab5e-427b-9eec-04bd9a5ce8cd.png" 
                 alt="UniX360" 
-                className="h-10 w-auto max-w-[160px]"
-                style={{ minHeight: '40px' }}
+                className="w-40 h-auto"
               />
             </div>
             <nav className="flex-1 px-2 pb-4 space-y-1">
