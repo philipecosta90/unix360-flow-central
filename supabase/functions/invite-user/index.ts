@@ -1,4 +1,5 @@
 
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { Resend } from "npm:resend@2.0.0";
@@ -38,8 +39,6 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log('🚀 Iniciando processamento da função invite-user');
-    console.log('📋 Método da requisição:', req.method);
-    console.log('🔍 Content-Type:', req.headers.get('content-type'));
 
     // Get the authorization header
     const authHeader = req.headers.get('authorization');
@@ -112,65 +111,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('✅ Usuário é admin, prosseguindo com o convite...');
 
-    // Parse request body com logs detalhados
-    console.log('📄 Iniciando parsing do corpo da requisição...');
-    
-    let requestBody: string;
-    try {
-      requestBody = await req.text();
-      console.log('📄 Corpo da requisição recebido (raw):', requestBody);
-      console.log('📏 Tamanho do corpo:', requestBody ? requestBody.length : 0);
-    } catch (error) {
-      console.error('❌ Erro ao ler o corpo da requisição:', error);
-      throw new Error('Failed to read request body');
-    }
-
-    // Verificar se o corpo não está vazio
-    if (!requestBody || requestBody.trim() === '') {
-      console.error('❌ Corpo da requisição está vazio');
-      throw new Error('Corpo da requisição inválido ou vazio');
-    }
-
-    // Parse JSON
+    // Parse request body
     let inviteData: InviteRequest;
     try {
-      console.log('🔄 Tentando fazer parse do JSON...');
-      inviteData = JSON.parse(requestBody);
-      console.log('✅ JSON parseado com sucesso:', JSON.stringify(inviteData, null, 2));
-    } catch (parseError) {
-      console.error('❌ Erro ao fazer parse do JSON:', parseError);
-      console.error('❌ Conteúdo que causou erro:', requestBody);
-      throw new Error('Corpo da requisição inválido ou vazio');
+      const body = await req.text();
+      console.log('📄 Corpo da requisição recebido:', body);
+      
+      if (!body || body.trim() === '') {
+        throw new Error('Empty request body');
+      }
+      
+      inviteData = JSON.parse(body);
+      console.log('✅ JSON parseado com sucesso:', inviteData);
+    } catch (e) {
+      console.error('❌ Erro ao processar corpo da requisição:', e);
+      throw new Error('Invalid JSON body');
     }
 
-    // Validar estrutura do JSON
     const { email, nome, nivel_permissao } = inviteData || {};
 
     if (!email || !nome || !nivel_permissao) {
-      console.error('❌ Campos obrigatórios faltando:', { 
-        email: !!email, 
-        nome: !!nome, 
-        nivel_permissao: !!nivel_permissao,
-        received_data: inviteData 
-      });
+      console.error('❌ Campos obrigatórios faltando:', { email: !!email, nome: !!nome, nivel_permissao: !!nivel_permissao });
       throw new Error('Missing required fields: email, nome, nivel_permissao');
-    }
-
-    // Validar tipos dos campos
-    if (typeof email !== 'string' || typeof nome !== 'string' || typeof nivel_permissao !== 'string') {
-      console.error('❌ Tipos de campos inválidos:', {
-        email_type: typeof email,
-        nome_type: typeof nome,
-        nivel_permissao_type: typeof nivel_permissao
-      });
-      throw new Error('Invalid field types in request body');
-    }
-
-    // Validar nível de permissão
-    const validPermissions = ['admin', 'editor', 'visualizacao', 'operacional'];
-    if (!validPermissions.includes(nivel_permissao)) {
-      console.error('❌ Nível de permissão inválido:', nivel_permissao);
-      throw new Error('Invalid permission level');
     }
 
     console.log('📧 Enviando convite para:', { email, nome, nivel_permissao });
@@ -397,10 +359,8 @@ const handler = async (req: Request): Promise<Response> => {
                errorMessage.includes('not allowed')) {
       statusCode = 403;
     } else if (errorMessage.includes('Missing required fields') ||
-               errorMessage.includes('Corpo da requisição inválido ou vazio') ||
-               errorMessage.includes('Invalid field types') ||
-               errorMessage.includes('Invalid permission level') ||
-               errorMessage.includes('Failed to read request body')) {
+               errorMessage.includes('Invalid JSON body') ||
+               errorMessage.includes('Empty request body')) {
       statusCode = 400;
     }
     
@@ -421,3 +381,4 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+
