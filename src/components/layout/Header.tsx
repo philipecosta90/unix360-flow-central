@@ -39,7 +39,7 @@ export const Header = ({ user, onLogout, onToggleSidebar }: HeaderProps) => {
             <img 
               src="/lovable-uploads/c3f86d3c-ab5e-427b-9eec-04bd9a5ce8cd.png" 
               alt="UniX360" 
-              className="w-30 h-auto"
+              className="w-[120px] h-auto"
             />
           </div>
           
