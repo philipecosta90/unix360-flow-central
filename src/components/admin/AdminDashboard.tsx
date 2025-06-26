@@ -1,7 +1,7 @@
 
 import { AdminMetrics } from "./AdminMetrics";
 import { CompanyList } from "./CompanyList";
-import { CreateUserForm } from "./CreateUserForm";
+import { UserInviteManager } from "./UserInviteManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, UserPlus, BarChart3 } from "lucide-react";
 
@@ -22,8 +22,8 @@ export const AdminDashboard = () => {
           </TabsTrigger>
           <TabsTrigger value="users" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <UserPlus className="h-4 w-4" />
-            <span className="hidden sm:inline">Cadastrar Usuários</span>
-            <span className="sm:hidden">Usuários</span>
+            <span className="hidden sm:inline">Convidar Usuários</span>
+            <span className="sm:hidden">Convites</span>
           </TabsTrigger>
           <TabsTrigger value="companies" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Building2 className="h-4 w-4" />
@@ -42,7 +42,7 @@ export const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4 sm:space-y-6">
-          <CreateUserForm />
+          <UserInviteManager />
         </TabsContent>
 
         <TabsContent value="companies" className="space-y-4 sm:space-y-6">
