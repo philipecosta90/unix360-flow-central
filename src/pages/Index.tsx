@@ -1,5 +1,4 @@
 
-
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
 import { AuthPage } from "@/components/auth/AuthPage";
@@ -108,7 +107,7 @@ const Index = () => {
               <img 
                 src="/lovable-uploads/c3f86d3c-ab5e-427b-9eec-04bd9a5ce8cd.png" 
                 alt="UniX360" 
-                className="h-10 w-auto max-w-[160px]"
+                className="h-auto w-[160px] max-w-[160px]"
                 style={{ minHeight: '40px' }}
               />
             </div>
@@ -156,4 +155,3 @@ const Index = () => {
 };
 
 export default Index;
-
