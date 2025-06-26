@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -185,6 +186,63 @@ const handler = async (req: Request): Promise<Response> => {
       } else {
         console.log('✅ Perfil do usuário criado com sucesso');
       }
+    }
+
+    // Send custom email using Resend with the new sender email
+    console.log('📧 Enviando e-mail de convite personalizado via Resend...');
+    try {
+      const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+      
+      const inviteUrl = `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.supabase.co/auth/v1/verify?token=${inviteResponse.user?.confirmation_sent_at}&type=invite&redirect_to=${encodeURIComponent('https://your-app-domain.com/login')}`;
+      
+      const { data: emailData, error: emailError } = await resend.emails.send({
+        from: 'UniX360 <uni.x360app@gmail.com>',
+        to: [email],
+        subject: 'Convite para acessar o UniX360',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #333; margin-bottom: 10px;">Bem-vindo ao UniX360!</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+              <h2 style="color: #333; margin-top: 0;">Olá, ${nome}!</h2>
+              <p style="color: #666; line-height: 1.6;">
+                Você foi convidado para acessar o sistema UniX360 com nível de permissão <strong>${nivel_permissao}</strong>.
+              </p>
+              <p style="color: #666; line-height: 1.6;">
+                Para concluir seu cadastro e definir sua senha, clique no botão abaixo:
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${inviteUrl}" 
+                 style="background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                Aceitar Convite
+              </a>
+            </div>
+            
+            <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
+              <p style="color: #999; font-size: 12px; text-align: center;">
+                Este convite foi enviado para ${email}. Se você não esperava receber este e-mail, pode ignorá-lo com segurança.
+              </p>
+              <p style="color: #999; font-size: 12px; text-align: center;">
+                © 2024 UniX360 - Sistema de Gestão Integrada
+              </p>
+            </div>
+          </div>
+        `,
+      });
+
+      if (emailError) {
+        console.error('❌ Erro ao enviar e-mail via Resend:', emailError);
+        // Não falha a operação se o e-mail personalizado falhar, pois o convite do Supabase já foi enviado
+        console.log('⚠️ E-mail personalizado não enviado, mas convite do Supabase foi processado');
+      } else {
+        console.log('✅ E-mail personalizado enviado via Resend:', emailData);
+      }
+    } catch (emailSendError) {
+      console.error('❌ Erro ao processar envio de e-mail via Resend:', emailSendError);
     }
 
     return new Response(
