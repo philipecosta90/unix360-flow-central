@@ -33,18 +33,7 @@ export const Header = ({ user, onLogout, onToggleSidebar }: HeaderProps) => {
             isOpen={mobileMenuOpen} 
             onOpenChange={setMobileMenuOpen} 
           />
-          
-          {/* Logo for mobile */}
-          <div className="block lg:hidden">
-            <img 
-              src="/lovable-uploads/c3f86d3c-ab5e-427b-9eec-04bd9a5ce8cd.png" 
-              alt="UniX360" 
-              className="w-[120px] h-auto"
-            />
-          </div>
-          
-          {/* Welcome text for desktop */}
-          <div className="min-w-0 flex-1 hidden lg:block">
+          <div className="min-w-0 flex-1">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
               Bem-vindo, {safeName || "Usuário"}
             </h2>

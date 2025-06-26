@@ -33,14 +33,10 @@ export const AuthPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#43B26D]/10 to-[#43B26D]/5 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex flex-col items-center mb-4">
-            <img 
-              src="/lovable-uploads/e9146f7f-e53b-4af0-b4b1-a233c944a174.png" 
-              alt="UniX360 Logo" 
-              className="w-[90px] h-auto mb-2"
-            />
-            <CardTitle className="text-2xl">UniX360</CardTitle>
+          <div className="w-16 h-16 bg-[#43B26D] rounded-lg flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold text-2xl">X</span>
           </div>
+          <CardTitle className="text-2xl">UniX360</CardTitle>
           <CardDescription>
             Acesso restrito por convite
           </CardDescription>

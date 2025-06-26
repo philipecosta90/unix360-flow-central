@@ -8,6 +8,7 @@ import { useNicheSettings } from "@/hooks/useNicheSettings";
 import { CSDashboard } from "./CSDashboard";
 import { CSOnboarding } from "./CSOnboarding";
 import { CSInteracoes } from "./CSInteracoes";
+import { CSNPS } from "./CSNPS";
 import { CSClientList } from "./CSClientList";
 
 export const CSModule = () => {
@@ -41,11 +42,12 @@ export const CSModule = () => {
       )}
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
           <TabsTrigger value="interacoes">Interações</TabsTrigger>
+          <TabsTrigger value="nps">Satisfação</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
@@ -62,6 +64,10 @@ export const CSModule = () => {
 
         <TabsContent value="interacoes" className="space-y-6">
           <CSInteracoes selectedClient={selectedClient} />
+        </TabsContent>
+
+        <TabsContent value="nps" className="space-y-6">
+          <CSNPS selectedClient={selectedClient} />
         </TabsContent>
       </Tabs>
     </div>

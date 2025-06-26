@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useCustomerSuccess } from "@/hooks/useCustomerSuccess";
-import { ClientDetailsModal } from "./ClientDetailsModal";
 import { Search, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 
 interface CSClientListProps {
@@ -16,8 +15,6 @@ export const CSClientList = ({ onSelectClient }: CSClientListProps) => {
   const { useCSData } = useCustomerSuccess();
   const { data: csData, isLoading } = useCSData();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredClients = csData?.clientes?.filter(cliente =>
     cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -43,16 +40,6 @@ export const CSClientList = ({ onSelectClient }: CSClientListProps) => {
     return { label: "Onboarding", color: "bg-yellow-100 text-yellow-600", icon: Clock };
   };
 
-  const handleViewDetails = (clientId: string) => {
-    setSelectedClientId(clientId);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedClientId(null);
-  };
-
   if (isLoading) {
     return (
       <Card>
@@ -64,78 +51,74 @@ export const CSClientList = ({ onSelectClient }: CSClientListProps) => {
   }
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Clientes</CardTitle>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar clientes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredClients.length > 0 ? (
-              filteredClients.map((cliente) => {
-                const status = getClientStatus(cliente);
-                const StatusIcon = status.icon;
-                
-                return (
-                  <div
-                    key={cliente.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-600">
-                          {cliente.nome.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{cliente.nome}</p>
-                        <p className="text-sm text-gray-600">{cliente.email}</p>
-                        {cliente.telefone && (
-                          <p className="text-xs text-gray-500">{cliente.telefone}</p>
-                        )}
-                      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Lista de Clientes</CardTitle>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Buscar clientes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {filteredClients.length > 0 ? (
+            filteredClients.map((cliente) => {
+              const status = getClientStatus(cliente);
+              const StatusIcon = status.icon;
+              
+              return (
+                <div
+                  key={cliente.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                  onClick={() => onSelectClient(cliente.id)}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-gray-600">
+                        {cliente.nome.charAt(0).toUpperCase()}
+                      </span>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Badge className={status.color}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
-                        {status.label}
-                      </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetails(cliente.id)}
-                      >
-                        Ver Detalhes
-                      </Button>
+                    <div>
+                      <p className="font-medium text-gray-900">{cliente.nome}</p>
+                      <p className="text-sm text-gray-600">{cliente.email}</p>
+                      {cliente.telefone && (
+                        <p className="text-xs text-gray-500">{cliente.telefone}</p>
+                      )}
                     </div>
                   </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">
-                  {searchTerm ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <ClientDetailsModal
-        clientId={selectedClientId}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-      />
-    </>
+                  <div className="flex items-center space-x-3">
+                    <Badge className={status.color}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {status.label}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectClient(cliente.id);
+                      }}
+                    >
+                      Ver Detalhes
+                    </Button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">
+                {searchTerm ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

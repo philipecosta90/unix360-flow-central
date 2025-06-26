@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
 import { AuthPage } from "@/components/auth/AuthPage";
@@ -102,11 +103,7 @@ const Index = () => {
       <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
         <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-white border-r border-gray-200">
           <div className="flex items-center flex-shrink-0 px-4">
-            <img 
-              src="/lovable-uploads/c3f86d3c-ab5e-427b-9eec-04bd9a5ce8cd.png" 
-              alt="UniX360" 
-              className="w-[150px] h-auto"
-            />
+            <h1 className="text-xl font-bold text-gray-900">UniX360</h1>
           </div>
           <div className="mt-8 flex-grow flex flex-col">
             <nav className="flex-1 px-2 pb-4 space-y-1">
