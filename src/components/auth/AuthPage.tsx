@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ValidationErrors } from "./ValidationErrors";
 import { LockoutWarning } from "./LockoutWarning";
 import { LoginFormTab } from "./LoginFormTab";
+import { CompanyLogo } from "@/components/layout/CompanyLogo";
 
 export const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -33,10 +34,10 @@ export const AuthPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#43B26D]/10 to-[#43B26D]/5 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-[#43B26D] rounded-lg flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-2xl">X</span>
+          <div className="flex flex-col items-center mb-4">
+            <CompanyLogo className="w-[90px] h-auto mb-1" />
+            <CardTitle className="text-2xl">UniX360</CardTitle>
           </div>
-          <CardTitle className="text-2xl">UniX360</CardTitle>
           <CardDescription>
             Acesso restrito por convite
           </CardDescription>
