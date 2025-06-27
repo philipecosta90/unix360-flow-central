@@ -20,6 +20,7 @@ import {
   Menu
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { CompanyLogo } from "./CompanyLogo";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -60,7 +61,9 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>UniX360 - Menu</DrawerTitle>
+          <DrawerTitle className="flex items-center justify-center">
+            <CompanyLogo className="h-10 max-w-[150px]" />
+          </DrawerTitle>
         </DrawerHeader>
         <div className="px-4 pb-6">
           <nav className="space-y-2">

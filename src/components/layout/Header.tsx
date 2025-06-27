@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MobileMenu } from "./MobileMenu";
+import { CompanyLogo } from "./CompanyLogo";
 
 interface HeaderProps {
   user: any;
@@ -25,6 +26,14 @@ export const Header = ({ user, onLogout, onToggleSidebar }: HeaderProps) => {
   const safeEmail = (user?.email ?? "").toString();
   const safeCompany = (user?.company ?? "").toString();
   
+  // Função para obter saudação personalizada
+  const getWelcomeMessage = () => {
+    if (safeName.trim()) {
+      return `Bem-vindo, ${safeName}`;
+    }
+    return "Bem-vindo!";
+  };
+  
   return (
     <header className="bg-white border-b border-gray-200 px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
       <div className="flex items-center justify-between">
@@ -33,9 +42,15 @@ export const Header = ({ user, onLogout, onToggleSidebar }: HeaderProps) => {
             isOpen={mobileMenuOpen} 
             onOpenChange={setMobileMenuOpen} 
           />
+          
+          {/* Logomarca no mobile */}
+          <div className="block md:hidden">
+            <CompanyLogo className="h-8 max-w-[120px]" />
+          </div>
+          
           <div className="min-w-0 flex-1">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
-              Bem-vindo, {safeName || "Usuário"}
+              {getWelcomeMessage()}
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 truncate">{safeCompany || "Empresa"}</p>
           </div>
