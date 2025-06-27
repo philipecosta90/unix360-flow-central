@@ -104,7 +104,7 @@ const Index = () => {
       <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
         <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-white border-r border-gray-200">
           <div className="flex items-center flex-shrink-0 px-4">
-            <CompanyLogo className="h-8 max-w-[160px]" />
+            <CompanyLogo className="h-8 w-40" />
           </div>
           <div className="mt-8 flex-grow flex flex-col">
             <nav className="flex-1 px-2 pb-4 space-y-1">

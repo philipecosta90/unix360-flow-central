@@ -62,7 +62,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle className="flex items-center justify-center">
-            <CompanyLogo className="h-10 max-w-[150px]" />
+            <CompanyLogo className="h-10 w-[150px]" />
           </DrawerTitle>
         </DrawerHeader>
         <div className="px-4 pb-6">

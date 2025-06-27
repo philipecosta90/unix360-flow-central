@@ -43,9 +43,9 @@ export const Header = ({ user, onLogout, onToggleSidebar }: HeaderProps) => {
             onOpenChange={setMobileMenuOpen} 
           />
           
-          {/* Logomarca no mobile */}
+          {/* Logomarca no mobile - 120px conforme solicitado */}
           <div className="block md:hidden">
-            <CompanyLogo className="h-8 max-w-[120px]" />
+            <CompanyLogo className="h-8 w-30" />
           </div>
           
           <div className="min-w-0 flex-1">
