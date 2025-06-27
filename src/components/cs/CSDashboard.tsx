@@ -1,8 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, CheckCircle, AlertTriangle, MessageSquare } from "lucide-react";
 import { useCustomerSuccess } from "@/hooks/useCustomerSuccess";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, CheckCircle, Users, TrendingUp } from "lucide-react";
 
 export const CSDashboard = () => {
   const { useCSData } = useCustomerSuccess();
@@ -10,16 +9,14 @@ export const CSDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(4)].map((_, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-8 w-8 rounded-full" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-8 w-24 mb-2" />
-              <Skeleton className="h-3 w-32" />
+              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
             </CardContent>
           </Card>
         ))}
@@ -27,186 +24,97 @@ export const CSDashboard = () => {
     );
   }
 
-  const kpis = [
-    {
-      title: "Total de Clientes",
-      value: csData?.totalClientes?.toString() || "0",
-      icon: Users,
-      color: "text-blue-600"
-    },
-    {
-      title: "Onboarding Concluído",
-      value: `${csData?.percentualOnboarding?.toFixed(1) || 0}%`,
-      icon: CheckCircle,
-      color: "text-green-600"
-    },
-    {
-      title: "NPS Médio",
-      value: csData?.npsMedian?.toFixed(1) || "0.0",
-      icon: TrendingUp,
-      color: "text-purple-600"
-    },
-    {
-      title: "Clientes em Risco",
-      value: csData?.clientesEmRisco?.toString() || "0",
-      icon: AlertTriangle,
-      color: "text-red-600"
-    }
-  ];
-
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpis.map((kpi, index) => {
-          const IconComponent = kpi.icon;
-          return (
-            <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  {kpi.title}
-                </CardTitle>
-                <IconComponent className={`h-5 w-5 ${kpi.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* CORREÇÃO: Painel de Clientes em Risco reimplementado */}
-      {csData?.clientesRiscoDetalhes && csData.clientesRiscoDetalhes.length > 0 && (
+        {/* Total de Clientes */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-red-600 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Alunos em Risco (7+ dias sem interação)
-            </CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {csData.clientesRiscoDetalhes.map((cliente, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-200">
-                  <div>
-                    <p className="font-medium text-gray-900">{cliente.nome}</p>
-                    <p className="text-sm text-gray-600">{cliente.email}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-red-600 font-medium">
-                      {cliente.diasSemInteracao} dias sem interação
-                    </p>
-                    <p className="text-xs text-gray-500">Necessita follow-up urgente</p>
-                  </div>
-                </div>
-              ))}
-              {csData.clientesRiscoDetalhes.length > 5 && (
-                <div className="text-center pt-2">
-                  <p className="text-sm text-gray-500">
-                    E mais {csData.clientesRiscoDetalhes.length - 5} clientes em risco...
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Caso não haja clientes em risco, mostrar uma mensagem positiva */}
-      {csData?.clientesRiscoDetalhes && csData.clientesRiscoDetalhes.length === 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-green-600 flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Parabéns! Nenhum cliente em risco
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">
-              Todos os seus clientes tiveram interações nos últimos 7 dias. Continue com o excelente trabalho!
+            <div className="text-2xl font-bold">{csData?.totalClientes || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Clientes ativos e em onboarding
             </p>
           </CardContent>
         </Card>
-      )}
+
+        {/* Onboarding Concluído */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Onboarding</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {csData?.percentualOnboarding?.toFixed(1) || 0}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Taxa de conclusão do onboarding
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Clientes em Risco */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Clientes em Risco</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {csData?.clientesEmRisco || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Sem interação há mais de 7 dias
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Interações Recentes */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Interações</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {csData?.interacoesRecentes?.length || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Últimas 10 interações
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Interações Recentes */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {csData?.interacoesRecentes && csData.interacoesRecentes.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Interações Recentes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {csData?.interacoesRecentes && csData.interacoesRecentes.length > 0 ? (
-                csData.interacoesRecentes.slice(0, 5).map((interacao, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
-                    <div className={`w-2 h-2 rounded-full ${
-                      interacao.tipo === 'call' ? 'bg-blue-500' :
-                      interacao.tipo === 'email' ? 'bg-green-500' :
-                      interacao.tipo === 'meeting' ? 'bg-purple-500' :
-                      'bg-yellow-500'
-                    }`}></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{interacao.titulo}</p>
-                      <p className="text-sm text-gray-600">
-                        {interacao.clientes?.nome} • {interacao.tipo}
-                      </p>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
-                    </span>
+              {csData.interacoesRecentes.slice(0, 5).map((interacao) => (
+                <div key={interacao.id} className="flex items-center justify-between border-b pb-2">
+                  <div>
+                    <p className="font-medium">{interacao.titulo}</p>
+                    <p className="text-sm text-gray-600">
+                      {interacao.clientes?.nome} - {interacao.tipo}
+                    </p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Nenhuma interação recente</p>
+                  <span className="text-sm text-gray-500">
+                    {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
+                  </span>
                 </div>
-              )}
+              ))}
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Resumo do Onboarding</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {csData?.onboardings && csData.onboardings.length > 0 ? (
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total de Passos</span>
-                    <span className="font-medium">{csData.onboardings.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Concluídos</span>
-                    <span className="font-medium text-green-600">
-                      {csData.onboardings.filter(o => o.concluido).length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Pendentes</span>
-                    <span className="font-medium text-orange-600">
-                      {csData.onboardings.filter(o => !o.concluido).length}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full" 
-                      style={{ width: `${csData.percentualOnboarding}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Nenhum onboarding configurado</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      )}
     </div>
   );
 };
