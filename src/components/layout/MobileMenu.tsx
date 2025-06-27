@@ -1,4 +1,3 @@
-
 import {
   Drawer,
   DrawerContent,
@@ -20,7 +19,7 @@ import {
   Menu
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { CompanyLogo } from "./CompanyLogo";
+import { MainLogo } from "./MainLogo";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -62,7 +61,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle className="flex items-center justify-center">
-            <CompanyLogo className="h-10 w-[150px]" />
+            <MainLogo className="h-10 w-[150px]" />
           </DrawerTitle>
         </DrawerHeader>
         <div className="px-4 pb-6">

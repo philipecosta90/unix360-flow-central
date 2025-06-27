@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MobileMenu } from "./MobileMenu";
 import { CompanyLogo } from "./CompanyLogo";
+import { MainLogo } from "./MainLogo";
 
 interface HeaderProps {
   user: any;
@@ -45,7 +45,7 @@ export const Header = ({ user, onLogout, onToggleSidebar }: HeaderProps) => {
           
           {/* Logomarca no mobile - 120px conforme solicitado */}
           <div className="block md:hidden">
-            <CompanyLogo className="h-8 w-30" />
+            <MainLogo className="h-8 w-30" />
           </div>
           
           <div className="min-w-0 flex-1">
