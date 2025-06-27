@@ -4,10 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NicheSettings } from "@/components/settings/NicheSettings";
 import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 import { NPSSettings } from "@/components/settings/NPSSettings";
-import { LogoSettings } from "@/components/settings/LogoSettings";
 import { DocumentExporter } from "@/components/export/DocumentExporter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Download, Palette, Users, Lock, Star, Image } from "lucide-react";
+import { Settings as SettingsIcon, Download, Palette, Users, Lock, Star } from "lucide-react";
 
 export default function Settings() {
   return (
@@ -21,14 +20,10 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="niche" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-5 h-auto">
           <TabsTrigger value="niche" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Palette className="w-4 h-4" />
             <span>Nicho</span>
-          </TabsTrigger>
-          <TabsTrigger value="logo" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
-            <Image className="w-4 h-4" />
-            <span>Logo</span>
           </TabsTrigger>
           <TabsTrigger value="password" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Lock className="w-4 h-4" />
@@ -51,16 +46,6 @@ export default function Settings() {
 
         <TabsContent value="niche">
           <NicheSettings />
-        </TabsContent>
-
-        <TabsContent value="logo">
-          <div className="space-y-4 sm:space-y-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Logomarca da Empresa</h2>
-              <p className="text-gray-600">Configure a logomarca que aparecerá no sistema</p>
-            </div>
-            <LogoSettings />
-          </div>
         </TabsContent>
 
         <TabsContent value="password">
