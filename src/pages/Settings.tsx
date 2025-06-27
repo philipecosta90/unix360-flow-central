@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NicheSettings } from "@/components/settings/NicheSettings";
+import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 import { DocumentExporter } from "@/components/export/DocumentExporter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Download, Palette, Users } from "lucide-react";
+import { Settings as SettingsIcon, Download, Palette, Users, Lock } from "lucide-react";
 
 export default function Settings() {
   return (
@@ -18,10 +19,14 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="niche" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 h-auto">
+        <TabsList className="grid w-full grid-cols-4 h-auto">
           <TabsTrigger value="niche" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Palette className="w-4 h-4" />
             <span>Nicho</span>
+          </TabsTrigger>
+          <TabsTrigger value="password" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
+            <Lock className="w-4 h-4" />
+            <span>Senha</span>
           </TabsTrigger>
           <TabsTrigger value="export" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Download className="w-4 h-4" />
@@ -36,6 +41,10 @@ export default function Settings() {
 
         <TabsContent value="niche">
           <NicheSettings />
+        </TabsContent>
+
+        <TabsContent value="password">
+          <ChangePasswordForm />
         </TabsContent>
 
         <TabsContent value="export">
