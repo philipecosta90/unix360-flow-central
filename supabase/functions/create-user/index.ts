@@ -49,15 +49,20 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log('✅ Token válido para usuário:', user.id);
 
-    // Check if current user is admin
+    // Check if current user is admin - using maybeSingle() to avoid errors when no profile exists
     const { data: userProfile, error: profileError } = await supabase
       .from('perfis')
       .select('nivel_permissao, empresa_id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !userProfile) {
+    if (profileError) {
       console.error('❌ Erro ao buscar perfil do usuário:', profileError);
+      throw new Error('Error fetching user profile');
+    }
+
+    if (!userProfile) {
+      console.error('❌ Perfil do usuário não encontrado para:', user.id);
       throw new Error('User profile not found');
     }
 
