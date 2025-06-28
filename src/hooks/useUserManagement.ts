@@ -34,55 +34,29 @@ export const useUserManagement = () => {
 
     setIsLoading(true);
     try {
-      // Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: data.email,
-        password: data.password,
-        email_confirm: true,
-        user_metadata: {
+      console.log('🚀 Chamando edge function create-user...');
+      
+      // Call the edge function to create user
+      const { data: result, error } = await supabase.functions.invoke('create-user', {
+        body: {
           nome: data.nome,
+          email: data.email,
+          password: data.password,
+          nivel_permissao: data.nivel_permissao
         }
       });
 
-      if (authError) {
-        console.error('Erro ao criar usuário:', authError);
-        toast({
-          title: "Erro ao criar usuário",
-          description: authError.message,
-          variant: "destructive",
-        });
-        return false;
+      if (error) {
+        console.error('❌ Erro na edge function:', error);
+        throw new Error(error.message || 'Erro ao criar usuário');
       }
 
-      if (!authData.user) {
-        toast({
-          title: "Erro",
-          description: "Falha ao criar usuário",
-          variant: "destructive",
-        });
-        return false;
+      if (!result.success) {
+        console.error('❌ Edge function retornou erro:', result.error);
+        throw new Error(result.error || 'Erro ao criar usuário');
       }
 
-      // Create user profile
-      const { error: profileError } = await supabase
-        .from('perfis')
-        .insert({
-          user_id: authData.user.id,
-          empresa_id: userProfile.empresa_id,
-          nome: data.nome,
-          nivel_permissao: data.nivel_permissao,
-          ativo: true
-        });
-
-      if (profileError) {
-        console.error('Erro ao criar perfil:', profileError);
-        toast({
-          title: "Erro ao criar perfil",
-          description: profileError.message,
-          variant: "destructive",
-        });
-        return false;
-      }
+      console.log('✅ Usuário criado com sucesso:', result);
 
       toast({
         title: "Usuário criado com sucesso",
@@ -90,11 +64,11 @@ export const useUserManagement = () => {
       });
 
       return true;
-    } catch (error) {
-      console.error('Erro inesperado:', error);
+    } catch (error: any) {
+      console.error('💥 Erro inesperado:', error);
       toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro ao criar o usuário",
+        title: "Erro ao criar usuário",
+        description: error.message || "Ocorreu um erro ao criar o usuário",
         variant: "destructive",
       });
       return false;
@@ -124,9 +98,15 @@ export const useUserManagement = () => {
 
     setIsLoading(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        throw new Error('Usuário não encontrado');
+      }
+
       // Verify current password by trying to sign in
       const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: (await supabase.auth.getUser()).data.user?.email || '',
+        email: user.email,
         password: data.currentPassword,
       });
 
@@ -160,11 +140,11 @@ export const useUserManagement = () => {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro inesperado:', error);
       toast({
         title: "Erro inesperado",
-        description: "Ocorreu um erro ao alterar a senha",
+        description: error.message || "Ocorreu um erro ao alterar a senha",
         variant: "destructive",
       });
       return false;
