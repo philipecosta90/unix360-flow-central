@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -48,27 +47,53 @@ export const useUserManagement = () => {
 
       if (error) {
         console.error('❌ Erro na edge function:', error);
+        
+        // Handle specific error messages
+        if (error.message?.includes('Usuário já cadastrado')) {
+          throw new Error('Este email já está cadastrado no sistema');
+        }
+        
         throw new Error(error.message || 'Erro ao criar usuário');
       }
 
-      if (!result.success) {
-        console.error('❌ Edge function retornou erro:', result.error);
-        throw new Error(result.error || 'Erro ao criar usuário');
+      if (!result?.success) {
+        console.error('❌ Edge function retornou erro:', result?.error);
+        
+        // Handle specific error messages from the function
+        if (result?.error?.includes('Usuário já cadastrado')) {
+          throw new Error('Este email já está cadastrado no sistema');
+        }
+        
+        throw new Error(result?.error || 'Erro ao criar usuário');
       }
 
       console.log('✅ Usuário criado com sucesso:', result);
 
       toast({
-        title: "Usuário criado com sucesso",
+        title: "Usuário criado com sucesso!",
         description: `O usuário ${data.nome} foi criado e pode fazer login com a senha fornecida.`,
       });
 
       return true;
     } catch (error: any) {
       console.error('💥 Erro inesperado:', error);
+      
+      let errorMessage = "Ocorreu um erro ao criar o usuário";
+      
+      if (error.message?.includes('Este email já está cadastrado')) {
+        errorMessage = "Este email já está cadastrado no sistema";
+      } else if (error.message?.includes('Admin permission required')) {
+        errorMessage = "Apenas administradores podem criar usuários";
+      } else if (error.message?.includes('Authorization header is required') || 
+                 error.message?.includes('Invalid authentication token')) {
+        errorMessage = "Sessão expirada. Faça login novamente";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Erro ao criar usuário",
-        description: error.message || "Ocorreu um erro ao criar o usuário",
+        description: errorMessage,
         variant: "destructive",
       });
       return false;

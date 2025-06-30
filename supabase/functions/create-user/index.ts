@@ -36,7 +36,12 @@ serve(async (req: Request): Promise<Response> => {
     // Create Supabase client for database queries (to verify permissions)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
     );
 
     // Verify the token and get user info
@@ -49,12 +54,12 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log('✅ Token válido para usuário:', user.id);
 
-    // Check if current user is admin - using maybeSingle() to avoid errors when no profile exists
+    // Check if current user is admin
     const { data: userProfile, error: profileError } = await supabase
       .from('perfis')
       .select('nivel_permissao, empresa_id')
       .eq('user_id', user.id)
-      .maybeSingle();
+      .single();
 
     if (profileError) {
       console.error('❌ Erro ao buscar perfil do usuário:', profileError);
@@ -94,6 +99,16 @@ serve(async (req: Request): Promise<Response> => {
         }
       }
     );
+
+    console.log('👤 Verificando se usuário já existe...');
+
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+    
+    if (existingUser.user) {
+      console.log('⚠️ Usuário já existe:', email);
+      throw new Error('Usuário já cadastrado com este email');
+    }
 
     console.log('👤 Criando usuário no Auth...');
 
@@ -170,7 +185,8 @@ serve(async (req: Request): Promise<Response> => {
       statusCode = 401;
     } else if (errorMessage.includes('Admin permission required')) {
       statusCode = 403;
-    } else if (errorMessage.includes('Missing required fields')) {
+    } else if (errorMessage.includes('Missing required fields') ||
+               errorMessage.includes('Usuário já cadastrado')) {
       statusCode = 400;
     }
     
