@@ -27,7 +27,16 @@ serve(async (req: Request): Promise<Response> => {
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       console.error('❌ Authorization header não encontrado');
-      throw new Error('Authorization header is required');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Apenas usuários autenticados podem cadastrar novos usuários pelo painel.'
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     // Extract the JWT token
@@ -44,12 +53,21 @@ serve(async (req: Request): Promise<Response> => {
       }
     );
 
-    // Verify the token and get user info
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Verify the token and get user info using getUser()
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
-      console.error('❌ Token inválido:', userError);
-      throw new Error('Invalid authentication token');
+      console.error('❌ Token inválido ou usuário não encontrado:', userError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Token de autenticação inválido. Faça login novamente.'
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     console.log('✅ Token válido para usuário:', user.id);
@@ -63,17 +81,44 @@ serve(async (req: Request): Promise<Response> => {
 
     if (profileError) {
       console.error('❌ Erro ao buscar perfil do usuário:', profileError);
-      throw new Error('Error fetching user profile');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Erro ao verificar permissões do usuário'
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     if (!userProfile) {
       console.error('❌ Perfil do usuário não encontrado para:', user.id);
-      throw new Error('User profile not found');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Perfil de usuário não encontrado'
+        }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     if (userProfile.nivel_permissao !== 'admin') {
       console.error('❌ Usuário não tem permissão de admin:', userProfile.nivel_permissao);
-      throw new Error('Admin permission required');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Apenas administradores podem criar usuários'
+        }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     console.log('✅ Usuário é admin, prosseguindo...');
@@ -85,7 +130,16 @@ serve(async (req: Request): Promise<Response> => {
     const { nome, email, password, nivel_permissao } = createUserData;
 
     if (!nome || !email || !password || !nivel_permissao) {
-      throw new Error('Missing required fields: nome, email, password, nivel_permissao');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Campos obrigatórios: nome, email, password, nivel_permissao'
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     // Create Supabase admin client with service role key
@@ -102,12 +156,33 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log('👤 Verificando se usuário já existe...');
 
-    // Check if user already exists
-    const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(email);
-    
-    if (existingUser.user) {
+    // Check if user already exists by trying to get user by email
+    const { data: existingUsers } = await supabaseAdmin
+      .from('auth.users')
+      .select('email')
+      .eq('email', email);
+
+    // Alternative check using admin.listUsers if the above doesn't work
+    let userExists = false;
+    try {
+      const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
+      userExists = usersList.users.some(u => u.email === email);
+    } catch (listError) {
+      console.log('⚠️ Não foi possível verificar usuários existentes via listUsers');
+    }
+
+    if (userExists) {
       console.log('⚠️ Usuário já existe:', email);
-      throw new Error('Usuário já cadastrado com este email');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Este email já está cadastrado no sistema'
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     console.log('👤 Criando usuário no Auth...');
@@ -124,11 +199,44 @@ serve(async (req: Request): Promise<Response> => {
 
     if (authError) {
       console.error('❌ Erro ao criar usuário no Auth:', authError);
-      throw new Error(`Failed to create user: ${authError.message}`);
+      
+      // Handle specific auth errors
+      if (authError.message?.includes('User already registered')) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Este email já está cadastrado no sistema'
+          }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Erro ao criar usuário: ${authError.message}`
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     if (!authData.user) {
-      throw new Error('Failed to create user - no user data returned');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Falha ao criar usuário - dados não retornados'
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     console.log('✅ Usuário criado no Auth:', authData.user.id);
@@ -148,8 +256,22 @@ serve(async (req: Request): Promise<Response> => {
     if (profileCreateError) {
       console.error('❌ Erro ao criar perfil:', profileCreateError);
       // Try to delete the auth user if profile creation failed
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      throw new Error(`Failed to create user profile: ${profileCreateError.message}`);
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      } catch (deleteError) {
+        console.error('❌ Erro ao limpar usuário após falha na criação do perfil:', deleteError);
+      }
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Erro ao criar perfil do usuário: ${profileCreateError.message}`
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     console.log('✅ Perfil criado com sucesso');
@@ -177,17 +299,22 @@ serve(async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('💥 Erro na função create-user:', error);
     
+    let errorMessage = 'Erro interno do servidor';
     let statusCode = 500;
-    let errorMessage = error.message || 'Unknown error occurred';
-
-    if (errorMessage.includes('Authorization header is required') || 
-        errorMessage.includes('Invalid authentication token')) {
+    
+    if (error.message?.includes('Authorization header is required') || 
+        error.message?.includes('Token de autenticação inválido')) {
+      errorMessage = 'Sessão expirada. Faça login novamente';
       statusCode = 401;
-    } else if (errorMessage.includes('Admin permission required')) {
+    } else if (error.message?.includes('Apenas administradores')) {
+      errorMessage = error.message;
       statusCode = 403;
-    } else if (errorMessage.includes('Missing required fields') ||
-               errorMessage.includes('Usuário já cadastrado')) {
+    } else if (error.message?.includes('Campos obrigatórios') ||
+               error.message?.includes('já está cadastrado')) {
+      errorMessage = error.message;
       statusCode = 400;
+    } else if (error.message) {
+      errorMessage = error.message;
     }
     
     return new Response(
