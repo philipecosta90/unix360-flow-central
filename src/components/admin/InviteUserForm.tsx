@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { getPermissionIcon, getPermissionDescription } from "@/utils/permissionUtils";
 
 interface InviteForm {
@@ -19,7 +19,7 @@ interface InviteUserFormProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-const permissionLevels = ['admin', 'editor', 'visualizacao', 'operacional'] as const;
+const permissionLevels = ['admin', 'operacional', 'visualizacao'] as const;
 
 export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit }: InviteUserFormProps) => {
   // Verificar se todos os campos obrigatórios estão preenchidos
@@ -59,7 +59,7 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
         <Label htmlFor="nivel_permissao">Nível de permissão</Label>
         <Select
           value={inviteForm.nivel_permissao}
-          onValueChange={(value: "admin" | "editor" | "visualizacao" | "operacional") => 
+          onValueChange={(value: "admin" | "operacional" | "visualizacao") => 
             setInviteForm(prev => ({ ...prev, nivel_permissao: value }))
           }
           disabled={isLoading}
@@ -77,9 +77,8 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
                     <div>
                       <div className="font-medium">
                         {level === 'admin' && 'Administrador'}
-                        {level === 'editor' && 'Editor'}
-                        {level === 'visualizacao' && 'Visualização'}
                         {level === 'operacional' && 'Operacional'}
+                        {level === 'visualizacao' && 'Visualização'}
                       </div>
                       <div className="text-sm text-gray-500">{getPermissionDescription(level)}</div>
                     </div>
@@ -98,13 +97,13 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
       >
         {isLoading ? (
           <>
-            <Mail className="h-4 w-4 mr-2 animate-spin" />
-            Enviando convite...
+            <UserPlus className="h-4 w-4 mr-2 animate-spin" />
+            Criando usuário...
           </>
         ) : (
           <>
-            <Mail className="h-4 w-4 mr-2" />
-            Enviar Convite
+            <UserPlus className="h-4 w-4 mr-2" />
+            Criar Usuário
           </>
         )}
       </Button>

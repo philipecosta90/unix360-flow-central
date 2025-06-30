@@ -13,10 +13,10 @@ export const UserInviteManager = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <UserPlus className="h-5 w-5" />
-          Convidar Novo Usuário
+          Criar Novo Usuário
         </CardTitle>
         <CardDescription>
-          Envie um convite por email para um novo usuário acessar o sistema
+          Crie um novo usuário com senha temporária para acessar o sistema
         </CardDescription>
       </CardHeader>
       <CardContent>
