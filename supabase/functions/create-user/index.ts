@@ -12,6 +12,7 @@ interface CreateUserRequest {
   email: string;
   password: string;
   nivel_permissao: 'admin' | 'visualizacao' | 'operacional';
+  nome_empresa: string;
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -72,7 +73,7 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log('✅ [CREATE-USER] Usuário autenticado:', user.id);
 
-    // Buscar perfil do admin para obter empresa_id e verificar permissões
+    // Buscar perfil do admin para verificar permissões
     console.log('🏢 [CREATE-USER] Buscando perfil do admin...');
     const { data: adminProfile, error: profileError } = await supabaseUser
       .from('perfis')
@@ -121,13 +122,14 @@ serve(async (req: Request): Promise<Response> => {
       nome: createUserData.nome,
       email: createUserData.email,
       nivel_permissao: createUserData.nivel_permissao,
+      nome_empresa: createUserData.nome_empresa,
       password: '***'
     });
 
-    const { nome, email, password, nivel_permissao } = createUserData;
+    const { nome, email, password, nivel_permissao, nome_empresa } = createUserData;
 
     // Validar campos obrigatórios
-    if (!nome || !email || !password || !nivel_permissao) {
+    if (!nome || !email || !password || !nivel_permissao || !nome_empresa) {
       console.error('❌ [CREATE-USER] Campos obrigatórios ausentes');
       return new Response(
         JSON.stringify({
@@ -190,122 +192,123 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Criar usuário no Auth
-    console.log('👤 [CREATE-USER] Criando usuário no Auth...');
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: email,
-      password: password,
-      email_confirm: true,
-      user_metadata: {
-        nome: nome,
+    // INÍCIO DA TRANSAÇÃO
+    let newEmpresaId: string | null = null;
+    let newUserId: string | null = null;
+
+    try {
+      // 1. Criar nova empresa
+      console.log('🏢 [CREATE-USER] Criando nova empresa...');
+      const { data: empresaData, error: empresaError } = await supabaseAdmin
+        .from('empresas')
+        .insert({
+          nome: nome_empresa,
+          email: email,
+          ativa: true
+        })
+        .select()
+        .single();
+
+      if (empresaError || !empresaData) {
+        console.error('❌ [CREATE-USER] Erro ao criar empresa:', empresaError?.message);
+        throw new Error(`Erro ao criar empresa: ${empresaError?.message}`);
       }
-    });
 
-    if (authError) {
-      console.error('❌ [CREATE-USER] Erro ao criar usuário no Auth:', authError.message);
-      
-      if (authError.message?.includes('User already registered') || 
-          authError.message?.includes('already registered')) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'Já existe um usuário com este email'
-          }),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-      
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Erro ao criar usuário: ${authError.message}`
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      newEmpresaId = empresaData.id;
+      console.log('✅ [CREATE-USER] Empresa criada:', newEmpresaId);
+
+      // 2. Criar usuário no Auth
+      console.log('👤 [CREATE-USER] Criando usuário no Auth...');
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: email,
+        password: password,
+        email_confirm: true,
+        user_metadata: {
+          nome: nome,
         }
-      );
-    }
-
-    if (!authData.user) {
-      console.error('❌ [CREATE-USER] Usuário não foi criado no Auth');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Falha ao criar usuário'
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
-    }
-
-    console.log('✅ [CREATE-USER] Usuário criado no Auth:', authData.user.id);
-
-    // Criar perfil na tabela perfis
-    console.log('👤 [CREATE-USER] Criando perfil...');
-    const { error: profileCreateError } = await supabaseAdmin
-      .from('perfis')
-      .insert({
-        user_id: authData.user.id,
-        empresa_id: adminProfile.empresa_id,
-        nome: nome,
-        nivel_permissao: nivel_permissao,
-        ativo: true
       });
 
-    if (profileCreateError) {
-      console.error('❌ [CREATE-USER] Erro ao criar perfil:', profileCreateError.message);
-      
-      // Limpar usuário do Auth se criação do perfil falhou
-      console.log('🧹 [CREATE-USER] Removendo usuário do Auth devido erro no perfil...');
-      try {
-        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-        console.log('✅ [CREATE-USER] Usuário removido do Auth');
-      } catch (deleteError) {
-        console.error('❌ [CREATE-USER] Erro ao remover usuário do Auth:', deleteError);
+      if (authError || !authData.user) {
+        console.error('❌ [CREATE-USER] Erro ao criar usuário no Auth:', authError?.message);
+        throw new Error(`Erro ao criar usuário: ${authError?.message}`);
       }
-      
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Erro ao criar perfil: ${profileCreateError.message}`
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
-    }
 
-    console.log('✅ [CREATE-USER] Perfil criado com sucesso');
+      newUserId = authData.user.id;
+      console.log('✅ [CREATE-USER] Usuário criado no Auth:', newUserId);
 
-    // Retorno de sucesso
-    console.log('🎉 [CREATE-USER] Usuário criado com sucesso');
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Usuário criado com sucesso',
-        user: {
-          id: authData.user.id,
-          email: authData.user.email,
+      // 3. Criar perfil na tabela perfis
+      console.log('👤 [CREATE-USER] Criando perfil...');
+      const { error: profileCreateError } = await supabaseAdmin
+        .from('perfis')
+        .insert({
+          user_id: newUserId,
+          empresa_id: newEmpresaId,
           nome: nome,
           nivel_permissao: nivel_permissao,
-          empresa_id: adminProfile.empresa_id
-        }
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders,
-        },
+          ativo: true
+        });
+
+      if (profileCreateError) {
+        console.error('❌ [CREATE-USER] Erro ao criar perfil:', profileCreateError.message);
+        throw new Error(`Erro ao criar perfil: ${profileCreateError.message}`);
       }
-    );
+
+      console.log('✅ [CREATE-USER] Perfil criado com sucesso');
+
+      // Retorno de sucesso
+      console.log('🎉 [CREATE-USER] Usuário e empresa criados com sucesso');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Usuário e empresa criados com sucesso',
+          user: {
+            id: newUserId,
+            email: email,
+            nome: nome,
+            nivel_permissao: nivel_permissao,
+            empresa_id: newEmpresaId,
+            nome_empresa: nome_empresa
+          }
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+
+    } catch (transactionError: any) {
+      console.error('💥 [CREATE-USER] Erro na transação, fazendo rollback...', transactionError);
+      
+      // Rollback: Remover usuário do Auth se foi criado
+      if (newUserId) {
+        console.log('🧹 [CREATE-USER] Removendo usuário do Auth...');
+        try {
+          await supabaseAdmin.auth.admin.deleteUser(newUserId);
+          console.log('✅ [CREATE-USER] Usuário removido do Auth');
+        } catch (deleteError) {
+          console.error('❌ [CREATE-USER] Erro ao remover usuário do Auth:', deleteError);
+        }
+      }
+
+      // Rollback: Remover empresa se foi criada
+      if (newEmpresaId) {
+        console.log('🧹 [CREATE-USER] Removendo empresa...');
+        try {
+          await supabaseAdmin
+            .from('empresas')
+            .delete()
+            .eq('id', newEmpresaId);
+          console.log('✅ [CREATE-USER] Empresa removida');
+        } catch (deleteError) {
+          console.error('❌ [CREATE-USER] Erro ao remover empresa:', deleteError);
+        }
+      }
+
+      throw transactionError;
+    }
 
   } catch (error: any) {
     console.error('💥 [CREATE-USER] Erro inesperado:', error);

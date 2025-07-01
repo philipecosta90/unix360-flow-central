@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Eye, EyeOff, Building2 } from "lucide-react";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -14,7 +14,8 @@ export const CreateUserForm = () => {
     nome: '',
     email: '',
     password: 'TempPassword123!',
-    nivel_permissao: 'operacional' as 'admin' | 'visualizacao' | 'operacional'
+    nivel_permissao: 'operacional' as 'admin' | 'visualizacao' | 'operacional',
+    nome_empresa: ''
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -26,7 +27,7 @@ export const CreateUserForm = () => {
     
     console.log('📋 [FORM] Formulário enviado');
     
-    if (!formData.nome.trim() || !formData.email.trim() || !formData.password.trim()) {
+    if (!formData.nome.trim() || !formData.email.trim() || !formData.password.trim() || !formData.nome_empresa.trim()) {
       console.error('❌ [FORM] Campos obrigatórios não preenchidos');
       return;
     }
@@ -45,6 +46,7 @@ export const CreateUserForm = () => {
       nome: formData.nome,
       email: formData.email,
       nivel_permissao: formData.nivel_permissao,
+      nome_empresa: formData.nome_empresa,
       password: '***'
     });
 
@@ -56,14 +58,16 @@ export const CreateUserForm = () => {
         nome: '',
         email: '',
         password: 'TempPassword123!',
-        nivel_permissao: 'operacional'
+        nivel_permissao: 'operacional',
+        nome_empresa: ''
       });
     }
   };
 
   const isFormValid = formData.nome.trim() !== '' && 
                      formData.email.trim() !== '' && 
-                     formData.password.trim() !== '';
+                     formData.password.trim() !== '' &&
+                     formData.nome_empresa.trim() !== '';
 
   const canCreateUsers = userProfile?.nivel_permissao === 'admin';
 
@@ -90,6 +94,23 @@ export const CreateUserForm = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="nome_empresa">Nome da Empresa</Label>
+            <div className="relative">
+              <Building2 className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                id="nome_empresa"
+                type="text"
+                value={formData.nome_empresa}
+                onChange={(e) => setFormData(prev => ({ ...prev, nome_empresa: e.target.value }))}
+                placeholder="Nome da empresa do cliente"
+                className="pl-10"
+                disabled={isLoading}
+                required
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="nome">Nome Completo</Label>
             <Input
@@ -167,10 +188,10 @@ export const CreateUserForm = () => {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Informações importantes:</h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• O usuário será criado automaticamente na sua empresa</li>
+              <li>• Uma nova empresa será criada com o nome informado</li>
+              <li>• O usuário será vinculado à sua própria empresa (dados isolados)</li>
               <li>• O usuário poderá fazer login imediatamente com o email e senha fornecidos</li>
               <li>• Recomende que o usuário altere a senha no primeiro acesso</li>
-              <li>• O nível de permissão pode ser alterado posteriormente</li>
             </ul>
           </div>
 
@@ -182,12 +203,12 @@ export const CreateUserForm = () => {
             {isLoading ? (
               <>
                 <UserPlus className="h-4 w-4 mr-2 animate-spin" />
-                Criando usuário...
+                Criando usuário e empresa...
               </>
             ) : (
               <>
                 <UserPlus className="h-4 w-4 mr-2" />
-                Criar Usuário
+                Criar Usuário e Empresa
               </>
             )}
           </Button>

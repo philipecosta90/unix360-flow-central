@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +9,7 @@ interface CreateUserData {
   email: string;
   password: string;
   nivel_permissao: 'admin' | 'visualizacao' | 'operacional';
+  nome_empresa: string;
 }
 
 interface ChangePasswordData {
@@ -22,7 +24,7 @@ export const useUserManagement = () => {
   const { userProfile } = useAuth();
 
   const createUser = async (data: CreateUserData) => {
-    console.log('🚀 [FRONTEND] Iniciando criação de usuário...');
+    console.log('🚀 [FRONTEND] Iniciando criação de usuário e empresa...');
     
     if (!userProfile?.empresa_id) {
       console.error('❌ [FRONTEND] Empresa não encontrada');
@@ -61,7 +63,8 @@ export const useUserManagement = () => {
           nome: data.nome,
           email: data.email,
           password: data.password,
-          nivel_permissao: data.nivel_permissao
+          nivel_permissao: data.nivel_permissao,
+          nome_empresa: data.nome_empresa
         },
         headers: {
           Authorization: `Bearer ${session.session.access_token}`,
@@ -80,11 +83,11 @@ export const useUserManagement = () => {
         throw new Error(result?.error || 'Erro ao criar usuário');
       }
 
-      console.log('✅ [FRONTEND] Usuário criado com sucesso');
+      console.log('✅ [FRONTEND] Usuário e empresa criados com sucesso');
 
       toast({
         title: "Usuário criado com sucesso!",
-        description: `O usuário ${data.nome} foi criado e pode fazer login com a senha fornecida.`,
+        description: `O usuário ${data.nome} foi criado na empresa "${data.nome_empresa}" e pode fazer login com a senha fornecida.`,
       });
 
       return true;
