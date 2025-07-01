@@ -12,10 +12,10 @@ interface CreateUserRequest {
   email: string;
   password: string;
   nivel_permissao: 'admin' | 'visualizacao' | 'operacional';
+  empresa_id?: string; // Opcional, será obtido do perfil do usuário
 }
 
 serve(async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -39,10 +39,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Extract the JWT token
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Create Supabase client for database queries (to verify permissions)
+    // Create Supabase client for database queries with user auth
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -53,7 +50,7 @@ serve(async (req: Request): Promise<Response> => {
       }
     );
 
-    // Verify the token and get user info using getUser()
+    // Verify the token and get user info
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
@@ -72,29 +69,15 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log('✅ Token válido para usuário:', user.id);
 
-    // Check if current user is admin
+    // Get current user profile to check permissions and get empresa_id
     const { data: userProfile, error: profileError } = await supabase
       .from('perfis')
-      .select('nivel_permissao, empresa_id')
+      .select('nivel_permissao, empresa_id, nome')
       .eq('user_id', user.id)
       .single();
 
-    if (profileError) {
+    if (profileError || !userProfile) {
       console.error('❌ Erro ao buscar perfil do usuário:', profileError);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Erro ao verificar permissões do usuário'
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
-    }
-
-    if (!userProfile) {
-      console.error('❌ Perfil do usuário não encontrado para:', user.id);
       return new Response(
         JSON.stringify({
           success: false,
@@ -107,6 +90,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
+    // Check if current user is admin
     if (userProfile.nivel_permissao !== 'admin') {
       console.error('❌ Usuário não tem permissão de admin:', userProfile.nivel_permissao);
       return new Response(
@@ -142,6 +126,9 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
+    // Use empresa_id from current user's profile
+    const empresaId = userProfile.empresa_id;
+
     // Create Supabase admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -156,20 +143,9 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log('👤 Verificando se usuário já existe...');
 
-    // Check if user already exists by trying to get user by email
-    const { data: existingUsers } = await supabaseAdmin
-      .from('auth.users')
-      .select('email')
-      .eq('email', email);
-
-    // Alternative check using admin.listUsers if the above doesn't work
-    let userExists = false;
-    try {
-      const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
-      userExists = usersList.users.some(u => u.email === email);
-    } catch (listError) {
-      console.log('⚠️ Não foi possível verificar usuários existentes via listUsers');
-    }
+    // Check if user already exists using admin client
+    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    const userExists = existingUsers?.users?.some(u => u.email === email);
 
     if (userExists) {
       console.log('⚠️ Usuário já existe:', email);
@@ -200,7 +176,6 @@ serve(async (req: Request): Promise<Response> => {
     if (authError) {
       console.error('❌ Erro ao criar usuário no Auth:', authError);
       
-      // Handle specific auth errors
       if (authError.message?.includes('User already registered')) {
         return new Response(
           JSON.stringify({
@@ -241,13 +216,13 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log('✅ Usuário criado no Auth:', authData.user.id);
 
-    // Create user profile in perfis table
+    // Create user profile in perfis table using admin client
     console.log('👤 Criando perfil do usuário...');
     const { error: profileCreateError } = await supabaseAdmin
       .from('perfis')
       .insert({
         user_id: authData.user.id,
-        empresa_id: userProfile.empresa_id,
+        empresa_id: empresaId, // Usar empresa_id do admin logado
         nome: nome,
         nivel_permissao: nivel_permissao,
         ativo: true
@@ -284,7 +259,8 @@ serve(async (req: Request): Promise<Response> => {
           id: authData.user.id,
           email: authData.user.email,
           nome: nome,
-          nivel_permissao: nivel_permissao
+          nivel_permissao: nivel_permissao,
+          empresa_id: empresaId
         }
       }),
       {

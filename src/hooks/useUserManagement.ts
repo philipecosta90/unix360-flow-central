@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,20 +36,29 @@ export const useUserManagement = () => {
     try {
       console.log('🚀 Chamando edge function create-user...');
       
-      // Call the edge function to create user
+      // Get the current session to send proper auth header
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error('Usuário não autenticado');
+      }
+      
+      // Call the edge function to create user with proper auth context
       const { data: result, error } = await supabase.functions.invoke('create-user', {
         body: {
           nome: data.nome,
           email: data.email,
           password: data.password,
-          nivel_permissao: data.nivel_permissao
+          nivel_permissao: data.nivel_permissao,
+          empresa_id: userProfile.empresa_id // Sempre enviar empresa_id do usuário logado
+        },
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
         }
       });
 
       if (error) {
         console.error('❌ Erro na edge function:', error);
         
-        // Handle specific error messages
         if (error.message?.includes('Usuário já cadastrado')) {
           throw new Error('Este email já está cadastrado no sistema');
         }
@@ -59,7 +69,6 @@ export const useUserManagement = () => {
       if (!result?.success) {
         console.error('❌ Edge function retornou erro:', result?.error);
         
-        // Handle specific error messages from the function
         if (result?.error?.includes('Usuário já cadastrado')) {
           throw new Error('Este email já está cadastrado no sistema');
         }
@@ -87,6 +96,8 @@ export const useUserManagement = () => {
       } else if (error.message?.includes('Authorization header is required') || 
                  error.message?.includes('Invalid authentication token')) {
         errorMessage = "Sessão expirada. Faça login novamente";
+      } else if (error.message?.includes('Usuário não autenticado')) {
+        errorMessage = "Faça login para continuar";
       } else if (error.message) {
         errorMessage = error.message;
       }

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus, Eye, EyeOff } from "lucide-react";
 import { useUserManagement } from "@/hooks/useUserManagement";
+import { useAuth } from "@/hooks/useAuth";
 
 export const CreateUserForm = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,7 @@ export const CreateUserForm = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const { createUser, isLoading } = useUserManagement();
+  const { userProfile } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +27,23 @@ export const CreateUserForm = () => {
     if (!formData.nome.trim() || !formData.email.trim() || !formData.password.trim()) {
       return;
     }
+
+    // Verificar se usuário está autenticado e é admin
+    if (!userProfile) {
+      console.error('❌ Usuário não autenticado');
+      return;
+    }
+
+    if (userProfile.nivel_permissao !== 'admin') {
+      console.error('❌ Usuário não é admin:', userProfile.nivel_permissao);
+      return;
+    }
+
+    console.log('📄 Enviando dados para criar usuário:', {
+      ...formData,
+      password: '***',
+      empresa_id: userProfile.empresa_id
+    });
 
     const success = await createUser(formData);
     if (success) {
@@ -40,6 +59,22 @@ export const CreateUserForm = () => {
   const isFormValid = formData.nome.trim() !== '' && 
                      formData.email.trim() !== '' && 
                      formData.password.trim() !== '';
+
+  // Verificar se usuário pode criar usuários
+  const canCreateUsers = userProfile?.nivel_permissao === 'admin';
+
+  if (!canCreateUsers) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">
+            <UserPlus className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p>Apenas administradores podem cadastrar novos usuários.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -128,6 +163,7 @@ export const CreateUserForm = () => {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Informações importantes:</h4>
             <ul className="text-sm text-blue-800 space-y-1">
+              <li>• O usuário será criado na mesma empresa que você ({userProfile?.empresa_id ? 'empresa vinculada' : 'empresa não encontrada'})</li>
               <li>• O usuário poderá fazer login imediatamente com o email e senha fornecidos</li>
               <li>• Recomende que o usuário altere a senha no primeiro acesso</li>
               <li>• O nível de permissão pode ser alterado posteriormente</li>
@@ -136,7 +172,7 @@ export const CreateUserForm = () => {
 
           <Button 
             type="submit" 
-            disabled={isLoading || !isFormValid}
+            disabled={isLoading || !isFormValid || !userProfile?.empresa_id}
             className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
           >
             {isLoading ? (
