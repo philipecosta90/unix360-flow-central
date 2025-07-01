@@ -24,29 +24,34 @@ export const CreateUserForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('📋 [FORM] Formulário enviado');
+    
     if (!formData.nome.trim() || !formData.email.trim() || !formData.password.trim()) {
+      console.error('❌ [FORM] Campos obrigatórios não preenchidos');
       return;
     }
 
-    // Verificar se usuário está autenticado e é admin
     if (!userProfile) {
-      console.error('❌ Usuário não autenticado');
+      console.error('❌ [FORM] Usuário não autenticado');
       return;
     }
 
     if (userProfile.nivel_permissao !== 'admin') {
-      console.error('❌ Usuário não é admin:', userProfile.nivel_permissao);
+      console.error('❌ [FORM] Usuário não é admin:', userProfile.nivel_permissao);
       return;
     }
 
-    console.log('📄 Enviando dados para criar usuário:', {
-      ...formData,
+    console.log('📤 [FORM] Enviando dados:', {
+      nome: formData.nome,
+      email: formData.email,
+      nivel_permissao: formData.nivel_permissao,
       password: '***'
-      // empresa_id é automaticamente identificado via sessão do admin
     });
 
     const success = await createUser(formData);
+    
     if (success) {
+      console.log('✅ [FORM] Usuário criado com sucesso, limpando formulário');
       setFormData({
         nome: '',
         email: '',
@@ -60,7 +65,6 @@ export const CreateUserForm = () => {
                      formData.email.trim() !== '' && 
                      formData.password.trim() !== '';
 
-  // Verificar se usuário pode criar usuários
   const canCreateUsers = userProfile?.nivel_permissao === 'admin';
 
   if (!canCreateUsers) {

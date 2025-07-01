@@ -15,21 +15,24 @@ interface CreateUserRequest {
 }
 
 serve(async (req: Request): Promise<Response> => {
+  console.log('🚀 [CREATE-USER] Função iniciada');
+  
   if (req.method === 'OPTIONS') {
+    console.log('📋 [CREATE-USER] Respondendo preflight CORS');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('🚀 Iniciando criação de usuário...');
-
-    // Get the authorization header
+    // Verificar Authorization header
     const authHeader = req.headers.get('authorization');
+    console.log('🔑 [CREATE-USER] Auth header presente:', !!authHeader);
+    
     if (!authHeader) {
-      console.error('❌ Authorization header não encontrado');
+      console.error('❌ [CREATE-USER] Authorization header ausente');
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Apenas usuários autenticados podem cadastrar novos usuários pelo painel.'
+          error: 'Token de autenticação necessário'
         }),
         {
           status: 401,
@@ -38,8 +41,8 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create Supabase client for database queries with user auth
-    const supabase = createClient(
+    // Criar cliente Supabase com auth do usuário
+    const supabaseUser = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
@@ -49,15 +52,16 @@ serve(async (req: Request): Promise<Response> => {
       }
     );
 
-    // Verify the token and get user info
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Verificar usuário autenticado
+    console.log('👤 [CREATE-USER] Verificando usuário autenticado...');
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     
     if (userError || !user) {
-      console.error('❌ Token inválido ou usuário não encontrado:', userError);
+      console.error('❌ [CREATE-USER] Usuário não autenticado:', userError?.message);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Token de autenticação inválido. Faça login novamente.'
+          error: 'Sessão inválida. Faça login novamente.'
         }),
         {
           status: 401,
@@ -66,17 +70,18 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('✅ Token válido para usuário:', user.id);
+    console.log('✅ [CREATE-USER] Usuário autenticado:', user.id);
 
-    // Get current user profile to check permissions and get empresa_id
-    const { data: userProfile, error: profileError } = await supabase
+    // Buscar perfil do admin para obter empresa_id e verificar permissões
+    console.log('🏢 [CREATE-USER] Buscando perfil do admin...');
+    const { data: adminProfile, error: profileError } = await supabaseUser
       .from('perfis')
-      .select('nivel_permissao, empresa_id, nome')
+      .select('empresa_id, nivel_permissao, nome')
       .eq('user_id', user.id)
       .single();
 
-    if (profileError || !userProfile) {
-      console.error('❌ Erro ao buscar perfil do usuário:', profileError);
+    if (profileError || !adminProfile) {
+      console.error('❌ [CREATE-USER] Erro ao buscar perfil:', profileError?.message);
       return new Response(
         JSON.stringify({
           success: false,
@@ -89,9 +94,14 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if current user is admin
-    if (userProfile.nivel_permissao !== 'admin') {
-      console.error('❌ Usuário não tem permissão de admin:', userProfile.nivel_permissao);
+    console.log('✅ [CREATE-USER] Perfil encontrado:', {
+      empresa_id: adminProfile.empresa_id,
+      nivel_permissao: adminProfile.nivel_permissao
+    });
+
+    // Verificar se é admin
+    if (adminProfile.nivel_permissao !== 'admin') {
+      console.error('❌ [CREATE-USER] Usuário não é admin:', adminProfile.nivel_permissao);
       return new Response(
         JSON.stringify({
           success: false,
@@ -104,19 +114,25 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('✅ Usuário é admin, prosseguindo...');
-
-    // Parse request body
+    // Parse dos dados da requisição
+    console.log('📝 [CREATE-USER] Parseando dados da requisição...');
     const createUserData: CreateUserRequest = await req.json();
-    console.log('📄 Dados recebidos:', { ...createUserData, password: '***' });
+    console.log('📄 [CREATE-USER] Dados recebidos:', {
+      nome: createUserData.nome,
+      email: createUserData.email,
+      nivel_permissao: createUserData.nivel_permissao,
+      password: '***'
+    });
 
     const { nome, email, password, nivel_permissao } = createUserData;
 
+    // Validar campos obrigatórios
     if (!nome || !email || !password || !nivel_permissao) {
+      console.error('❌ [CREATE-USER] Campos obrigatórios ausentes');
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Campos obrigatórios: nome, email, password, nivel_permissao'
+          error: 'Todos os campos são obrigatórios'
         }),
         {
           status: 400,
@@ -125,10 +141,8 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Use empresa_id from current user's profile
-    const empresaId = userProfile.empresa_id;
-
-    // Create Supabase admin client with service role key
+    // Criar cliente admin com service role
+    console.log('🔧 [CREATE-USER] Criando cliente admin...');
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -140,16 +154,16 @@ serve(async (req: Request): Promise<Response> => {
       }
     );
 
-    console.log('👤 Verificando se usuário já existe...');
-
-    // Check if user already exists using admin client
+    // Verificar se usuário já existe
+    console.log('🔍 [CREATE-USER] Verificando se usuário já existe...');
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    
     if (listError) {
-      console.error('❌ Erro ao listar usuários:', listError);
+      console.error('❌ [CREATE-USER] Erro ao listar usuários:', listError.message);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Erro ao verificar usuários existentes'
+          error: 'Erro interno do servidor'
         }),
         {
           status: 500,
@@ -158,10 +172,12 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const userExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === email.toLowerCase());
+    const userExists = existingUsers?.users?.some(u => 
+      u.email?.toLowerCase() === email.toLowerCase()
+    );
 
     if (userExists) {
-      console.log('⚠️ Usuário já existe:', email);
+      console.log('⚠️ [CREATE-USER] Usuário já existe:', email);
       return new Response(
         JSON.stringify({
           success: false,
@@ -174,9 +190,8 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('👤 Criando usuário no Auth...');
-
-    // Create user in Supabase Auth using admin client
+    // Criar usuário no Auth
+    console.log('👤 [CREATE-USER] Criando usuário no Auth...');
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: password,
@@ -187,7 +202,7 @@ serve(async (req: Request): Promise<Response> => {
     });
 
     if (authError) {
-      console.error('❌ Erro ao criar usuário no Auth:', authError);
+      console.error('❌ [CREATE-USER] Erro ao criar usuário no Auth:', authError.message);
       
       if (authError.message?.includes('User already registered') || 
           authError.message?.includes('already registered')) {
@@ -216,10 +231,11 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     if (!authData.user) {
+      console.error('❌ [CREATE-USER] Usuário não foi criado no Auth');
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Falha ao criar usuário - dados não retornados'
+          error: 'Falha ao criar usuário'
         }),
         {
           status: 500,
@@ -228,35 +244,36 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('✅ Usuário criado no Auth:', authData.user.id);
+    console.log('✅ [CREATE-USER] Usuário criado no Auth:', authData.user.id);
 
-    // Create user profile in perfis table using admin client
-    console.log('👤 Criando perfil do usuário...');
+    // Criar perfil na tabela perfis
+    console.log('👤 [CREATE-USER] Criando perfil...');
     const { error: profileCreateError } = await supabaseAdmin
       .from('perfis')
       .insert({
         user_id: authData.user.id,
-        empresa_id: empresaId, // Usar empresa_id do admin logado
+        empresa_id: adminProfile.empresa_id,
         nome: nome,
         nivel_permissao: nivel_permissao,
         ativo: true
       });
 
     if (profileCreateError) {
-      console.error('❌ Erro ao criar perfil:', profileCreateError);
+      console.error('❌ [CREATE-USER] Erro ao criar perfil:', profileCreateError.message);
       
-      // Try to delete the auth user if profile creation failed
+      // Limpar usuário do Auth se criação do perfil falhou
+      console.log('🧹 [CREATE-USER] Removendo usuário do Auth devido erro no perfil...');
       try {
-        console.log('🧹 Limpando usuário Auth devido falha no perfil...');
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+        console.log('✅ [CREATE-USER] Usuário removido do Auth');
       } catch (deleteError) {
-        console.error('❌ Erro ao limpar usuário após falha na criação do perfil:', deleteError);
+        console.error('❌ [CREATE-USER] Erro ao remover usuário do Auth:', deleteError);
       }
       
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Erro ao criar perfil do usuário: ${profileCreateError.message}`
+          error: `Erro ao criar perfil: ${profileCreateError.message}`
         }),
         {
           status: 500,
@@ -265,8 +282,10 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('✅ Perfil criado com sucesso');
+    console.log('✅ [CREATE-USER] Perfil criado com sucesso');
 
+    // Retorno de sucesso
+    console.log('🎉 [CREATE-USER] Usuário criado com sucesso');
     return new Response(
       JSON.stringify({
         success: true,
@@ -276,7 +295,7 @@ serve(async (req: Request): Promise<Response> => {
           email: authData.user.email,
           nome: nome,
           nivel_permissao: nivel_permissao,
-          empresa_id: empresaId
+          empresa_id: adminProfile.empresa_id
         }
       }),
       {
@@ -289,22 +308,19 @@ serve(async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error('💥 Erro na função create-user:', error);
+    console.error('💥 [CREATE-USER] Erro inesperado:', error);
     
-    let errorMessage = 'Ocorreu um erro ao criar usuário, tente novamente';
+    let errorMessage = 'Erro interno do servidor';
     let statusCode = 500;
     
-    if (error.message?.includes('Authorization header is required') || 
-        error.message?.includes('Token de autenticação inválido')) {
+    if (error.message?.includes('Authorization') || error.message?.includes('Token')) {
       errorMessage = 'Sessão expirada. Faça login novamente';
       statusCode = 401;
-    } else if (error.message?.includes('Apenas administradores')) {
-      errorMessage = error.message;
+    } else if (error.message?.includes('Permission denied') || error.message?.includes('admin')) {
+      errorMessage = 'Permissão negada';
       statusCode = 403;
-    } else if (error.message?.includes('Campos obrigatórios') ||
-               error.message?.includes('já está cadastrado') ||
-               error.message?.includes('Já existe um usuário')) {
-      errorMessage = error.message;
+    } else if (error.message?.includes('duplicate') || error.message?.includes('já está cadastrado')) {
+      errorMessage = 'Usuário já existe com este email';
       statusCode = 400;
     } else if (error.message) {
       errorMessage = error.message;
@@ -313,7 +329,8 @@ serve(async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: errorMessage
+        error: errorMessage,
+        details: error.message // Para debugging
       }),
       {
         status: statusCode,

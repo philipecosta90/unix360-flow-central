@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -23,7 +22,10 @@ export const useUserManagement = () => {
   const { userProfile } = useAuth();
 
   const createUser = async (data: CreateUserData) => {
+    console.log('🚀 [FRONTEND] Iniciando criação de usuário...');
+    
     if (!userProfile?.empresa_id) {
+      console.error('❌ [FRONTEND] Empresa não encontrada');
       toast({
         title: "Erro",
         description: "Empresa não encontrada",
@@ -32,52 +34,53 @@ export const useUserManagement = () => {
       return false;
     }
 
+    if (userProfile.nivel_permissao !== 'admin') {
+      console.error('❌ [FRONTEND] Usuário não é admin');
+      toast({
+        title: "Erro",
+        description: "Apenas administradores podem criar usuários",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     setIsLoading(true);
+    
     try {
-      console.log('🚀 Chamando edge function create-user...');
+      console.log('📤 [FRONTEND] Enviando dados para edge function...');
       
-      // Get the current session to send proper auth header
+      // Obter sessão atual
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.access_token) {
         throw new Error('Usuário não autenticado');
       }
-      
-      // Call the edge function to create user with proper auth context
-      // NÃO enviamos empresa_id - a função identifica automaticamente
+
+      // Chamar a edge function
       const { data: result, error } = await supabase.functions.invoke('create-user', {
         body: {
           nome: data.nome,
           email: data.email,
           password: data.password,
           nivel_permissao: data.nivel_permissao
-          // empresa_id é identificado automaticamente via sessão do admin
         },
         headers: {
           Authorization: `Bearer ${session.session.access_token}`,
         }
       });
 
+      console.log('📥 [FRONTEND] Resposta recebida:', { result, error });
+
       if (error) {
-        console.error('❌ Erro na edge function:', error);
-        
-        if (error.message?.includes('Já existe um usuário')) {
-          throw new Error('Já existe um usuário com este email');
-        }
-        
+        console.error('❌ [FRONTEND] Erro na edge function:', error);
         throw new Error(error.message || 'Erro ao criar usuário');
       }
 
       if (!result?.success) {
-        console.error('❌ Edge function retornou erro:', result?.error);
-        
-        if (result?.error?.includes('Já existe um usuário')) {
-          throw new Error('Já existe um usuário com este email');
-        }
-        
+        console.error('❌ [FRONTEND] Edge function retornou erro:', result?.error);
         throw new Error(result?.error || 'Erro ao criar usuário');
       }
 
-      console.log('✅ Usuário criado com sucesso:', result);
+      console.log('✅ [FRONTEND] Usuário criado com sucesso');
 
       toast({
         title: "Usuário criado com sucesso!",
@@ -85,22 +88,22 @@ export const useUserManagement = () => {
       });
 
       return true;
-    } catch (error: any) {
-      console.error('💥 Erro inesperado:', error);
       
-      let errorMessage = "Ocorreu um erro ao criar usuário, tente novamente";
+    } catch (error: any) {
+      console.error('💥 [FRONTEND] Erro inesperado:', error);
+      
+      let errorMessage = "Erro ao criar usuário";
       
       if (error.message?.includes('Já existe um usuário com este email')) {
         errorMessage = "Já existe um usuário com este email";
-      } else if (error.message?.includes('Apenas administradores podem criar usuários')) {
+      } else if (error.message?.includes('Apenas administradores')) {
         errorMessage = "Apenas administradores podem criar usuários";
-      } else if (error.message?.includes('Authorization header is required') || 
-                 error.message?.includes('Invalid authentication token')) {
+      } else if (error.message?.includes('Sessão')) {
         errorMessage = "Sessão expirada. Faça login novamente";
-      } else if (error.message?.includes('Usuário não autenticado')) {
-        errorMessage = "Faça login para continuar";
-      } else if (error.message?.includes('Token de autenticação inválido')) {
-        errorMessage = "Sessão expirada. Faça login novamente";
+      } else if (error.message?.includes('Token')) {
+        errorMessage = "Sessão inválida. Faça login novamente";
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = "Erro de conexão. Verifique sua internet";
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -110,6 +113,7 @@ export const useUserManagement = () => {
         description: errorMessage,
         variant: "destructive",
       });
+      
       return false;
     } finally {
       setIsLoading(false);
