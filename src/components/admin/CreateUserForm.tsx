@@ -41,8 +41,8 @@ export const CreateUserForm = () => {
 
     console.log('📄 Enviando dados para criar usuário:', {
       ...formData,
-      password: '***',
-      empresa_id: userProfile.empresa_id
+      password: '***'
+      // empresa_id é automaticamente identificado via sessão do admin
     });
 
     const success = await createUser(formData);
@@ -163,7 +163,7 @@ export const CreateUserForm = () => {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Informações importantes:</h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• O usuário será criado na mesma empresa que você ({userProfile?.empresa_id ? 'empresa vinculada' : 'empresa não encontrada'})</li>
+              <li>• O usuário será criado automaticamente na sua empresa</li>
               <li>• O usuário poderá fazer login imediatamente com o email e senha fornecidos</li>
               <li>• Recomende que o usuário altere a senha no primeiro acesso</li>
               <li>• O nível de permissão pode ser alterado posteriormente</li>
@@ -172,7 +172,7 @@ export const CreateUserForm = () => {
 
           <Button 
             type="submit" 
-            disabled={isLoading || !isFormValid || !userProfile?.empresa_id}
+            disabled={isLoading || !isFormValid}
             className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
           >
             {isLoading ? (

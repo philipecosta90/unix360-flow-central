@@ -12,7 +12,6 @@ interface CreateUserRequest {
   email: string;
   password: string;
   nivel_permissao: 'admin' | 'visualizacao' | 'operacional';
-  empresa_id?: string; // Opcional, será obtido do perfil do usuário
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -145,14 +144,28 @@ serve(async (req: Request): Promise<Response> => {
 
     // Check if user already exists using admin client
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    const userExists = existingUsers?.users?.some(u => u.email === email);
+    if (listError) {
+      console.error('❌ Erro ao listar usuários:', listError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Erro ao verificar usuários existentes'
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    const userExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === email.toLowerCase());
 
     if (userExists) {
       console.log('⚠️ Usuário já existe:', email);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Este email já está cadastrado no sistema'
+          error: 'Já existe um usuário com este email'
         }),
         {
           status: 400,
@@ -176,11 +189,12 @@ serve(async (req: Request): Promise<Response> => {
     if (authError) {
       console.error('❌ Erro ao criar usuário no Auth:', authError);
       
-      if (authError.message?.includes('User already registered')) {
+      if (authError.message?.includes('User already registered') || 
+          authError.message?.includes('already registered')) {
         return new Response(
           JSON.stringify({
             success: false,
-            error: 'Este email já está cadastrado no sistema'
+            error: 'Já existe um usuário com este email'
           }),
           {
             status: 400,
@@ -230,8 +244,10 @@ serve(async (req: Request): Promise<Response> => {
 
     if (profileCreateError) {
       console.error('❌ Erro ao criar perfil:', profileCreateError);
+      
       // Try to delete the auth user if profile creation failed
       try {
+        console.log('🧹 Limpando usuário Auth devido falha no perfil...');
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       } catch (deleteError) {
         console.error('❌ Erro ao limpar usuário após falha na criação do perfil:', deleteError);
@@ -275,7 +291,7 @@ serve(async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('💥 Erro na função create-user:', error);
     
-    let errorMessage = 'Erro interno do servidor';
+    let errorMessage = 'Ocorreu um erro ao criar usuário, tente novamente';
     let statusCode = 500;
     
     if (error.message?.includes('Authorization header is required') || 
@@ -286,7 +302,8 @@ serve(async (req: Request): Promise<Response> => {
       errorMessage = error.message;
       statusCode = 403;
     } else if (error.message?.includes('Campos obrigatórios') ||
-               error.message?.includes('já está cadastrado')) {
+               error.message?.includes('já está cadastrado') ||
+               error.message?.includes('Já existe um usuário')) {
       errorMessage = error.message;
       statusCode = 400;
     } else if (error.message) {
