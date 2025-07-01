@@ -236,15 +236,15 @@ serve(async (req: Request): Promise<Response> => {
       newUserId = authData.user.id;
       console.log('✅ [CREATE-USER] Usuário criado no Auth:', newUserId);
 
-      // 3. Criar perfil na tabela perfis
+      // 3. Criar perfil na tabela perfis (vinculado à NOVA empresa)
       console.log('👤 [CREATE-USER] Criando perfil...');
       const { error: profileCreateError } = await supabaseAdmin
         .from('perfis')
         .insert({
           user_id: newUserId,
-          empresa_id: newEmpresaId,
+          empresa_id: newEmpresaId, // IMPORTANTE: usar a nova empresa, não a do admin
           nome: nome,
-          nivel_permissao: nivel_permissao,
+          nivel_permissao: 'admin', // Novo usuário sempre é admin da sua própria empresa
           ativo: true
         });
 
@@ -265,7 +265,7 @@ serve(async (req: Request): Promise<Response> => {
             id: newUserId,
             email: email,
             nome: nome,
-            nivel_permissao: nivel_permissao,
+            nivel_permissao: 'admin',
             empresa_id: newEmpresaId,
             nome_empresa: nome_empresa
           }
