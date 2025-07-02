@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Bell, ChevronDown, User, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +17,7 @@ import { MobileMenu } from "./MobileMenu";
 export const Header = () => {
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -27,7 +29,7 @@ export const Header = () => {
         {/* Logo - Aumentado para 3x o tamanho */}
         <div className="flex items-center space-x-4">
           <div className="lg:hidden">
-            <MobileMenu />
+            <MobileMenu isOpen={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen} />
           </div>
           <div className="transform scale-[3] origin-left ml-8 lg:ml-0">
             <MainLogo />
