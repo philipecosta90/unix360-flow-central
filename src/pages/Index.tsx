@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
 import { AuthPage } from "@/components/auth/AuthPage";
@@ -136,7 +135,11 @@ const Index = () => {
 
       {/* Main content */}
       <div className="flex flex-col flex-1 lg:ml-64 min-h-screen overflow-hidden">
-        <Header />
+        <Header 
+          user={user} 
+          onLogout={signOut}
+          onToggleSidebar={() => {}}
+        />
         <main className="flex-1 overflow-y-auto bg-gray-50">
           <div className="p-3 sm:p-4 lg:p-6">
             {renderContent()}
