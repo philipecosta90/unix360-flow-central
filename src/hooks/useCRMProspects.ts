@@ -37,7 +37,7 @@ export const useCRMProspects = (filters: CRMFilters) => {
     queryFn: async () => {
       if (!userProfile?.empresa_id) return [];
       
-      console.log('🔍 Buscando prospects do CRM com filtros (incluindo Fechado):', filters);
+      console.log('🔍 Buscando prospects do CRM com filtros:', filters);
       
       let query = supabase
         .from('crm_prospects')
@@ -77,15 +77,23 @@ export const useCRMProspects = (filters: CRMFilters) => {
         throw error;
       }
 
-      console.log('✅ Prospects encontrados (incluindo Fechado):', data?.length || 0);
-      console.log('📊 Prospects por stage:', data?.reduce((acc: any, p: any) => {
-        acc[p.stage] = (acc[p.stage] || 0) + 1;
-        return acc;
-      }, {}) || {});
+      console.log('✅ Prospects encontrados:', data?.length || 0);
       
-      // Verificar especificamente quantos prospects "Fechado" foram encontrados
-      const fechadoCount = data?.filter(p => p.stage.toLowerCase() === 'fechado').length || 0;
-      console.log('🎯 Prospects na etapa Fechado:', fechadoCount);
+      // Log detalhado dos prospects e seus stages para debug
+      if (data && data.length > 0) {
+        console.log('📊 Prospects por stage:', data.reduce((acc: any, p: any) => {
+          acc[p.stage] = (acc[p.stage] || 0) + 1;
+          return acc;
+        }, {}));
+        
+        // Mostrar alguns exemplos de prospects para debug
+        console.log('🔍 Primeiros 3 prospects:', data.slice(0, 3).map(p => ({
+          id: p.id,
+          nome: p.nome,
+          stage: p.stage,
+          empresa_id: p.empresa_id
+        })));
+      }
       
       return data as CRMProspect[];
     },

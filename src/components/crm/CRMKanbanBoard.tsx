@@ -27,8 +27,8 @@ interface CRMKanbanBoardProps {
 }
 
 export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
-  const { data: stages = [] } = useCRMStages();
-  const { data: prospects = [], isLoading } = useCRMProspects(filters);
+  const { data: stages = [], isLoading: stagesLoading } = useCRMStages();
+  const { data: prospects = [], isLoading: prospectsLoading } = useCRMProspects(filters);
   const { activeProspect, handleDragStart, handleDragEnd } = useCRMDragAndDrop(prospects);
   const [selectedProspectId, setSelectedProspectId] = useState<string | null>(null);
   const [showProspectDetail, setShowProspectDetail] = useState(false);
@@ -37,14 +37,25 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
   const safeStages = Array.isArray(stages) ? stages : [];
   const safeProspects = Array.isArray(prospects) ? prospects : [];
 
-  console.log('🔍 CRMKanbanBoard - Total prospects carregados:', safeProspects.length);
-  console.log('🔍 CRMKanbanBoard - Stages disponíveis:', safeStages.map(s => ({ id: s?.id, nome: s?.nome })));
+  console.log('🔍 CRMKanbanBoard - Stages carregados:', safeStages.length);
+  console.log('🔍 CRMKanbanBoard - Prospects carregados:', safeProspects.length);
+  console.log('🔍 CRMKanbanBoard - Stages disponíveis:', safeStages.map(s => ({ id: s?.id, nome: s?.nome, ordem: s?.ordem })));
 
   const getProspectsByStage = (stageId: string) => {
-    if (!stageId) return [];
-    const stageProspects = safeProspects.filter(prospect => prospect && prospect.stage === stageId);
-    console.log(`🎯 Stage ID "${stageId}" - Total de ${stageProspects.length} prospects encontrados:`,
+    if (!stageId) {
+      console.warn('⚠️ Stage ID vazio fornecido para getProspectsByStage');
+      return [];
+    }
+    
+    const stageProspects = safeProspects.filter(prospect => {
+      if (!prospect) return false;
+      const matches = prospect.stage === stageId;
+      return matches;
+    });
+    
+    console.log(`🎯 Stage "${stageId}" - ${stageProspects.length} prospects encontrados:`,
       stageProspects.map(p => ({ id: p?.id, nome: p?.nome, stage: p?.stage })));
+    
     return stageProspects;
   };
 
@@ -59,9 +70,26 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
     setShowProspectDetail(true);
   };
 
-  if (isLoading) {
+  if (stagesLoading || prospectsLoading) {
+    console.log('⏳ Carregando stages ou prospects...');
     return <CRMKanbanLoadingSkeleton />;
   }
+
+  if (safeStages.length === 0) {
+    console.warn('⚠️ Nenhum stage encontrado');
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-gray-500">Nenhuma etapa de CRM configurada.</p>
+          <p className="text-sm text-gray-400 mt-2">As etapas serão criadas automaticamente.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Ordenar stages por ordem
+  const sortedStages = safeStages.sort((a, b) => a.ordem - b.ordem);
+  console.log('📊 Stages ordenados:', sortedStages.map(s => ({ nome: s.nome, ordem: s.ordem })));
 
   return (
     <>
@@ -71,8 +99,11 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-6 overflow-x-auto pb-4 min-h-[calc(100vh-250px)]">
-          {safeStages.map((stage) => {
-            if (!stage || !stage.id) return null;
+          {sortedStages.map((stage) => {
+            if (!stage || !stage.id) {
+              console.warn('⚠️ Stage inválido encontrado:', stage);
+              return null;
+            }
             
             const stageProspects = getProspectsByStage(stage.id);
             const stageValue = getTotalValueByStage(stage.id);

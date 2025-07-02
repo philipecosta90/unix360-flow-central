@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
+import { useCRMStages } from "@/hooks/useCRMStages";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,9 @@ export const AddProspectDialog = ({ open, onOpenChange }: AddProspectDialogProps
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Usar o hook de stages que já está funcionando
+  const { data: stages = [], isLoading: stagesLoading } = useCRMStages();
+
   const form = useForm<ProspectFormData>({
     defaultValues: {
       nome: "",
@@ -65,25 +69,6 @@ export const AddProspectDialog = ({ open, onOpenChange }: AddProspectDialogProps
       proximo_followup: "",
       observacoes: "",
     },
-  });
-
-  // Fetch stages
-  const { data: stages = [] } = useQuery({
-    queryKey: ['crm-stages', userProfile?.empresa_id],
-    queryFn: async () => {
-      if (!userProfile?.empresa_id) return [];
-      
-      const { data, error } = await supabase
-        .from('crm_stages')
-        .select('id, nome')
-        .eq('empresa_id', userProfile.empresa_id)
-        .eq('ativo', true)
-        .order('ordem');
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userProfile?.empresa_id && open,
   });
 
   // Fetch team members
@@ -110,6 +95,17 @@ export const AddProspectDialog = ({ open, onOpenChange }: AddProspectDialogProps
 
       const tags = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
       
+      // Se não foi selecionado um stage, usar o primeiro stage disponível
+      let selectedStageId = data.stage;
+      if (!selectedStageId && stages.length > 0) {
+        // Ordenar por ordem e pegar o primeiro
+        const firstStage = stages.sort((a, b) => a.ordem - b.ordem)[0];
+        selectedStageId = firstStage.id;
+        console.log('🎯 Stage não selecionado, usando o primeiro:', firstStage.nome, firstStage.id);
+      }
+
+      console.log('📝 Criando prospect com stage:', selectedStageId);
+      
       const { error } = await supabase
         .from('crm_prospects')
         .insert({
@@ -119,7 +115,7 @@ export const AddProspectDialog = ({ open, onOpenChange }: AddProspectDialogProps
           telefone: data.telefone || null,
           empresa_cliente: data.empresa_cliente || null,
           cargo: data.cargo || null,
-          stage: data.stage || stages[0]?.id,
+          stage: selectedStageId, // Usar o ID do stage, não string
           valor_estimado: data.valor_estimado ? parseFloat(data.valor_estimado) : null,
           origem: data.origem || null,
           tags,
@@ -155,6 +151,12 @@ export const AddProspectDialog = ({ open, onOpenChange }: AddProspectDialogProps
     createProspectMutation.mutate(data);
     setIsLoading(false);
   };
+
+  // Se não selecionou stage, definir o primeiro como padrão quando stages carregarem
+  const firstStage = stages.length > 0 ? stages.sort((a, b) => a.ordem - b.ordem)[0] : null;
+  if (firstStage && !form.getValues('stage')) {
+    form.setValue('stage', firstStage.id);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -242,10 +244,10 @@ export const AddProspectDialog = ({ open, onOpenChange }: AddProspectDialogProps
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Etapa</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={firstStage?.id}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione a etapa" />
+                          <SelectValue placeholder={stagesLoading ? "Carregando..." : "Selecione a etapa"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -361,7 +363,7 @@ export const AddProspectDialog = ({ open, onOpenChange }: AddProspectDialogProps
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || stagesLoading}>
                 {isLoading ? "Criando..." : "Criar Prospect"}
               </Button>
             </div>
