@@ -1,11 +1,12 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, AlertTriangle, Calendar } from "lucide-react";
+import { CheckCircle, AlertTriangle, Calendar, Edit } from "lucide-react";
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
 import { useCRMProspects } from "@/hooks/useCRMProspects";
+import { TaskFormModal } from "./TaskFormModal";
+import { useState } from "react";
 
 interface Task {
   id: string;
@@ -30,6 +31,9 @@ export const TasksList = ({ tasks }: TasksListProps) => {
     startDate: undefined,
     endDate: undefined,
   });
+
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
@@ -120,69 +124,98 @@ export const TasksList = ({ tasks }: TasksListProps) => {
     }
   };
 
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditingTask(null);
+    setShowEditModal(false);
+  };
+
   // Safe check for tasks array
   const safeTasks = Array.isArray(tasks) ? tasks : [];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Lista de Tarefas</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Tarefa</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ação</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {safeTasks.length === 0 ? (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Tarefas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    Nenhuma tarefa encontrada
-                  </TableCell>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tarefa</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ) : (
-                safeTasks.map((task) => {
-                  if (!task || !task.id) return null;
-                  
-                  return (
-                    <TableRow key={task.id} className={getRowClassName(task.vencimento || "", task.concluida)}>
-                      <TableCell className="font-medium">
-                        {formatDate(task.vencimento)}
-                      </TableCell>
-                      <TableCell className={task.concluida ? "line-through text-gray-500" : ""}>
-                        {task.descricao || "Sem descrição"}
-                      </TableCell>
-                      <TableCell>
-                        {getClientName(task.cliente_id)}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(task.vencimento || "", task.concluida)}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleToggleComplete(task.id, !task.concluida)}
-                          className={task.concluida ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
-                        >
-                          {task.concluida ? "Reabrir" : "Concluir"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {safeTasks.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      Nenhuma tarefa encontrada
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  safeTasks.map((task) => {
+                    if (!task || !task.id) return null;
+                    
+                    return (
+                      <TableRow key={task.id} className={getRowClassName(task.vencimento || "", task.concluida)}>
+                        <TableCell className="font-medium">
+                          {formatDate(task.vencimento)}
+                        </TableCell>
+                        <TableCell className={task.concluida ? "line-through text-gray-500" : ""}>
+                          {task.descricao || "Sem descrição"}
+                        </TableCell>
+                        <TableCell>
+                          {getClientName(task.cliente_id)}
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(task.vencimento || "", task.concluida)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditTask(task)}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleComplete(task.id, !task.concluida)}
+                              className={task.concluida ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
+                            >
+                              {task.concluida ? "Reabrir" : "Concluir"}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <TaskFormModal
+        open={showEditModal}
+        onOpenChange={handleCloseEditModal}
+        task={editingTask}
+      />
+    </>
   );
 };

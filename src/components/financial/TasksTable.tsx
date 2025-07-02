@@ -3,8 +3,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Calendar, AlertTriangle } from "lucide-react";
+import { Trash2, Calendar, AlertTriangle, Edit } from "lucide-react";
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
+import { TaskFormModal } from "../tasks/TaskFormModal";
+import { useState } from "react";
 
 interface Task {
   id: string;
@@ -21,6 +23,8 @@ interface TasksTableProps {
 
 export const TasksTable = ({ tasks }: TasksTableProps) => {
   const { updateTask, deleteTask } = useFinancialTasks();
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
@@ -80,56 +84,84 @@ export const TasksTable = ({ tasks }: TasksTableProps) => {
     }
   };
 
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditingTask(null);
+    setShowEditModal(false);
+  };
+
   return (
-    <div className="border rounded-lg">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]">✓</TableHead>
-            <TableHead>Descrição</TableHead>
-            <TableHead>Vencimento</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-[80px]">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tasks.length === 0 ? (
+    <>
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                Nenhuma tarefa encontrada
-              </TableCell>
+              <TableHead className="w-[50px]">✓</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Vencimento</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-[160px]">Ações</TableHead>
             </TableRow>
-          ) : (
-            tasks.map((task) => (
-              <TableRow key={task.id} className={task.concluida ? "opacity-60" : ""}>
-                <TableCell>
-                  <Checkbox
-                    checked={task.concluida}
-                    onCheckedChange={(checked) => handleToggleComplete(task.id, checked as boolean)}
-                  />
-                </TableCell>
-                <TableCell className={`font-medium ${task.concluida ? "line-through" : ""}`}>
-                  {task.descricao}
-                </TableCell>
-                <TableCell>{formatDate(task.vencimento)}</TableCell>
-                <TableCell>
-                  {getStatusBadge(task.vencimento, task.concluida)}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(task.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+          </TableHeader>
+          <TableBody>
+            {tasks.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                  Nenhuma tarefa encontrada
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ) : (
+              tasks.map((task) => (
+                <TableRow key={task.id} className={task.concluida ? "opacity-60" : ""}>
+                  <TableCell>
+                    <Checkbox
+                      checked={task.concluida}
+                      onCheckedChange={(checked) => handleToggleComplete(task.id, checked as boolean)}
+                    />
+                  </TableCell>
+                  <TableCell className={`font-medium ${task.concluida ? "line-through" : ""}`}>
+                    {task.descricao}
+                  </TableCell>
+                  <TableCell>{formatDate(task.vencimento)}</TableCell>
+                  <TableCell>
+                    {getStatusBadge(task.vencimento, task.concluida)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditTask(task)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(task.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <TaskFormModal
+        open={showEditModal}
+        onOpenChange={handleCloseEditModal}
+        task={editingTask}
+      />
+    </>
   );
 };

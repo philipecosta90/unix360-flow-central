@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye } from "lucide-react";
 import { InteractionDialog } from "./InteractionDialog";
 import { DocumentUploadDialog } from "./DocumentUploadDialog";
 import { FinancialTransactionDialog } from "./FinancialTransactionDialog";
@@ -179,6 +179,30 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    // Por enquanto, usando um ícone genérico. Pode ser expandido para diferentes tipos
+    return File;
+  };
+
+  const handlePreviewDocument = (doc: ClientDocument) => {
+    // Para PDFs e imagens, podemos abrir em nova aba
+    const extension = doc.nome.split('.').pop()?.toLowerCase();
+    
+    if (['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(extension || '')) {
+      // Simulamos um preview - na implementação real, você teria uma URL do documento
+      alert(`Preview do documento: ${doc.nome}\nTipo: ${doc.tipo_arquivo}\nTamanho: ${formatFileSize(doc.tamanho)}`);
+    } else {
+      // Para outros tipos, mostra informações
+      alert(`Documento: ${doc.nome}\nTipo: ${doc.tipo_arquivo}\nTamanho: ${formatFileSize(doc.tamanho)}\nData: ${new Date(doc.created_at).toLocaleDateString('pt-BR')}`);
+    }
+  };
+
+  const handleDownloadDocument = (doc: ClientDocument) => {
+    // Simulação de download - na implementação real, você faria o download do arquivo
+    alert(`Iniciando download de: ${doc.nome}`);
   };
 
   return (
@@ -423,18 +447,43 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
               {loadingDocuments ? (
                 <p>Carregando documentos...</p>
               ) : documents.length > 0 ? (
-                <div className="space-y-2">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                      <File className="w-5 h-5 text-gray-400" />
-                      <div className="flex-1">
-                        <span className="font-medium">{doc.nome}</span>
-                        <p className="text-sm text-gray-500">
-                          {formatFileSize(doc.tamanho)} • {new Date(doc.created_at).toLocaleDateString('pt-BR')}
-                        </p>
+                <div className="space-y-3">
+                  {documents.map((doc) => {
+                    const FileIcon = getFileIcon(doc.nome);
+                    return (
+                      <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <FileIcon className="w-6 h-6 text-gray-400" />
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{doc.nome}</h4>
+                            <p className="text-sm text-gray-500">
+                              {doc.tipo_arquivo} • {formatFileSize(doc.tamanho)} • {new Date(doc.created_at).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePreviewDocument(doc)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Visualizar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadDocument(doc)}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            <Download className="w-4 h-4 mr-1" />
+                            Download
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-8">
