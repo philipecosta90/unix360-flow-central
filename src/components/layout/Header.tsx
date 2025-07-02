@@ -31,9 +31,7 @@ export const Header = () => {
           <div className="lg:hidden">
             <MobileMenu isOpen={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen} />
           </div>
-          <div className="transform scale-[3] origin-left ml-8 lg:ml-0">
-            <MainLogo />
-          </div>
+          <MainLogo />
         </div>
 
         {/* User menu and notifications */}
