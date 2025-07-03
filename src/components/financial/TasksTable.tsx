@@ -140,14 +140,18 @@ export const TasksTable = ({ tasks }: TasksTableProps) => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(task.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                       <Button
+                         variant="ghost"
+                         size="sm"
+                         onClick={() => {
+                           if (confirm("Tem certeza que deseja excluir esta tarefa?")) {
+                             handleDelete(task.id);
+                           }
+                         }}
+                         className="text-red-600 hover:text-red-800"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>

@@ -29,15 +29,27 @@ export const CRMCardContent = ({ prospect, onEditClick, onDeleteClick }: CRMCard
             )}
           </div>
         </div>
-        <Button
-          data-edit-button
-          variant="ghost"
-          size="sm"
-          className="h-6 w-6 p-0 pointer-events-auto"
-          onClick={onEditClick}
-        >
-          <Edit className="h-3 w-3" />
-        </Button>
+        <div className="flex gap-1">
+          <Button
+            data-edit-button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={onEditClick}
+          >
+            <Edit className="h-3 w-3" />
+          </Button>
+          {onDeleteClick && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
+              onClick={onDeleteClick}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
       </div>
       
       <div className="space-y-2">
@@ -105,20 +117,6 @@ export const CRMCardContent = ({ prospect, onEditClick, onDeleteClick }: CRMCard
           </div>
         )}
         
-        {/* Add delete button for prospects */}
-        {onDeleteClick && (
-          <div className="flex items-center justify-between mt-3 pt-2 border-t">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-red-600 hover:text-red-800 hover:bg-red-50"
-              onClick={onDeleteClick}
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Excluir
-            </Button>
-          </div>
-        )}
       </div>
     </>
   );
