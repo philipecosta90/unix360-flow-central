@@ -32,8 +32,12 @@ export const CRMCardContent = ({ prospect, onEditClick }: CRMCardContentProps) =
           data-edit-button
           variant="ghost"
           size="sm"
-          className="h-6 w-6 p-0"
-          onClick={onEditClick}
+          className="h-6 w-6 p-0 pointer-events-auto"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onEditClick(e);
+          }}
         >
           <Edit className="h-3 w-3" />
         </Button>

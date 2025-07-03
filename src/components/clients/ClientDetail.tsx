@@ -188,21 +188,50 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
   };
 
   const handlePreviewDocument = (doc: ClientDocument) => {
-    // Para PDFs e imagens, podemos abrir em nova aba
+    // Para PDFs e imagens, podemos abrir em nova aba para visualização
     const extension = doc.nome.split('.').pop()?.toLowerCase();
     
     if (['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(extension || '')) {
-      // Simulamos um preview - na implementação real, você teria uma URL do documento
-      alert(`Preview do documento: ${doc.nome}\nTipo: ${doc.tipo_arquivo}\nTamanho: ${formatFileSize(doc.tamanho)}`);
+      // Simula abertura em nova aba para preview
+      const previewContent = `
+        <html>
+          <head><title>Preview - ${doc.nome}</title></head>
+          <body style="margin:0;padding:20px;font-family:Arial,sans-serif;">
+            <h2>Preview do Documento</h2>
+            <p><strong>Nome:</strong> ${doc.nome}</p>
+            <p><strong>Tipo:</strong> ${doc.tipo_arquivo}</p>
+            <p><strong>Tamanho:</strong> ${formatFileSize(doc.tamanho)}</p>
+            <p><strong>Data:</strong> ${new Date(doc.created_at).toLocaleDateString('pt-BR')}</p>
+            <hr>
+            <p>Preview do documento seria exibido aqui.</p>
+            ${extension === 'pdf' ? '<p>Para arquivos PDF, seria usado um viewer de PDF.</p>' : ''}
+            ${['jpg', 'jpeg', 'png', 'gif'].includes(extension || '') ? '<p>Para imagens, seria exibida a imagem diretamente.</p>' : ''}
+          </body>
+        </html>
+      `;
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        newWindow.document.write(previewContent);
+        newWindow.document.close();
+      }
     } else {
-      // Para outros tipos, mostra informações
-      alert(`Documento: ${doc.nome}\nTipo: ${doc.tipo_arquivo}\nTamanho: ${formatFileSize(doc.tamanho)}\nData: ${new Date(doc.created_at).toLocaleDateString('pt-BR')}`);
+      alert(`Tipo de arquivo não suportado para preview: ${doc.tipo_arquivo}`);
     }
   };
 
   const handleDownloadDocument = (doc: ClientDocument) => {
-    // Simulação de download - na implementação real, você faria o download do arquivo
-    alert(`Iniciando download de: ${doc.nome}`);
+    // Simula download criando um blob com dados do documento
+    const content = `Documento: ${doc.nome}\nTipo: ${doc.tipo_arquivo}\nTamanho: ${formatFileSize(doc.tamanho)}\nData: ${new Date(doc.created_at).toLocaleDateString('pt-BR')}\n\nConteúdo do documento seria baixado aqui.`;
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = doc.nome;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   return (

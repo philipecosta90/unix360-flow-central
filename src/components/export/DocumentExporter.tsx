@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePickerWithRange } from "@/components/ui/date-picker";
 import { Download, FileText, Table } from "lucide-react";
 import { DateRange } from "react-day-picker";
+import jsPDF from 'jspdf';
 
 interface ExportOptions {
   type: 'contracts' | 'clients' | 'financial' | 'tasks';
@@ -24,16 +25,13 @@ export const DocumentExporter = () => {
     setIsExporting(true);
     
     try {
-      // Simular exportação - aqui você implementaria a lógica real
       console.log('Exportando:', exportOptions);
       
-      // Exemplo de geração de CSV
       if (exportOptions.format === 'csv') {
         const csvContent = generateCSV(exportOptions.type);
         downloadFile(csvContent, `${exportOptions.type}_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
-      } else {
-        // Para PDF, você usaria uma biblioteca como jsPDF ou react-pdf
-        console.log('Exportação PDF em desenvolvimento');
+      } else if (exportOptions.format === 'pdf') {
+        generatePDF(exportOptions.type);
       }
     } catch (error) {
       console.error('Erro na exportação:', error);
@@ -59,6 +57,75 @@ export const DocumentExporter = () => {
     };
 
     return `${headers[type as keyof typeof headers]}\n${sampleData[type as keyof typeof sampleData]}`;
+  };
+
+  const generatePDF = (type: string) => {
+    const doc = new jsPDF();
+    const date = new Date().toLocaleDateString('pt-BR');
+    
+    // Configuração do PDF
+    doc.setFontSize(16);
+    doc.text(`Relatório - ${getTypeLabel(type)}`, 20, 20);
+    
+    doc.setFontSize(10);
+    doc.text(`Data de exportação: ${date}`, 20, 30);
+    
+    // Headers baseados no tipo
+    const headers = {
+      contracts: ['Título', 'Cliente', 'Valor', 'Data Início', 'Status'],
+      clients: ['Nome', 'Email', 'Telefone', 'Status', 'Data Cadastro'],
+      financial: ['Descrição', 'Valor', 'Tipo', 'Data', 'Categoria'],
+      tasks: ['Título', 'Responsável', 'Prazo', 'Status', 'Descrição']
+    };
+    
+    // Dados de exemplo
+    const sampleData = {
+      contracts: [['Contrato Personal', 'João Silva', 'R$ 500,00', '15/01/2024', 'Ativo']],
+      clients: [['Maria Santos', 'maria@email.com', '(11) 99999-9999', 'Ativo', '10/01/2024']],
+      financial: [['Mensalidade Janeiro', 'R$ 150,00', 'Entrada', '01/01/2024', 'Mensalidades']],
+      tasks: [['Follow-up Cliente', 'Personal Trainer', '20/01/2024', 'Pendente', 'Entrar em contato']]
+    };
+    
+    // Cabeçalhos da tabela
+    let yPos = 50;
+    doc.setFontSize(8);
+    const currentHeaders = headers[type as keyof typeof headers];
+    const colWidth = 180 / currentHeaders.length;
+    
+    currentHeaders.forEach((header, index) => {
+      doc.text(header, 20 + (index * colWidth), yPos);
+    });
+    
+    // Linha separadora
+    yPos += 5;
+    doc.line(20, yPos, 200, yPos);
+    
+    // Dados da tabela
+    yPos += 10;
+    const currentData = sampleData[type as keyof typeof sampleData];
+    currentData.forEach((row) => {
+      row.forEach((cell, index) => {
+        doc.text(cell, 20 + (index * colWidth), yPos);
+      });
+      yPos += 10;
+    });
+    
+    // Rodapé
+    doc.setFontSize(8);
+    doc.text('Relatório gerado pelo sistema UniX360', 20, 280);
+    
+    // Download do PDF
+    doc.save(`${type}_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const getTypeLabel = (type: string) => {
+    const labels = {
+      contracts: 'Contratos',
+      clients: 'Clientes', 
+      financial: 'Financeiro',
+      tasks: 'Tarefas'
+    };
+    return labels[type as keyof typeof labels] || type;
   };
 
   const downloadFile = (content: string, filename: string, contentType: string) => {
