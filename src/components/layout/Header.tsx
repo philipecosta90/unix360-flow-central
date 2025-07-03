@@ -26,17 +26,27 @@ export const Header = () => {
   return (
     <header className="bg-white shadow-sm border-b px-4 py-3">
       <div className="flex items-center justify-between">
-        {/* Logo - Aumentado para 3x o tamanho */}
+        {/* Mobile menu and company name */}
         <div className="flex items-center space-x-4">
           <div className="lg:hidden">
             <MobileMenu isOpen={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen} />
           </div>
-          <MainLogo />
+          <div className="text-2xl font-bold text-[#43B26D]">
+            UniX360
+          </div>
         </div>
 
         {/* User menu and notifications */}
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="icon" className="relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative"
+            onClick={() => {
+              // Placeholder for notifications functionality
+              console.log('Notifications clicked');
+            }}
+          >
             <Bell className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
               3
@@ -56,7 +66,7 @@ export const Header = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configurações</span>
               </DropdownMenuItem>
