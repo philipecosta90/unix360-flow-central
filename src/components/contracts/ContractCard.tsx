@@ -90,7 +90,11 @@ export const ContractCard = ({ contract, onView, onEdit, onDelete }: ContractCar
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => onDelete(contract.id)}
+                onClick={() => {
+                  if (confirm(`Tem certeza que deseja excluir o contrato "${contract.titulo}"?`)) {
+                    onDelete(contract.id);
+                  }
+                }}
                 className="text-red-600 hover:text-red-800 hover:bg-red-50"
               >
                 <Trash2 className="w-4 h-4" />

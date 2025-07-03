@@ -358,9 +358,9 @@ export const ClientsModule = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                handleDeleteClient(client.id, client.nome);
+                                await handleDeleteClient(client.id, client.nome);
                               }}
                               className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             >

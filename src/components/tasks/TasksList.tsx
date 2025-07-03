@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, AlertTriangle, Calendar, Edit } from "lucide-react";
+import { CheckCircle, AlertTriangle, Calendar, Edit, Trash2 } from "lucide-react";
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
 import { useCRMProspects } from "@/hooks/useCRMProspects";
 import { TaskFormModal } from "./TaskFormModal";
@@ -22,7 +22,7 @@ interface TasksListProps {
 }
 
 export const TasksList = ({ tasks }: TasksListProps) => {
-  const { updateTask } = useFinancialTasks();
+  const { updateTask, deleteTask } = useFinancialTasks();
   const { data: prospects = [] } = useCRMProspects({
     search: "",
     tags: [],
@@ -198,6 +198,23 @@ export const TasksList = ({ tasks }: TasksListProps) => {
                               className={task.concluida ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
                             >
                               {task.concluida ? "Reabrir" : "Concluir"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                if (confirm("Tem certeza que deseja excluir esta tarefa?")) {
+                                  try {
+                                    await deleteTask.mutateAsync(task.id);
+                                  } catch (error) {
+                                    console.error('Erro ao excluir tarefa:', error);
+                                  }
+                                }
+                              }}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Excluir
                             </Button>
                           </div>
                         </TableCell>
