@@ -164,21 +164,29 @@ export const ClientsModule = () => {
     }
 
     try {
+      console.log('🗑️ Excluindo cliente:', clientId, clientName);
+      
       const { error } = await supabase
         .from('clientes')
         .delete()
         .eq('id', clientId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro do Supabase ao excluir cliente:', error);
+        throw error;
+      }
 
+      console.log('✅ Cliente excluído com sucesso, atualizando lista...');
+      
       toast({
         title: "Cliente removido",
         description: `${clientName} foi removido com sucesso.`,
       });
       
-      fetchClients();
+      // Atualizar a lista imediatamente
+      await fetchClients();
     } catch (error) {
-      console.error('Erro ao excluir cliente:', error);
+      console.error('❌ Erro ao excluir cliente:', error);
       toast({
         title: "Erro",
         description: "Não foi possível excluir o cliente.",
