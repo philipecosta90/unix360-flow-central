@@ -167,11 +167,17 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
         .eq('id', id);
 
       if (error) throw error;
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      // Forçar revalidação imediata das queries
       queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
+      
+      // Revalidar imediatamente para atualizar a UI
+      queryClient.refetchQueries({ queryKey: ['financial-transactions'] });
+      queryClient.refetchQueries({ queryKey: ['all-financial-transactions'] });
     },
   });
 

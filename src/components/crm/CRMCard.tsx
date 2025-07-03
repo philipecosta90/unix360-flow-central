@@ -3,6 +3,9 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { EditProspectDialog } from "./EditProspectDialog";
 import { CRMProspectDetail } from "./CRMProspectDetail";
 import { CRMCardContent } from "./CRMCardContent";
@@ -12,6 +15,8 @@ import { GripVertical } from "lucide-react";
 export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCardProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDrawer, setShowDetailDrawer] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const {
     attributes,
@@ -45,9 +50,44 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
     }
   };
 
+  const deleteProspectMutation = useMutation({
+    mutationFn: async (prospectId: string) => {
+      const { error } = await supabase
+        .from('crm_prospects')
+        .delete()
+        .eq('id', prospectId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-prospects'] });
+      toast({
+        title: "Prospect removido",
+        description: "O prospect foi removido com sucesso.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting prospect:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o prospect.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEditClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setShowEditDialog(true);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (confirm("Tem certeza que deseja excluir este prospect? Esta ação não pode ser desfeita.")) {
+      deleteProspectMutation.mutate(prospect.id);
+    }
   };
 
   return (
@@ -73,6 +113,7 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
           <CRMCardContent 
             prospect={prospect} 
             onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
           />
         </CardContent>
       </Card>

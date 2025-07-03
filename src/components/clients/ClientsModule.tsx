@@ -158,6 +158,35 @@ export const ClientsModule = () => {
     }
   };
 
+  const handleDeleteClient = async (clientId: string, clientName: string) => {
+    if (!confirm(`Tem certeza que deseja excluir o cliente "${clientName}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('clientes')
+        .delete()
+        .eq('id', clientId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cliente removido",
+        description: `${clientName} foi removido com sucesso.`,
+      });
+      
+      fetchClients();
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o cliente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleViewDetails = (client: Cliente) => {
     if (!client) return;
     console.log('👁️ Visualizando detalhes do cliente:', client.nome);
@@ -317,6 +346,17 @@ export const ClientsModule = () => {
                               }}
                             >
                               Ver detalhes
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClient(client.id, client.nome);
+                              }}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            >
+                              Excluir
                             </Button>
                           </div>
                         </div>

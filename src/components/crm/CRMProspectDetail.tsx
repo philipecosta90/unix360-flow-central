@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AddActivityDialog } from "./AddActivityDialog";
+import { ActivityList } from "./ActivityList";
 import { 
   Mail, 
   Phone, 
@@ -293,33 +294,7 @@ export const CRMProspectDetail = ({ prospectId, open, onOpenChange }: CRMProspec
                         ))}
                       </div>
                     ) : activities.length > 0 ? (
-                      <div className="space-y-3">
-                        {activities.map((activity) => (
-                          <div key={activity.id} className="border rounded-lg p-3">
-                            <div className="flex items-start space-x-3">
-                              <div className="flex-shrink-0 mt-1">
-                                {getActivityIcon(activity.tipo)}
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-medium text-sm">{activity.titulo}</span>
-                                    <Badge variant="outline" className="text-xs">
-                                      {getActivityTypeLabel(activity.tipo)}
-                                    </Badge>
-                                  </div>
-                                  <span className="text-xs text-gray-500">
-                                    {formatDateTime(activity.data_atividade)}
-                                  </span>
-                                </div>
-                                {activity.descricao && (
-                                  <p className="text-sm text-gray-600 mt-1">{activity.descricao}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <ActivityList activities={activities} prospectId={prospectId || ""} />
                     ) : (
                       <div className="text-center py-8 text-gray-500">
                         <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />

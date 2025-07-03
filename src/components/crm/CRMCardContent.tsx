@@ -2,16 +2,17 @@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Edit, Phone, Mail, Calendar } from "lucide-react";
+import { Edit, Phone, Mail, Calendar, Trash2 } from "lucide-react";
 import { CRMProspect } from "@/types/crm";
 import { getInitials, formatCurrency, isFollowupOverdue } from "@/utils/crmFormatters";
 
 interface CRMCardContentProps {
   prospect: CRMProspect;
   onEditClick: (e: React.MouseEvent) => void;
+  onDeleteClick?: (e: React.MouseEvent) => void;
 }
 
-export const CRMCardContent = ({ prospect, onEditClick }: CRMCardContentProps) => {
+export const CRMCardContent = ({ prospect, onEditClick, onDeleteClick }: CRMCardContentProps) => {
   return (
     <>
       <div className="flex items-center justify-between mb-3">
@@ -33,11 +34,7 @@ export const CRMCardContent = ({ prospect, onEditClick }: CRMCardContentProps) =
           variant="ghost"
           size="sm"
           className="h-6 w-6 p-0 pointer-events-auto"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onEditClick(e);
-          }}
+          onClick={onEditClick}
         >
           <Edit className="h-3 w-3" />
         </Button>
@@ -105,6 +102,21 @@ export const CRMCardContent = ({ prospect, onEditClick }: CRMCardContentProps) =
         {prospect.responsavel_id && (
           <div className="text-xs text-gray-600">
             Responsável: {prospect.responsavel_id}
+          </div>
+        )}
+        
+        {/* Add delete button for prospects */}
+        {onDeleteClick && (
+          <div className="flex items-center justify-between mt-3 pt-2 border-t">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-red-600 hover:text-red-800 hover:bg-red-50"
+              onClick={onDeleteClick}
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Excluir
+            </Button>
           </div>
         )}
       </div>
