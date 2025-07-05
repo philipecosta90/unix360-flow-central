@@ -60,21 +60,21 @@ export const CSClientList = ({ onSelectClient }: CSClientListProps) => {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Clientes</CardTitle>
+      <Card className="mx-2 sm:mx-0">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl">Lista de Clientes</CardTitle>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Buscar clientes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-10"
             />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="px-3 sm:px-6">
+          <div className="space-y-3 sm:space-y-4">
             {filteredClients.length > 0 ? (
               filteredClients.map((cliente) => {
                 const status = getClientStatus(cliente);
@@ -83,45 +83,53 @@ export const CSClientList = ({ onSelectClient }: CSClientListProps) => {
                 return (
                   <div
                     key={cliente.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                    className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors bg-white"
                     onClick={() => onSelectClient(cliente.id)}
                   >
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-600">
+                    {/* Avatar e informações principais */}
+                    <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm sm:text-base font-medium text-gray-600">
                           {cliente.nome.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{cliente.nome}</p>
-                        <p className="text-sm text-gray-600">{cliente.email}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{cliente.nome}</p>
+                        <p className="text-sm text-gray-600 truncate">{cliente.email}</p>
                         {cliente.telefone && (
-                          <p className="text-xs text-gray-500">{cliente.telefone}</p>
+                          <p className="text-xs text-gray-500 truncate">{cliente.telefone}</p>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Badge className={status.color}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
-                        {status.label}
+                    
+                    {/* Status e botão de ação */}
+                    <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 sm:flex-shrink-0">
+                      <Badge className={`${status.color} text-xs px-2 py-1 flex items-center gap-1`}>
+                        <StatusIcon className="h-3 w-3" />
+                        <span className="hidden xs:inline">{status.label}</span>
+                        <span className="xs:hidden">
+                          {status.label.includes('Risco') ? 'Risco' : status.label.split(' ')[0]}
+                        </span>
                       </Badge>
                       <Button
                         variant="outline"
                         size="sm"
+                        className="text-xs sm:text-sm px-3 py-1.5 h-auto whitespace-nowrap"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleViewDetails(cliente.id);
                         }}
                       >
-                        Ver Detalhes
+                        <span className="hidden sm:inline">Ver Detalhes</span>
+                        <span className="sm:hidden">Detalhes</span>
                       </Button>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-sm">
                   {searchTerm ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
                 </p>
               </div>

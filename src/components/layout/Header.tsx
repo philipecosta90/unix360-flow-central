@@ -13,11 +13,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { MainLogo } from "./MainLogo";
 import { MobileMenu } from "./MobileMenu";
+import { NotificationsPanel } from "./NotificationsPanel";
 
 export const Header = () => {
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -42,10 +44,7 @@ export const Header = () => {
             variant="ghost" 
             size="icon" 
             className="relative"
-            onClick={() => {
-              // Placeholder for notifications functionality
-              console.log('Notifications clicked');
-            }}
+            onClick={() => setShowNotifications(true)}
           >
             <Bell className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -78,6 +77,11 @@ export const Header = () => {
           </DropdownMenu>
         </div>
       </div>
+
+      <NotificationsPanel 
+        open={showNotifications} 
+        onOpenChange={setShowNotifications} 
+      />
     </header>
   );
 };

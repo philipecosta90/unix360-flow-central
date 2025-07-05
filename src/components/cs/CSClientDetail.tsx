@@ -62,51 +62,54 @@ export const CSClientDetail = ({ clientId, open, onOpenChange }: CSClientDetailP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <Avatar className="w-12 h-12">
-              <AvatarFallback className="bg-[#43B26D] text-white">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <Avatar className="w-12 h-12 sm:w-14 sm:h-14">
+              <AvatarFallback className="bg-[#43B26D] text-white text-lg sm:text-xl">
                 {cliente.nome.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h2 className="text-xl font-bold">{cliente.nome}</h2>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge className={status.color}>
+            <div className="flex-1">
+              <h2 className="text-lg sm:text-xl font-bold leading-tight">{cliente.nome}</h2>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge className={`${status.color} text-xs sm:text-sm px-2 py-1`}>
                   <StatusIcon className="h-3 w-3 mr-1" />
-                  {status.label}
+                  <span className="hidden xs:inline">{status.label}</span>
+                  <span className="xs:hidden">
+                    {status.label.includes('Risco') ? 'Risco' : status.label.split(' ')[0]}
+                  </span>
                 </Badge>
               </div>
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Informações Básicas */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <User className="h-4 w-4 sm:h-5 sm:w-5" />
                 Informações Básicas
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4">
                 {cliente.email && (
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{cliente.email}</span>
+                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                    <Mail className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <span className="text-sm break-all">{cliente.email}</span>
                   </div>
                 )}
                 {cliente.telefone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                    <Phone className="h-4 w-4 text-gray-500 flex-shrink-0" />
                     <span className="text-sm">{cliente.telefone}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
+                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                  <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
                   <span className="text-sm">
                     Cliente desde: {format(new Date(cliente.created_at), "dd/MM/yyyy", { locale: ptBR })}
                   </span>
@@ -118,34 +121,34 @@ export const CSClientDetail = ({ clientId, open, onOpenChange }: CSClientDetailP
           {/* Progresso do Onboarding */}
           {onboarding.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle>Progresso do Onboarding</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base sm:text-lg">Progresso do Onboarding</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2">
                     <span className="text-sm font-medium">
                       {onboardingConcluido} de {onboardingTotal} etapas concluídas
                     </span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-600 font-semibold">
                       {percentualOnboarding.toFixed(0)}%
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
-                      className="bg-[#43B26D] h-2 rounded-full transition-all duration-300"
+                      className="bg-[#43B26D] h-3 rounded-full transition-all duration-300"
                       style={{ width: `${percentualOnboarding}%` }}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {onboarding.map((step) => (
-                      <div key={step.id} className="flex items-center gap-2">
+                      <div key={step.id} className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg">
                         {step.concluido ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-1" />
                         ) : (
-                          <Clock className="h-4 w-4 text-gray-400" />
+                          <Clock className="h-4 w-4 text-gray-400 flex-shrink-0 mt-1" />
                         )}
-                        <span className={`text-sm ${step.concluido ? 'text-gray-900' : 'text-gray-600'}`}>
+                        <span className={`text-sm leading-relaxed ${step.concluido ? 'text-gray-900' : 'text-gray-600'}`}>
                           {step.titulo}
                         </span>
                       </div>
@@ -158,9 +161,9 @@ export const CSClientDetail = ({ clientId, open, onOpenChange }: CSClientDetailP
 
           {/* Interações Recentes */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
                 Interações Recentes
               </CardTitle>
             </CardHeader>
@@ -168,20 +171,20 @@ export const CSClientDetail = ({ clientId, open, onOpenChange }: CSClientDetailP
               {interacoes.length > 0 ? (
                 <div className="space-y-3">
                   {interacoes.slice(0, 5).map((interacao) => (
-                    <div key={interacao.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                    <div key={interacao.id} className="flex items-start gap-3 p-3 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <MessageSquare className="h-4 w-4 text-blue-600" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-sm">{interacao.titulo}</h4>
-                          <span className="text-xs text-gray-500">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 xs:gap-2">
+                          <h4 className="font-medium text-sm leading-tight truncate">{interacao.titulo}</h4>
+                          <span className="text-xs text-gray-500 flex-shrink-0">
                             {format(new Date(interacao.data_interacao), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{interacao.tipo}</p>
                         {interacao.descricao && (
-                          <p className="text-sm text-gray-700 mt-2">{interacao.descricao}</p>
+                          <p className="text-sm text-gray-700 mt-2 leading-relaxed break-words">{interacao.descricao}</p>
                         )}
                       </div>
                     </div>
@@ -189,7 +192,7 @@ export const CSClientDetail = ({ clientId, open, onOpenChange }: CSClientDetailP
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-30" />
                   <p className="text-sm">Nenhuma interação registrada</p>
                 </div>
               )}
