@@ -235,68 +235,70 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={onBack}>
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+        <Button variant="outline" onClick={onBack} className="w-fit">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Detalhes do Cliente</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Detalhes do Cliente</h1>
         </div>
       </div>
 
       {/* Client Header */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-6">
-            <Avatar className="w-20 h-20">
-              <AvatarFallback className="bg-[#43B26D] text-white text-2xl">
-                {client.nome.split(' ').map(n => n[0]).join('').substring(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900">{client.nome}</h2>
-              <div className="flex items-center gap-4 mt-2 text-gray-600">
-                {client.email && (
-                  <div className="flex items-center gap-1">
-                    <Mail className="w-4 h-4" />
-                    <span>{client.email}</span>
-                  </div>
-                )}
-                {client.telefone && (
-                  <div className="flex items-center gap-1">
-                    <Phone className="w-4 h-4" />
-                    <span>{client.telefone}</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 mt-3">
-                <Badge className={getStatusColor(client.status)}>
-                  {getStatusLabel(client.status)}
-                </Badge>
-                {client.plano_contratado && (
-                  <Badge variant="outline">{client.plano_contratado}</Badge>
-                )}
-                {client.tags && client.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    <Tag className="w-3 h-3 mr-1" />
-                    {tag}
+        <CardContent className="p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Avatar className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 flex-shrink-0">
+                <AvatarFallback className="bg-[#43B26D] text-white text-sm sm:text-lg lg:text-2xl">
+                  {client.nome.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">{client.nome}</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2 text-gray-600">
+                  {client.email && (
+                    <div className="flex items-center gap-1 min-w-0">
+                      <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm truncate">{client.email}</span>
+                    </div>
+                  )}
+                  {client.telefone && (
+                    <div className="flex items-center gap-1">
+                      <Phone className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm">{client.telefone}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1 sm:gap-2 mt-2 sm:mt-3">
+                  <Badge className={`${getStatusColor(client.status)} text-xs`}>
+                    {getStatusLabel(client.status)}
                   </Badge>
-                ))}
+                  {client.plano_contratado && (
+                    <Badge variant="outline" className="text-xs">{client.plano_contratado}</Badge>
+                  )}
+                  {client.tags && client.tags.map((tag, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      <Tag className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="text-right space-y-2">
+            <div className="text-left sm:text-right space-y-2 w-full sm:w-auto flex-shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0">
               <div>
-                <p className="text-sm text-gray-600">Cliente desde</p>
-                <p className="font-medium">
+                <p className="text-xs sm:text-sm text-gray-600">Cliente desde</p>
+                <p className="font-medium text-sm sm:text-base">
                   {new Date(client.created_at).toLocaleDateString('pt-BR')}
                 </p>
               </div>
               {client.updated_at !== client.created_at && (
                 <div>
-                  <p className="text-sm text-gray-600">Última atualização</p>
-                  <p className="font-medium">
+                  <p className="text-xs sm:text-sm text-gray-600">Última atualização</p>
+                  <p className="font-medium text-sm sm:text-base">
                     {new Date(client.updated_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
@@ -308,61 +310,73 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
       {/* Client Tabs */}
       <Tabs defaultValue="informacoes" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="informacoes">Informações</TabsTrigger>
-          <TabsTrigger value="interacoes">Histórico</TabsTrigger>
-          <TabsTrigger value="documentos">Documentos</TabsTrigger>
-          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+          <TabsTrigger value="informacoes" className="text-xs sm:text-sm py-2">
+            <span className="hidden xs:inline">Informações</span>
+            <span className="xs:hidden">Info</span>
+          </TabsTrigger>
+          <TabsTrigger value="interacoes" className="text-xs sm:text-sm py-2">
+            <span className="hidden xs:inline">Histórico</span>
+            <span className="xs:hidden">Histórico</span>
+          </TabsTrigger>
+          <TabsTrigger value="documentos" className="text-xs sm:text-sm py-2">
+            <span className="hidden xs:inline">Documentos</span>
+            <span className="xs:hidden">Docs</span>
+          </TabsTrigger>
+          <TabsTrigger value="financeiro" className="text-xs sm:text-sm py-2">
+            <span className="hidden xs:inline">Financeiro</span>
+            <span className="xs:hidden">$$</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="informacoes">
           <Card>
-            <CardHeader>
-              <CardTitle>Informações do Cliente</CardTitle>
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Informações do Cliente</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Dados Pessoais</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Nome:</span>
-                      <span className="font-medium">{client.nome}</span>
+                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Dados Pessoais</h4>
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                      <span className="text-gray-600 text-sm font-medium">Nome:</span>
+                      <span className="font-medium text-sm break-words">{client.nome}</span>
                     </div>
                     {client.email && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">E-mail:</span>
-                        <span className="font-medium">{client.email}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                        <span className="text-gray-600 text-sm font-medium">E-mail:</span>
+                        <span className="font-medium text-sm break-all">{client.email}</span>
                       </div>
                     )}
                     {client.telefone && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Telefone:</span>
-                        <span className="font-medium">{client.telefone}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                        <span className="text-gray-600 text-sm font-medium">Telefone:</span>
+                        <span className="font-medium text-sm">{client.telefone}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Informações Comerciais</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Status:</span>
-                      <Badge className={getStatusColor(client.status)}>
+                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Informações Comerciais</h4>
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                      <span className="text-gray-600 text-sm font-medium">Status:</span>
+                      <Badge className={`${getStatusColor(client.status)} text-xs w-fit`}>
                         {getStatusLabel(client.status)}
                       </Badge>
                     </div>
                     {client.plano_contratado && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Plano:</span>
-                        <span className="font-medium">{client.plano_contratado}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                        <span className="text-gray-600 text-sm font-medium">Plano:</span>
+                        <span className="font-medium text-sm">{client.plano_contratado}</span>
                       </div>
                     )}
                     {client.tags && client.tags.length > 0 && (
                       <div>
-                        <span className="text-gray-600">Tags:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
+                        <span className="text-gray-600 text-sm font-medium block mb-2">Tags:</span>
+                        <div className="flex flex-wrap gap-1">
                           {client.tags.map((tag, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
                               {tag}
@@ -377,9 +391,9 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
               {client.observacoes && (
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Observações</h4>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-gray-700 whitespace-pre-wrap">{client.observacoes}</p>
+                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Observações</h4>
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                    <p className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{client.observacoes}</p>
                   </div>
                 </div>
               )}
@@ -389,14 +403,16 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
         <TabsContent value="interacoes">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Histórico de Interações</CardTitle>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Histórico de Interações</CardTitle>
               <Button 
                 onClick={() => setShowInteractionDialog(true)}
-                className="bg-[#43B26D] hover:bg-[#37A05B]"
+                className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-3 py-2 w-fit"
+                size="sm"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Registrar Interação
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden xs:inline">Registrar Interação</span>
+                <span className="xs:hidden">Nova Interação</span>
               </Button>
             </CardHeader>
             <CardContent>
@@ -409,52 +425,54 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                       const IconComponent = getInteractionIcon(interacao.tipo);
                       const colorClass = getInteractionColor(interacao.tipo);
                       
-                      return (
-                        <div key={interacao.id} className="flex items-start space-x-4 p-4 border rounded-lg">
-                          <div className={`p-2 rounded-full ${colorClass}`}>
-                            <IconComponent className="h-4 w-4" />
-                          </div>
-                          
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-medium text-gray-900">{interacao.titulo}</h4>
-                              <span className="text-sm text-gray-500">
-                                {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
-                              </span>
-                            </div>
-                            
-                            {interacao.descricao && (
-                              <p className="text-sm text-gray-600 mt-1">{interacao.descricao}</p>
-                            )}
-                            
-                            <div className="flex items-center space-x-4 mt-2">
-                              <span className="text-xs text-gray-500 capitalize">
-                                {interacao.tipo === 'call' ? 'Ligação' :
-                                 interacao.tipo === 'email' ? 'E-mail' :
-                                 interacao.tipo === 'meeting' ? 'Reunião' :
-                                 interacao.tipo === 'feedback' ? 'Feedback' : 'Outro'}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {new Date(interacao.created_at).toLocaleString('pt-BR')}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
+                       return (
+                         <div key={interacao.id} className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg">
+                           <div className={`p-2 rounded-full ${colorClass} flex-shrink-0`}>
+                             <IconComponent className="h-3 w-3 sm:h-4 sm:w-4" />
+                           </div>
+                           
+                           <div className="flex-1 min-w-0">
+                             <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 xs:gap-2">
+                               <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{interacao.titulo}</h4>
+                               <span className="text-xs sm:text-sm text-gray-500 flex-shrink-0">
+                                 {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
+                               </span>
+                             </div>
+                             
+                             {interacao.descricao && (
+                               <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed break-words">{interacao.descricao}</p>
+                             )}
+                             
+                             <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4 mt-2">
+                               <span className="text-xs text-gray-500 capitalize">
+                                 {interacao.tipo === 'call' ? 'Ligação' :
+                                  interacao.tipo === 'email' ? 'E-mail' :
+                                  interacao.tipo === 'meeting' ? 'Reunião' :
+                                  interacao.tipo === 'feedback' ? 'Feedback' : 'Outro'}
+                               </span>
+                               <span className="text-xs text-gray-400">
+                                 {new Date(interacao.created_at).toLocaleString('pt-BR')}
+                               </span>
+                             </div>
+                           </div>
+                         </div>
+                       );
                     })}
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-4">Nenhuma interação registrada ainda</p>
-                    <Button 
-                      onClick={() => setShowInteractionDialog(true)}
-                      className="bg-[#43B26D] hover:bg-[#37A05B]"
-                    >
-                      Registrar Interação
-                    </Button>
-                  </div>
-                )}
+                 ) : (
+                   <div className="text-center py-6 sm:py-8">
+                     <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                     <p className="text-gray-500 mb-3 sm:mb-4 text-sm sm:text-base">Nenhuma interação registrada ainda</p>
+                     <Button 
+                       onClick={() => setShowInteractionDialog(true)}
+                       className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-4 py-2"
+                       size="sm"
+                     >
+                       <span className="hidden xs:inline">Registrar Interação</span>
+                       <span className="xs:hidden">Nova Interação</span>
+                     </Button>
+                   </div>
+                 )}
               </div>
             </CardContent>
           </Card>
@@ -462,14 +480,16 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
         <TabsContent value="documentos">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Documentos</CardTitle>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Documentos</CardTitle>
               <Button 
                 onClick={() => setShowDocumentDialog(true)}
-                className="bg-[#43B26D] hover:bg-[#37A05B]"
+                className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-3 py-2 w-fit"
+                size="sm"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Documento
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden xs:inline">Adicionar Documento</span>
+                <span className="xs:hidden">Adicionar</span>
               </Button>
             </CardHeader>
             <CardContent>
@@ -479,67 +499,73 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                 <div className="space-y-3">
                   {documents.map((doc) => {
                     const FileIcon = getFileIcon(doc.nome);
-                    return (
-                      <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center space-x-3">
-                          <FileIcon className="w-6 h-6 text-gray-400" />
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-900">{doc.nome}</h4>
-                            <p className="text-sm text-gray-500">
-                              {doc.tipo_arquivo} • {formatFileSize(doc.tamanho)} • {new Date(doc.created_at).toLocaleDateString('pt-BR')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePreviewDocument(doc)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Visualizar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownloadDocument(doc)}
-                            className="text-green-600 hover:text-green-800"
-                          >
-                            <Download className="w-4 h-4 mr-1" />
-                            Download
-                          </Button>
-                        </div>
-                      </div>
-                    );
+                     return (
+                       <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg hover:bg-gray-50">
+                         <div className="flex items-center gap-3 flex-1 min-w-0">
+                           <FileIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 flex-shrink-0" />
+                           <div className="flex-1 min-w-0">
+                             <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{doc.nome}</h4>
+                             <p className="text-xs sm:text-sm text-gray-500 break-words">
+                               {doc.tipo_arquivo} • {formatFileSize(doc.tamanho)} • {new Date(doc.created_at).toLocaleDateString('pt-BR')}
+                             </p>
+                           </div>
+                         </div>
+                         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handlePreviewDocument(doc)}
+                             className="text-blue-600 hover:text-blue-800 flex-1 sm:flex-none text-xs sm:text-sm px-2 sm:px-3 py-1.5"
+                           >
+                             <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                             <span className="hidden xs:inline">Visualizar</span>
+                             <span className="xs:hidden">Ver</span>
+                           </Button>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleDownloadDocument(doc)}
+                             className="text-green-600 hover:text-green-800 flex-1 sm:flex-none text-xs sm:text-sm px-2 sm:px-3 py-1.5"
+                           >
+                             <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                             <span className="hidden xs:inline">Download</span>
+                             <span className="xs:hidden">Baixar</span>
+                           </Button>
+                         </div>
+                       </div>
+                     );
                   })}
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <File className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">Nenhum documento encontrado</p>
-                  <Button 
-                    onClick={() => setShowDocumentDialog(true)}
-                    className="bg-[#43B26D] hover:bg-[#37A05B]"
-                  >
-                    Adicionar Documento
-                  </Button>
-                </div>
-              )}
+               ) : (
+                 <div className="text-center py-6 sm:py-8">
+                   <File className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                   <p className="text-gray-500 mb-3 sm:mb-4 text-sm sm:text-base">Nenhum documento encontrado</p>
+                   <Button 
+                     onClick={() => setShowDocumentDialog(true)}
+                     className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-4 py-2"
+                     size="sm"
+                   >
+                     <span className="hidden xs:inline">Adicionar Documento</span>
+                     <span className="xs:hidden">Adicionar</span>
+                   </Button>
+                 </div>
+               )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="financeiro">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Histórico Financeiro</CardTitle>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Histórico Financeiro</CardTitle>
               <Button 
                 onClick={() => setShowFinancialDialog(true)}
-                className="bg-[#43B26D] hover:bg-[#37A05B]"
+                className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-3 py-2 w-fit"
+                size="sm"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Movimentação
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden xs:inline">Adicionar Movimentação</span>
+                <span className="xs:hidden">Adicionar</span>
               </Button>
             </CardHeader>
             <CardContent>
@@ -548,34 +574,36 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                   <p>Carregando movimentações...</p>
                 ) : transactions.length > 0 ? (
                   <div className="space-y-4">
-                    {transactions.map((transaction) => (
-                      <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{transaction.descricao}</h4>
-                          <p className="text-sm text-gray-600">
-                            {transaction.categoria} • {new Date(transaction.data).toLocaleDateString('pt-BR')}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className={`font-medium ${transaction.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
-                            {transaction.tipo === 'entrada' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </p>
-                          <p className="text-xs text-gray-500 capitalize">{transaction.tipo === 'entrada' ? 'Receita' : 'Despesa'}</p>
-                        </div>
-                      </div>
-                    ))}
+                     {transactions.map((transaction) => (
+                       <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg">
+                         <div className="flex-1 min-w-0">
+                           <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{transaction.descricao}</h4>
+                           <p className="text-xs sm:text-sm text-gray-600 break-words">
+                             {transaction.categoria} • {new Date(transaction.data).toLocaleDateString('pt-BR')}
+                           </p>
+                         </div>
+                         <div className="text-left sm:text-right flex-shrink-0">
+                           <p className={`font-medium text-sm sm:text-base ${transaction.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
+                             {transaction.tipo === 'entrada' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                           </p>
+                           <p className="text-xs text-gray-500 capitalize">{transaction.tipo === 'entrada' ? 'Receita' : 'Despesa'}</p>
+                         </div>
+                       </div>
+                     ))}
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 mb-4">Nenhuma movimentação financeira registrada</p>
-                    <Button 
-                      onClick={() => setShowFinancialDialog(true)}
-                      className="bg-[#43B26D] hover:bg-[#37A05B]"
-                    >
-                      Adicionar Movimentação
-                    </Button>
-                  </div>
-                )}
+                 ) : (
+                   <div className="text-center py-6 sm:py-8">
+                     <p className="text-gray-500 mb-3 sm:mb-4 text-sm sm:text-base">Nenhuma movimentação financeira registrada</p>
+                     <Button 
+                       onClick={() => setShowFinancialDialog(true)}
+                       className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-4 py-2"
+                       size="sm"
+                     >
+                       <span className="hidden xs:inline">Adicionar Movimentação</span>
+                       <span className="xs:hidden">Adicionar</span>
+                     </Button>
+                   </div>
+                 )}
               </div>
             </CardContent>
           </Card>
