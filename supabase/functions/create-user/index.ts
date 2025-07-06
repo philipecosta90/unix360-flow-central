@@ -244,7 +244,7 @@ serve(async (req: Request): Promise<Response> => {
           user_id: newUserId,
           empresa_id: newEmpresaId, // IMPORTANTE: usar a nova empresa, não a do admin
           nome: nome,
-          nivel_permissao: 'admin', // Novo usuário sempre é admin da sua própria empresa
+          nivel_permissao: nivel_permissao, // Usar o nível de permissão selecionado no formulário
           ativo: true
         });
 
@@ -265,7 +265,7 @@ serve(async (req: Request): Promise<Response> => {
             id: newUserId,
             email: email,
             nome: nome,
-            nivel_permissao: 'admin',
+            nivel_permissao: nivel_permissao, // Retornar o nível de permissão correto
             empresa_id: newEmpresaId,
             nome_empresa: nome_empresa
           }
