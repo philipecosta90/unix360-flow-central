@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { MainLogo } from "./MainLogo";
 import { MobileMenu } from "./MobileMenu";
 import { NotificationsPanel } from "./NotificationsPanel";
+import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
 
 export const Header = () => {
   const { user, userProfile } = useAuth();
@@ -40,6 +41,8 @@ export const Header = () => {
 
         {/* User menu and notifications */}
         <div className="flex items-center space-x-4">
+          <FeedbackDialog />
+          
           <Button 
             variant="ghost" 
             size="icon" 
