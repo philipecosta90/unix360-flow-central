@@ -27,6 +27,9 @@ export const LoginFormTab = ({
   onAccountLockout
 }: LoginFormTabProps) => {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const MAX_LOGIN_ATTEMPTS = 5;
@@ -110,6 +113,104 @@ export const LoginFormTab = ({
     setValidationErrors([]);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail.trim()) {
+      toast({
+        title: "Email obrigatório",
+        description: "Por favor, insira seu email para recuperar a senha.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResettingPassword(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/dashboard`,
+      });
+
+      if (error) {
+        toast({
+          title: "Erro ao enviar email",
+          description: "Não foi possível enviar o email de recuperação. Verifique o endereço informado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      
+      setShowForgotPassword(false);
+      setResetEmail("");
+    } catch (error) {
+      console.error('Password reset error:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  if (showForgotPassword) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-medium">Recuperar Senha</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Digite seu email para receber as instruções de recuperação
+          </p>
+        </div>
+        
+        <form onSubmit={handleForgotPassword} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="reset-email">Email</Label>
+            <Input
+              id="reset-email"
+              type="email"
+              placeholder="seu@email.com"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(sanitizeInput(e.target.value))}
+              disabled={isResettingPassword}
+              maxLength={255}
+              required
+            />
+          </div>
+          
+          <div className="flex flex-col xs:flex-row gap-2 xs:gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowForgotPassword(false);
+                setResetEmail("");
+              }}
+              disabled={isResettingPassword}
+              className="w-full xs:w-auto"
+            >
+              Voltar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isResettingPassword}
+              className="w-full xs:flex-1 bg-[#43B26D] hover:bg-[#37A05B]"
+            >
+              {isResettingPassword ? "Enviando..." : "Enviar Email"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleLogin} className="space-y-4">
       <div className="space-y-2">
@@ -126,7 +227,17 @@ export const LoginFormTab = ({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Senha</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Senha</Label>
+          <button
+            type="button"
+            onClick={() => setShowForgotPassword(true)}
+            className="text-sm text-[#43B26D] hover:text-[#37A05B] hover:underline transition-colors"
+            disabled={isLockedOut || isLoading}
+          >
+            Esqueci minha senha
+          </button>
+        </div>
         <Input
           id="password"
           type="password"
