@@ -2,8 +2,9 @@
 import { AdminMetrics } from "./AdminMetrics";
 import { CompanyList } from "./CompanyList";
 import { CreateUserForm } from "./CreateUserForm";
+import { FeedbackList } from "./FeedbackList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, UserPlus, BarChart3 } from "lucide-react";
+import { Building2, Users, UserPlus, BarChart3, MessageSquare } from "lucide-react";
 
 export const AdminDashboard = () => {
   return (
@@ -14,7 +15,7 @@ export const AdminDashboard = () => {
       </div>
 
       <Tabs defaultValue="metrics" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto">
           <TabsTrigger value="metrics" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Métricas</span>
@@ -29,6 +30,11 @@ export const AdminDashboard = () => {
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">Empresas</span>
             <span className="sm:hidden">Emp.</span>
+          </TabsTrigger>
+          <TabsTrigger value="feedbacks" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
+            <MessageSquare className="h-4 w-4" />
+            <span className="hidden sm:inline">Feedbacks</span>
+            <span className="sm:hidden">Feed.</span>
           </TabsTrigger>
           <TabsTrigger value="system" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Users className="h-4 w-4" />
@@ -47,6 +53,10 @@ export const AdminDashboard = () => {
 
         <TabsContent value="companies" className="space-y-4 sm:space-y-6">
           <CompanyList searchTerm="" selectedPlan="todos" />
+        </TabsContent>
+
+        <TabsContent value="feedbacks" className="space-y-4 sm:space-y-6">
+          <FeedbackList />
         </TabsContent>
 
         <TabsContent value="system" className="space-y-4 sm:space-y-6">
