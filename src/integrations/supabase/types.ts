@@ -733,6 +733,62 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          asaas_payment_id: string | null
+          boleto_url: string | null
+          created_at: string
+          due_date: string
+          id: string
+          invoice_url: string | null
+          payment_date: string | null
+          payment_method: string | null
+          pix_qr_code: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          subscription_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          asaas_payment_id?: string | null
+          boleto_url?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          invoice_url?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          pix_qr_code?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          subscription_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          asaas_payment_id?: string | null
+          boleto_url?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          invoice_url?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          pix_qr_code?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          subscription_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis: {
         Row: {
           ativo: boolean
@@ -790,6 +846,66 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          asaas_customer_id: string | null
+          asaas_subscription_id: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          empresa_id: string
+          id: string
+          monthly_value: number
+          status: Database["public"]["Enums"]["subscription_status"]
+          trial_end_date: string
+          trial_start_date: string
+          updated_at: string
+        }
+        Insert: {
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          empresa_id: string
+          id?: string
+          monthly_value?: number
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_end_date?: string
+          trial_start_date?: string
+          updated_at?: string
+        }
+        Update: {
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          empresa_id?: string
+          id?: string
+          monthly_value?: number
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_end_date?: string
+          trial_start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       admin_empresa_stats: {
@@ -811,6 +927,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      has_active_subscription: {
+        Args: { empresa_uuid: string }
+        Returns: boolean
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -818,7 +938,9 @@ export type Database = {
     }
     Enums: {
       nivel_permissao: "admin" | "operacional" | "visualizacao"
+      payment_status: "pending" | "confirmed" | "overdue" | "cancelled"
       status_cliente: "ativo" | "inativo" | "lead" | "prospecto"
+      subscription_status: "trial" | "active" | "suspended" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -947,7 +1069,9 @@ export const Constants = {
   public: {
     Enums: {
       nivel_permissao: ["admin", "operacional", "visualizacao"],
+      payment_status: ["pending", "confirmed", "overdue", "cancelled"],
       status_cliente: ["ativo", "inativo", "lead", "prospecto"],
+      subscription_status: ["trial", "active", "suspended", "cancelled"],
     },
   },
 } as const
