@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          empresa_id: string | null
+          id: string
+          ip_address: unknown | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          empresa_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          empresa_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       cliente_documentos: {
         Row: {
           cliente_id: string
@@ -921,6 +957,14 @@ export type Database = {
         }
         Relationships: []
       }
+      security_report: {
+        Row: {
+          check_name: string | null
+          message: string | null
+          status: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_empresa_id: {
@@ -932,6 +976,22 @@ export type Database = {
         Returns: boolean
       }
       is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_super_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      log_sensitive_access: {
+        Args: { p_action: string; p_table_name: string; p_record_id?: string }
+        Returns: undefined
+      }
+      validate_permission_levels: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      validate_user_empresa_integrity: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
