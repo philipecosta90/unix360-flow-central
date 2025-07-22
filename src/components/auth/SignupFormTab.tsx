@@ -1,51 +1,206 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { validateAndSanitize, signupSchema, sanitizeInput } from "@/utils/inputValidation";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock, Mail, Shield } from "lucide-react";
+interface SignupFormTabProps {
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  setValidationErrors: (errors: string[]) => void;
+}
 
-export const SignupFormTab = () => {
+export const SignupFormTab = ({
+  isLoading,
+  setIsLoading,
+  setValidationErrors
+}: SignupFormTabProps) => {
+  const [signupForm, setSignupForm] = useState({
+    nome: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    nomeEmpresa: ""
+  });
+  const { toast } = useToast();
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Clear previous validation errors
+    setValidationErrors([]);
+
+    // Validate input using Zod
+    const result = validateAndSanitize(signupForm, signupSchema);
+    if (!result.success) {
+      setValidationErrors(result.error.issues.map(err => err.message));
+      return;
+    }
+
+    if (signupForm.password !== signupForm.confirmPassword) {
+      setValidationErrors(["As senhas não coincidem"]);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+
+      // Create user with signup
+      const { data, error } = await supabase.auth.signUp({
+        email: signupForm.email,
+        password: signupForm.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: {
+            nome: signupForm.nome,
+            nome_empresa: signupForm.nomeEmpresa
+          }
+        }
+      });
+
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          toast({
+            title: "Email já cadastrado",
+            description: "Já existe uma conta com este email. Tente fazer login.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro no cadastro",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Cadastro realizado com sucesso!",
+          description: "Verifique seu email para confirmar a conta. Seu trial de 7 dias começou!",
+        });
+        
+        // Reset form
+        setSignupForm({
+          nome: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          nomeEmpresa: ""
+        });
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof typeof signupForm, value: string) => {
+    const sanitizedValue = field === 'password' || field === 'confirmPassword'
+      ? value // Don't sanitize passwords
+      : sanitizeInput(value);
+    
+    setSignupForm(prev => ({ ...prev, [field]: sanitizedValue }));
+    
+    // Clear validation errors when user starts typing
+    setValidationErrors([]);
+  };
+
   return (
-    <Card className="w-full">
-      <CardHeader className="text-center">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Lock className="h-8 w-8 text-gray-400" />
-        </div>
-        <CardTitle className="text-xl">Acesso Restrito</CardTitle>
-        <CardDescription>
-          O cadastro público foi desabilitado
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-blue-900">Sistema por Convite</h4>
-              <p className="text-sm text-blue-700 mt-1">
-                O acesso ao UniX360 é restrito e controlado por administradores.
-              </p>
-            </div>
-          </div>
-        </div>
+    <form onSubmit={handleSignup} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="nome">Nome Completo</Label>
+        <Input
+          id="nome"
+          type="text"
+          placeholder="Seu nome completo"
+          value={signupForm.nome}
+          onChange={(e) => handleInputChange('nome', e.target.value)}
+          disabled={isLoading}
+          maxLength={100}
+          required
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="seu@email.com"
+          value={signupForm.email}
+          onChange={(e) => handleInputChange('email', e.target.value)}
+          disabled={isLoading}
+          maxLength={255}
+          required
+        />
+      </div>
 
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <Mail className="h-5 w-5 text-gray-600 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-gray-900">Como obter acesso?</h4>
-              <p className="text-sm text-gray-600 mt-1">
-                Entre em contato com um administrador para solicitar um convite.
-                Você receberá um email com instruções para criar sua conta.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center pt-4">
-          <p className="text-sm text-gray-500">
-            Já possui uma conta? Use a aba "Entrar" para fazer login.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="space-y-2">
+        <Label htmlFor="nomeEmpresa">Nome da Empresa</Label>
+        <Input
+          id="nomeEmpresa"
+          type="text"
+          placeholder="Nome da sua empresa"
+          value={signupForm.nomeEmpresa}
+          onChange={(e) => handleInputChange('nomeEmpresa', e.target.value)}
+          disabled={isLoading}
+          maxLength={100}
+          required
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="password">Senha</Label>
+        <Input
+          id="password"
+          type="password"
+          placeholder="Mínimo 6 caracteres"
+          value={signupForm.password}
+          onChange={(e) => handleInputChange('password', e.target.value)}
+          disabled={isLoading}
+          maxLength={128}
+          required
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+        <Input
+          id="confirmPassword"
+          type="password"
+          placeholder="Confirme sua senha"
+          value={signupForm.confirmPassword}
+          onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+          disabled={isLoading}
+          maxLength={128}
+          required
+        />
+      </div>
+      
+      <Button 
+        type="submit" 
+        className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
+        disabled={isLoading}
+      >
+        {isLoading ? "Criando conta..." : "Criar Conta e Iniciar Trial"}
+      </Button>
+      
+      <div className="text-center">
+        <p className="text-xs text-gray-600">
+          Ao criar sua conta, você inicia automaticamente um trial gratuito de 7 dias.
+        </p>
+      </div>
+    </form>
   );
 };

@@ -52,27 +52,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Log successful login (but don't await to avoid blocking)
           securityMonitor.logLoginAttempt(session.user.email || '', true).catch(console.error);
           
-          // Use setTimeout to defer profile fetching and avoid blocking auth flow
-          setTimeout(async () => {
-            if (!isMounted) return;
+        // Use setTimeout to defer profile fetching and avoid blocking auth flow
+        setTimeout(async () => {
+          if (!isMounted) return;
+          
+          try {
+            console.log('🔍 Fetching user profile...');
+            const profile = await fetchUserProfile(session.user.id);
             
-            try {
-              console.log('🔍 Fetching user profile...');
-              const profile = await fetchUserProfile(session.user.id);
-              
-              if (isMounted) {
-                console.log('👤 Profile loaded:', profile ? 'Success' : 'Failed');
-                setUserProfile(profile);
-                setLoading(false);
-              }
-            } catch (error) {
-              console.error('💥 Error loading profile:', error);
-              if (isMounted) {
-                setUserProfile(null);
-                setLoading(false);
+            // Complete signup process if needed (new user without profile)
+            if (!profile && session.user.user_metadata?.nome) {
+              try {
+                console.log('🚀 Completing signup process...');
+                const { error } = await supabase.functions.invoke('signup-complete');
+                if (!error) {
+                  // Send welcome email
+                  await supabase.functions.invoke('send-welcome-email', {
+                    body: {
+                      email: session.user.email,
+                      nome: session.user.user_metadata.nome,
+                      nomeEmpresa: session.user.user_metadata.nome_empresa || 'Empresa'
+                    }
+                  });
+                  
+                  // Refresh profile after completion
+                  setTimeout(async () => {
+                    if (!isMounted) return;
+                    const newProfile = await fetchUserProfile(session.user.id);
+                    if (isMounted) {
+                      setUserProfile(newProfile);
+                      setLoading(false);
+                    }
+                  }, 1000);
+                  return;
+                }
+              } catch (error) {
+                console.error('Erro ao completar cadastro:', error);
               }
             }
-          }, 0);
+            
+            if (isMounted) {
+              console.log('👤 Profile loaded:', profile ? 'Success' : 'Failed');
+              setUserProfile(profile);
+              setLoading(false);
+            }
+          } catch (error) {
+            console.error('💥 Error loading profile:', error);
+            if (isMounted) {
+              setUserProfile(null);
+              setLoading(false);
+            }
+          }
+        }, 0);
         } else {
           console.log('👋 User logged out');
           setUserProfile(null);

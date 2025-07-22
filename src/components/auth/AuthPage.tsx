@@ -1,10 +1,12 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ValidationErrors } from "./ValidationErrors";
 import { LockoutWarning } from "./LockoutWarning";
 import { LoginFormTab } from "./LoginFormTab";
+import { SignupFormTab } from "./SignupFormTab";
 import { CompanyLogo } from "@/components/layout/CompanyLogo";
 
 export const AuthPage = () => {
@@ -39,30 +41,39 @@ export const AuthPage = () => {
             <CardTitle className="text-2xl">UniX360</CardTitle>
           </div>
           <CardDescription>
-            Acesso restrito por convite
+            Entre ou crie sua conta para começar
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ValidationErrors errors={validationErrors} />
           <LockoutWarning isLockedOut={isLockedOut} />
 
-          <div className="w-full">
-            <LoginFormTab
-              isLoading={isLoading}
-              setIsLoading={setIsLoading}
-              loginAttempts={loginAttempts}
-              setLoginAttempts={setLoginAttempts}
-              isLockedOut={isLockedOut}
-              setValidationErrors={setValidationErrors}
-              onAccountLockout={handleAccountLockout}
-            />
-          </div>
-          
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Não possui acesso? Entre em contato com o administrador.
-            </p>
-          </div>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Entrar</TabsTrigger>
+              <TabsTrigger value="signup">Criar Conta</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login" className="mt-6">
+              <LoginFormTab
+                isLoading={isLoading}
+                setIsLoading={setIsLoading}
+                loginAttempts={loginAttempts}
+                setLoginAttempts={setLoginAttempts}
+                isLockedOut={isLockedOut}
+                setValidationErrors={setValidationErrors}
+                onAccountLockout={handleAccountLockout}
+              />
+            </TabsContent>
+            
+            <TabsContent value="signup" className="mt-6">
+              <SignupFormTab
+                isLoading={isLoading}
+                setIsLoading={setIsLoading}
+                setValidationErrors={setValidationErrors}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
