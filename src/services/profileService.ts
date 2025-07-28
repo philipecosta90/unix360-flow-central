@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/auth";
 
@@ -28,6 +27,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         )
       `)
       .eq('user_id', userId)
+      .eq('ativo', true) // Só buscar perfis ativos
       .maybeSingle();
 
     console.log('🔍 Resposta da query:', { data, error });
@@ -38,7 +38,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
     }
 
     if (!data) {
-      console.log('⚠️ Perfil não encontrado. Tentando criar automaticamente...');
+      console.log('⚠️ Perfil ativo não encontrado. Tentando criar automaticamente...');
       // Try to create a profile automatically if none exists
       const success = await createDefaultProfile(userId);
       if (!success) {
@@ -63,6 +63,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
           )
         `)
         .eq('user_id', userId)
+        .eq('ativo', true) // Só buscar perfis ativos
         .maybeSingle();
       
       console.log('🔍 Segunda tentativa:', { data: newData, error: newError });
@@ -75,7 +76,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       return newData;
     }
 
-    console.log('✅ Perfil carregado com sucesso:', data);
+    console.log('✅ Perfil ativo carregado com sucesso:', data);
     return data;
   } catch (error) {
     console.error('💥 Erro inesperado ao buscar perfil:', error);
@@ -134,7 +135,8 @@ export const createDefaultProfile = async (userId: string): Promise<boolean> => 
         user_id: userId,
         empresa_id: defaultCompany.id,
         nome: user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário',
-        nivel_permissao: 'admin' as const
+        nivel_permissao: 'admin' as const,
+        ativo: true // Criar perfil como ativo por padrão
       };
       
       console.log('👤 Dados do perfil a ser criado:', profileData);

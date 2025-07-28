@@ -1003,12 +1003,20 @@ export type Database = {
       }
     }
     Functions: {
+      get_active_user_empresa_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_empresa_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
       has_active_subscription: {
         Args: { empresa_uuid: string }
+        Returns: boolean
+      }
+      is_active_user: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       is_admin: {

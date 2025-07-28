@@ -1,5 +1,6 @@
 
 import { useAuth } from "@/hooks/useAuth";
+import { useUserValidation } from "@/hooks/useUserValidation";
 import { useLocation } from "react-router-dom";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { Header } from "@/components/layout/Header";
@@ -30,6 +31,9 @@ import { MainLogo } from "@/components/layout/MainLogo";
 const Index = () => {
   const { user, userProfile, loading, signOut } = useAuth();
   const location = useLocation();
+  
+  // Ativar validação periódica de usuário ativo
+  useUserValidation();
 
   console.log('📄 Index component render:', {
     user: user ? 'Present' : 'Null',

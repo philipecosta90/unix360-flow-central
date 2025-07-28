@@ -5,7 +5,7 @@ export const hasPermission = (
   userProfile: UserProfile | null,
   requiredPermission: 'admin' | 'editor' | 'operacional' | 'visualizacao'
 ): boolean => {
-  if (!userProfile) return false;
+  if (!userProfile || !userProfile.ativo) return false;
   
   const permissionHierarchy = {
     'admin': 4,
@@ -21,7 +21,7 @@ export const hasPermission = (
 };
 
 export const isAdmin = (userProfile: UserProfile | null): boolean => {
-  return userProfile?.nivel_permissao === 'admin';
+  return userProfile?.nivel_permissao === 'admin' && userProfile?.ativo === true;
 };
 
 export const canEditData = (userProfile: UserProfile | null): boolean => {
@@ -36,8 +36,12 @@ export const validateCompanyAccess = (
   userProfile: UserProfile | null,
   recordCompanyId: string
 ): boolean => {
-  if (!userProfile) return false;
+  if (!userProfile || !userProfile.ativo) return false;
   return userProfile.empresa_id === recordCompanyId;
+};
+
+export const isActiveUser = (userProfile: UserProfile | null): boolean => {
+  return userProfile?.ativo === true;
 };
 
 export const sanitizeUserInput = (input: string): string => {
