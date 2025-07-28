@@ -66,15 +66,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 console.log('🚀 Completing signup process...');
                 const { error } = await supabase.functions.invoke('signup-complete');
                 if (!error) {
-                  // Send welcome email
-                  await supabase.functions.invoke('send-welcome-email', {
-                    body: {
-                      email: session.user.email,
-                      nome: session.user.user_metadata.nome,
-                      nomeEmpresa: session.user.user_metadata.nome_empresa || 'Empresa'
-                    }
-                  });
-                  
                   // Refresh profile after completion
                   setTimeout(async () => {
                     if (!isMounted) return;
