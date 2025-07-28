@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthDebug } from "@/components/debug/AuthDebug";
+import { InactiveUserMessage } from "@/components/auth/InactiveUserMessage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <AuthDebug />
+          <InactiveUserMessage />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

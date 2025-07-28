@@ -93,6 +93,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             if (isMounted) {
               console.log('👤 Profile loaded:', profile ? 'Success' : 'Failed');
+              
+              // Verificar se o perfil existe e está ativo
+              if (!profile || !profile.ativo) {
+                console.warn('🚫 Perfil inativo ou não encontrado, fazendo logout...');
+                
+                // Force logout para usuários inativos
+                try {
+                  await supabase.auth.signOut();
+                  setUser(null);
+                  setSession(null);
+                  setUserProfile(null);
+                  
+                  // Mostrar mensagem de erro
+                  if (typeof window !== 'undefined') {
+                    setTimeout(() => {
+                      const event = new CustomEvent('show-inactive-user-message');
+                      window.dispatchEvent(event);
+                    }, 100);
+                  }
+                } catch (error) {
+                  console.error('Erro ao fazer logout forçado:', error);
+                }
+                setLoading(false);
+                return;
+              }
+              
               setUserProfile(profile);
               setLoading(false);
             }
@@ -133,6 +159,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const profile = await fetchUserProfile(session.user.id);
             
             if (isMounted) {
+              // Verificar se o perfil existe e está ativo na verificação inicial
+              if (!profile || !profile.ativo) {
+                console.warn('🚫 Perfil inativo ou não encontrado na verificação inicial, fazendo logout...');
+                
+                try {
+                  await supabase.auth.signOut();
+                  setUser(null);
+                  setSession(null);
+                  setUserProfile(null);
+                  
+                  if (typeof window !== 'undefined') {
+                    setTimeout(() => {
+                      const event = new CustomEvent('show-inactive-user-message');
+                      window.dispatchEvent(event);
+                    }, 100);
+                  }
+                } catch (error) {
+                  console.error('Erro ao fazer logout forçado inicial:', error);
+                }
+                setLoading(false);
+                return;
+              }
+              
               setUserProfile(profile);
               setLoading(false);
             }
