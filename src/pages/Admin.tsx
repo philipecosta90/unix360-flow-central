@@ -27,8 +27,8 @@ const Admin = () => {
     return <Navigate to="/" replace />;
   }
 
-  // Verificar se o usuário tem permissão de admin
-  if (userProfile?.nivel_permissao !== 'admin') {
+  // Verificar se é o super admin específico
+  if (user?.id !== 'b0896210-8487-4456-a5f1-056a0685ee7f') {
     return (
       <div className="flex items-center justify-center min-h-[50vh] bg-gray-50">
         <div className="text-center">

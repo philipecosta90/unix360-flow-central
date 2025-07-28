@@ -21,7 +21,7 @@ interface ChangePasswordData {
 export const useUserManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const createUser = async (data: CreateUserData) => {
     console.log('🚀 [FRONTEND] Iniciando criação de usuário e empresa...');
@@ -36,11 +36,11 @@ export const useUserManagement = () => {
       return false;
     }
 
-    if (userProfile.nivel_permissao !== 'admin') {
-      console.error('❌ [FRONTEND] Usuário não é admin');
+    if (user?.id !== 'b0896210-8487-4456-a5f1-056a0685ee7f') {
+      console.error('❌ [FRONTEND] Usuário não é super admin');
       toast({
         title: "Erro",
-        description: "Apenas administradores podem criar usuários",
+        description: "Apenas o super administrador pode criar usuários",
         variant: "destructive",
       });
       return false;

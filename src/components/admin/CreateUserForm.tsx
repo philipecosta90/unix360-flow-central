@@ -20,7 +20,7 @@ export const CreateUserForm = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const { createUser, isLoading } = useUserManagement();
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +37,8 @@ export const CreateUserForm = () => {
       return;
     }
 
-    if (userProfile.nivel_permissao !== 'admin') {
-      console.error('❌ [FORM] Usuário não é admin:', userProfile.nivel_permissao);
+    if (user?.id !== 'b0896210-8487-4456-a5f1-056a0685ee7f') {
+      console.error('❌ [FORM] Usuário não é super admin');
       return;
     }
 
@@ -69,7 +69,7 @@ export const CreateUserForm = () => {
                      formData.password.trim() !== '' &&
                      formData.nome_empresa.trim() !== '';
 
-  const canCreateUsers = userProfile?.nivel_permissao === 'admin';
+  const canCreateUsers = user?.id === 'b0896210-8487-4456-a5f1-056a0685ee7f';
 
   if (!canCreateUsers) {
     return (

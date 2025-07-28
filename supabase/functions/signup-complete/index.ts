@@ -105,7 +105,7 @@ serve(async (req: Request): Promise<Response> => {
           user_id: user.id,
           empresa_id: newEmpresaId,
           nome: nome,
-          nivel_permissao: 'admin', // Primeiro usuário é admin
+          nivel_permissao: 'operacional', // Usuários começam com nível operacional
           ativo: true
         });
 

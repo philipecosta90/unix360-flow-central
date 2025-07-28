@@ -35,7 +35,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export const Sidebar = () => {
   const location = useLocation();
-  const { userProfile } = useAuth(); // Add this to get user profile
+  const { user, userProfile } = useAuth();
 
   const menuItems = [
     { icon: BarChart3, label: "Dashboard", path: "/dashboard" },
@@ -48,8 +48,8 @@ export const Sidebar = () => {
     { icon: Settings, label: "Configurações", path: "/configuracoes" },
   ];
 
-  // Add admin menu item if user is admin
-  if (userProfile?.nivel_permissao === 'admin') {
+  // Add admin menu item only for super admin
+  if (user?.id === 'b0896210-8487-4456-a5f1-056a0685ee7f') {
     menuItems.push({ icon: Shield, label: "Admin", path: "/admin" });
   }
 

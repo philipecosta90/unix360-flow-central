@@ -100,13 +100,13 @@ serve(async (req: Request): Promise<Response> => {
       nivel_permissao: adminProfile.nivel_permissao
     });
 
-    // Verificar se é admin
-    if (adminProfile.nivel_permissao !== 'admin') {
-      console.error('❌ [CREATE-USER] Usuário não é admin:', adminProfile.nivel_permissao);
+    // Verificar se é o super admin específico
+    if (user.id !== 'b0896210-8487-4456-a5f1-056a0685ee7f') {
+      console.error('❌ [CREATE-USER] Usuário não é super admin:', user.id);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Apenas administradores podem criar usuários'
+          error: 'Apenas o super administrador pode criar usuários'
         }),
         {
           status: 403,
