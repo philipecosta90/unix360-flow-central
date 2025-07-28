@@ -30,6 +30,17 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
     setLoading(true);
 
     try {
+      // Verificar se já existe assinatura ativa para este e-mail
+      const { data: existingSubscription } = await supabase
+        .from('subscriptions')
+        .select('id, status, asaas_customer_id')
+        .eq('empresa_id', subscription.empresa_id)
+        .single();
+
+      if (existingSubscription?.asaas_customer_id && existingSubscription.status === 'active') {
+        throw new Error('Já existe uma assinatura ativa para esta empresa.');
+      }
+
       // 1. Criar cliente no Asaas
       const { data: customerData, error: customerError } = await supabase.functions.invoke('asaas-create-customer', {
         body: formData

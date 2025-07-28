@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProximasTarefas } from "./ProximasTarefas";
+import { SubscriptionBanner } from "./SubscriptionBanner";
 
 export const DashboardOverview = () => {
   const { data: dashboardData, isLoading } = useDashboardData();
@@ -114,6 +115,9 @@ export const DashboardOverview = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-2">Visão geral do seu negócio</p>
       </div>
+
+      {/* Banner de Assinatura */}
+      <SubscriptionBanner />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

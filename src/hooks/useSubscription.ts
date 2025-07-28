@@ -1,0 +1,84 @@
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+interface Subscription {
+  id: string;
+  status: string;
+  trial_start_date: string;
+  trial_end_date: string;
+  monthly_value: number;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  asaas_customer_id: string | null;
+  asaas_subscription_id: string | null;
+}
+
+export const useSubscription = () => {
+  const { userProfile } = useAuth();
+  
+  const { data: subscription, isLoading, refetch } = useQuery({
+    queryKey: ['subscription', userProfile?.empresa_id],
+    queryFn: async (): Promise<Subscription | null> => {
+      if (!userProfile?.empresa_id) return null;
+      
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('empresa_id', userProfile.empresa_id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return data;
+    },
+    enabled: !!userProfile?.empresa_id,
+  });
+
+  const isTrialActive = () => {
+    if (!subscription || subscription.status !== 'trial') return false;
+    return new Date() <= new Date(subscription.trial_end_date);
+  };
+
+  const isTrialExpired = () => {
+    if (!subscription || subscription.status !== 'trial') return false;
+    return new Date() > new Date(subscription.trial_end_date);
+  };
+
+  const getDaysLeftInTrial = () => {
+    if (!subscription || subscription.status !== 'trial') return 0;
+    const now = new Date();
+    const trialEnd = new Date(subscription.trial_end_date);
+    const diffTime = trialEnd.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
+  };
+
+  const canUpgrade = () => {
+    return subscription && (
+      subscription.status === 'trial' || 
+      subscription.status === 'suspended'
+    );
+  };
+
+  const needsUpgrade = () => {
+    return subscription && (
+      (subscription.status === 'trial' && isTrialExpired()) ||
+      subscription.status === 'suspended'
+    );
+  };
+
+  return {
+    subscription,
+    isLoading,
+    refetch,
+    isTrialActive: isTrialActive(),
+    isTrialExpired: isTrialExpired(),
+    getDaysLeftInTrial: getDaysLeftInTrial(),
+    canUpgrade: canUpgrade(),
+    needsUpgrade: needsUpgrade()
+  };
+};

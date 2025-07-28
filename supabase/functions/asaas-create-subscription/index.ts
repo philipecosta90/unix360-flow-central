@@ -24,6 +24,32 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Buscar dados da assinatura atual para calcular dias restantes do trial
+    const { data: currentSubscription } = await supabase
+      .from('subscriptions')
+      .select('trial_end_date, status')
+      .eq('id', subscriptionId)
+      .single()
+
+    let nextDueDate = new Date()
+    
+    // Se está em trial e ainda não expirou, usar a data de fim do trial como primeira cobrança
+    if (currentSubscription?.status === 'trial') {
+      const trialEndDate = new Date(currentSubscription.trial_end_date)
+      const now = new Date()
+      
+      if (trialEndDate > now) {
+        // Trial ainda ativo - primeira cobrança será na data de fim do trial
+        nextDueDate = trialEndDate
+      } else {
+        // Trial expirado - cobrar imediatamente
+        nextDueDate = new Date(Date.now() + 24 * 60 * 60 * 1000) // Amanhã
+      }
+    } else {
+      // Não é trial - cobrar imediatamente
+      nextDueDate = new Date(Date.now() + 24 * 60 * 60 * 1000) // Amanhã
+    }
+
     // Criar assinatura no Asaas
     const subscriptionResponse = await fetch('https://sandbox.asaas.com/api/v3/subscriptions', {
       method: 'POST',
@@ -35,7 +61,7 @@ serve(async (req) => {
         customer: customerId,
         billingType: 'UNDEFINED', // Permite todos os métodos
         value: 75.00,
-        nextDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 dias de trial
+        nextDueDate: nextDueDate.toISOString().split('T')[0],
         cycle: 'MONTHLY',
         description: 'Assinatura UniX360 - Plano Mensal'
       })
@@ -55,9 +81,9 @@ serve(async (req) => {
       .update({
         asaas_customer_id: customerId,
         asaas_subscription_id: subscription.id,
-        status: 'trial',
+        status: 'active', // Muda para ativo imediatamente
         current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        current_period_end: nextDueDate.toISOString() // Primeiro período vai até a próxima cobrança
       })
       .eq('id', subscriptionId)
 
