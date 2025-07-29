@@ -4,9 +4,16 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProximasTarefas } from "./ProximasTarefas";
 import { SubscriptionBanner } from "./SubscriptionBanner";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PaymentForm } from "@/components/subscription/PaymentForm";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Crown, Sparkles } from "lucide-react";
 
 export const DashboardOverview = () => {
   const { data: dashboardData, isLoading } = useDashboardData();
+  const { subscription, isTrialActive } = useSubscription();
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -111,9 +118,29 @@ export const DashboardOverview = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-2">Visão geral do seu negócio</p>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-2">Visão geral do seu negócio</p>
+        </div>
+        
+        {/* Botão destacado para trial */}
+        {isTrialActive && subscription?.status === 'trial' && (
+          <div className="flex flex-col items-center lg:items-end gap-2">
+            <Button
+              onClick={() => setShowPaymentForm(true)}
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg border-0 px-8 py-3 text-lg font-semibold transform hover:scale-105 transition-all duration-200"
+            >
+              <Crown className="mr-2 h-5 w-5" />
+              Assine Agora
+              <Sparkles className="ml-2 h-5 w-5" />
+            </Button>
+            <p className="text-sm text-gray-600 text-center">
+              Migre para o plano pago a qualquer momento!
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Banner de Assinatura */}
@@ -152,6 +179,18 @@ export const DashboardOverview = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Pagamento */}
+      {showPaymentForm && subscription && (
+        <PaymentForm
+          subscription={subscription}
+          onClose={() => setShowPaymentForm(false)}
+          onSuccess={() => {
+            setShowPaymentForm(false);
+            window.location.reload(); // Recarrega para atualizar o status
+          }}
+        />
+      )}
     </div>
   );
 };
