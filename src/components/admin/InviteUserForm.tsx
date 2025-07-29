@@ -47,7 +47,7 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
         <Input
           id="nome"
           type="text"
-          placeholder="Nome do usuário"
+          placeholder="João da Silva Santos"
           value={inviteForm.nome}
           onChange={(e) => setInviteForm(prev => ({ ...prev, nome: e.target.value }))}
           disabled={isLoading}

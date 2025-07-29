@@ -46,11 +46,22 @@ export const signupSchema = z.object({
 export const sanitizeInput = (input: string): string => {
   if (typeof input !== 'string') return '';
   
-  // Remove caracteres perigosos e sanitiza HTML
-  return DOMPurify.sanitize(input.trim(), { 
+  // Remove caracteres perigosos e sanitiza HTML, mas preserva espaços
+  return DOMPurify.sanitize(input, { 
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: []
-  });
+  }).trim();
+};
+
+// Função específica para sanitizar campos de nome
+export const sanitizeNameInput = (input: string): string => {
+  if (typeof input !== 'string') return '';
+  
+  // Remove apenas caracteres realmente perigosos, preservando espaços, acentos e hífens
+  return input
+    .replace(/[<>\"\'&]/g, '') // Remove apenas caracteres HTML perigosos
+    .replace(/\s+/g, ' ') // Normaliza múltiplos espaços para um único espaço
+    .trim();
 };
 
 // Função para sanitizar HTML

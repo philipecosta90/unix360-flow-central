@@ -74,7 +74,7 @@ export const AddCompanyDialog = ({ open, onClose }: AddCompanyDialogProps) => {
               id="nome"
               value={formData.nome}
               onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-              placeholder="Digite o nome da empresa"
+              placeholder="Time Marketing Digital"
               required
             />
           </div>

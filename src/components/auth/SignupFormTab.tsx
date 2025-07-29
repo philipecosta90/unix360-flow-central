@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { validateAndSanitize, signupSchema, sanitizeInput } from "@/utils/inputValidation";
+import { validateAndSanitize, signupSchema, sanitizeInput, sanitizeNameInput } from "@/utils/inputValidation";
 
 interface SignupFormTabProps {
   isLoading: boolean;
@@ -106,9 +106,15 @@ export const SignupFormTab = ({
   };
 
   const handleInputChange = (field: keyof typeof signupForm, value: string) => {
-    const sanitizedValue = field === 'password' || field === 'confirmPassword'
-      ? value // Don't sanitize passwords
-      : sanitizeInput(value);
+    let sanitizedValue = value;
+    
+    if (field === 'password' || field === 'confirmPassword') {
+      sanitizedValue = value; // Don't sanitize passwords
+    } else if (field === 'nome' || field === 'nomeEmpresa') {
+      sanitizedValue = sanitizeNameInput(value); // Use specific sanitization for names
+    } else {
+      sanitizedValue = sanitizeInput(value); // Use general sanitization for other fields
+    }
     
     setSignupForm(prev => ({ ...prev, [field]: sanitizedValue }));
     
@@ -123,7 +129,7 @@ export const SignupFormTab = ({
         <Input
           id="nome"
           type="text"
-          placeholder="Seu nome completo"
+          placeholder="Maria da Silva"
           value={signupForm.nome}
           onChange={(e) => handleInputChange('nome', e.target.value)}
           disabled={isLoading}
@@ -151,7 +157,7 @@ export const SignupFormTab = ({
         <Input
           id="nomeEmpresa"
           type="text"
-          placeholder="Nome da sua empresa"
+          placeholder="Empresa Exemplo Ltda"
           value={signupForm.nomeEmpresa}
           onChange={(e) => handleInputChange('nomeEmpresa', e.target.value)}
           disabled={isLoading}
