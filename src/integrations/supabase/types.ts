@@ -1003,6 +1003,10 @@ export type Database = {
       }
     }
     Functions: {
+      check_and_update_expired_trials: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_active_user_empresa_id: {
         Args: Record<PropertyKey, never>
         Returns: string

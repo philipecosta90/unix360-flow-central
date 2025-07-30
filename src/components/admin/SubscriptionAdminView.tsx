@@ -284,7 +284,7 @@ export const SubscriptionAdminView = () => {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">{stats.suspended}</div>
+            <div className="text-2xl font-bold text-orange-600">{stats.suspended}</div>
             <div className="text-sm text-muted-foreground">Suspensas</div>
           </CardContent>
         </Card>
