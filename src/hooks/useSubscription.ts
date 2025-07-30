@@ -53,9 +53,29 @@ export const useSubscription = () => {
     const now = new Date();
     const trialEnd = new Date(subscription.trial_end_date);
     const diffTime = trialEnd.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
+    const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    return diffDays;
   };
+
+  // Auto-check for expired trials every hour
+  useEffect(() => {
+    const checkTrialStatus = async () => {
+      if (subscription && subscription.status === 'trial' && isTrialExpired()) {
+        try {
+          await supabase.functions.invoke('check-expired-trials');
+          refetch(); // Refresh subscription data
+        } catch (error) {
+          console.error('Failed to check trial status:', error);
+        }
+      }
+    };
+
+    // Check immediately and then every hour
+    checkTrialStatus();
+    const interval = setInterval(checkTrialStatus, 60 * 60 * 1000); // 1 hour
+
+    return () => clearInterval(interval);
+  }, [subscription, isTrialExpired, refetch]);
 
   const canUpgrade = () => {
     return subscription && (

@@ -3,3 +3,6 @@ project_id = "hfqzbljiwkrksmjyfdiy"
 
 [functions.invite-user]
 verify_jwt = true
+
+[functions.check-expired-trials]
+verify_jwt = false
