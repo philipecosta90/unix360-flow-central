@@ -1003,6 +1003,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_user_access_system: {
+        Args: { user_uuid: string }
+        Returns: Json
+      }
       check_and_update_expired_trials: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1037,6 +1041,15 @@ export type Database = {
       }
       log_sensitive_access: {
         Args: { p_action: string; p_table_name: string; p_record_id?: string }
+        Returns: undefined
+      }
+      log_subscription_action: {
+        Args: {
+          p_subscription_id: string
+          p_action: string
+          p_old_status?: string
+          p_new_status?: string
+        }
         Returns: undefined
       }
       validate_permission_levels: {

@@ -28,6 +28,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to handle user access denial
+  const handleUserAccessDenied = async (message: string) => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      
+      // Mostrar mensagem de erro
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          const event = new CustomEvent('show-access-denied', { detail: { message } });
+          window.dispatchEvent(event);
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Erro ao fazer logout forçado:', error);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
     console.log('🚀 Inicializando AuthProvider...');
     
@@ -85,30 +106,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (isMounted) {
               console.log('👤 Profile loaded:', profile ? 'Success' : 'Failed');
               
-              // Verificar se o perfil existe e está ativo
-              if (!profile || !profile.ativo) {
-                console.warn('🚫 Perfil inativo ou não encontrado, fazendo logout...');
-                
-                // Force logout para usuários inativos
-                try {
-                  await supabase.auth.signOut();
-                  setUser(null);
-                  setSession(null);
-                  setUserProfile(null);
-                  
-                  // Mostrar mensagem de erro
-                  if (typeof window !== 'undefined') {
-                    setTimeout(() => {
-                      const event = new CustomEvent('show-inactive-user-message');
-                      window.dispatchEvent(event);
-                    }, 100);
-                  }
-                } catch (error) {
-                  console.error('Erro ao fazer logout forçado:', error);
-                }
-                setLoading(false);
+              // Verificar se o perfil existe e se o usuário pode acessar o sistema
+              if (!profile) {
+                console.warn('🚫 Perfil não encontrado, fazendo logout...');
+                await handleUserAccessDenied('Perfil não encontrado. Entre em contato com o administrador.');
                 return;
               }
+              
+                // Verificar acesso completo do sistema usando função do banco
+                try {
+                  const { data: accessCheck, error: accessError } = await supabase.rpc('can_user_access_system', {
+                    user_uuid: session.user.id
+                  });
+                  
+                  if (accessError) {
+                    console.error('Erro ao verificar acesso:', accessError);
+                    await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
+                    return;
+                  }
+                  
+                  const accessData = accessCheck as any; // Type assertion para contornar tipo Json
+                  if (!accessData?.can_access) {
+                    console.warn('🚫 Acesso negado:', accessData?.reason);
+                    await handleUserAccessDenied(accessData?.message || 'Acesso negado');
+                    return;
+                  }
+                  
+                  console.log('✅ Acesso autorizado:', accessData?.reason);
+                } catch (error) {
+                  console.error('Erro ao verificar acesso do sistema:', error);
+                  await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
+                  return;
+                }
               
               setUserProfile(profile);
               setLoading(false);
@@ -150,39 +179,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const profile = await fetchUserProfile(session.user.id);
             
             if (isMounted) {
-              // Verificar se o perfil existe e está ativo na verificação inicial
-              if (!profile || !profile.ativo) {
-                console.warn('🚫 Perfil inativo ou não encontrado na verificação inicial, fazendo logout...');
-                
-                try {
-                  await supabase.auth.signOut();
-                  setUser(null);
-                  setSession(null);
-                  setUserProfile(null);
-                  
-                  if (typeof window !== 'undefined') {
-                    setTimeout(() => {
-                      const event = new CustomEvent('show-inactive-user-message');
-                      window.dispatchEvent(event);
-                    }, 100);
-                  }
-                } catch (error) {
-                  console.error('Erro ao fazer logout forçado inicial:', error);
-                }
-                setLoading(false);
+              // Verificar se o perfil existe e se o usuário pode acessar o sistema
+              if (!profile) {
+                console.warn('🚫 Perfil não encontrado na verificação inicial, fazendo logout...');
+                await handleUserAccessDenied('Perfil não encontrado. Entre em contato com o administrador.');
                 return;
               }
               
-              setUserProfile(profile);
-              setLoading(false);
+                // Verificar acesso completo do sistema usando função do banco
+                try {
+                  const { data: accessCheck, error: accessError } = await supabase.rpc('can_user_access_system', {
+                    user_uuid: session.user.id
+                  });
+                  
+                  if (accessError) {
+                    console.error('Erro ao verificar acesso inicial:', accessError);
+                    await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
+                    return;
+                  }
+                  
+                  const accessData = accessCheck as any; // Type assertion para contornar tipo Json
+                  if (!accessData?.can_access) {
+                    console.warn('🚫 Acesso negado na verificação inicial:', accessData?.reason);
+                    await handleUserAccessDenied(accessData?.message || 'Acesso negado');
+                    return;
+                  }
+                  
+                  console.log('✅ Acesso autorizado na verificação inicial:', accessData?.reason);
+                } catch (error) {
+                  console.error('Erro ao verificar acesso inicial do sistema:', error);
+                  await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
+                  return;
+                }
+                
+                setUserProfile(profile);
+                setLoading(false);
+              }
+            } catch (error) {
+              console.error('💥 Error loading initial profile:', error);
+              if (isMounted) {
+                setUserProfile(null);
+                setLoading(false);
+              }
             }
-          } catch (error) {
-            console.error('💥 Error loading initial profile:', error);
-            if (isMounted) {
-              setUserProfile(null);
-              setLoading(false);
-            }
-          }
         }, 0);
       } else {
         setLoading(false);

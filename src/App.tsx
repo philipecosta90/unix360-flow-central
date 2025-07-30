@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthDebug } from "@/components/debug/AuthDebug";
 import { InactiveUserMessage } from "@/components/auth/InactiveUserMessage";
+import { AccessDeniedMessage } from "@/components/auth/AccessDeniedMessage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => {
           <Sonner />
           <AuthDebug />
           <InactiveUserMessage />
+          <AccessDeniedMessage />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

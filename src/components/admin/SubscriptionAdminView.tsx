@@ -117,6 +117,10 @@ export const SubscriptionAdminView = () => {
   const updateSubscriptionStatus = async (subscriptionId: string, newStatus: SubscriptionStatus) => {
     setActionLoading(subscriptionId);
     try {
+      // Get current status for audit log
+      const currentSub = subscriptions.find(sub => sub.id === subscriptionId);
+      const oldStatus = currentSub?.status;
+      
       const { error } = await supabase
         .from('subscriptions')
         .update({ 
@@ -127,12 +131,31 @@ export const SubscriptionAdminView = () => {
 
       if (error) throw error;
 
+      // Log the action for audit
+      try {
+        await supabase.rpc('log_subscription_action', {
+          p_subscription_id: subscriptionId,
+          p_action: `STATUS_UPDATE`,
+          p_old_status: oldStatus,
+          p_new_status: newStatus
+        });
+      } catch (auditError) {
+        console.error('Erro ao registrar ação de auditoria:', auditError);
+        // Não interrompe o fluxo principal se a auditoria falhar
+      }
+
       await loadSubscriptions();
+      
+      const actionMessages = {
+        'suspended': 'suspensa',
+        'active': 'reativada',
+        'cancelled': 'cancelada',
+        'trial': 'alterada para trial'
+      };
+      
       toast({
         title: "Sucesso",
-        description: `Assinatura ${newStatus === 'suspended' ? 'suspensa' : 
-                     newStatus === 'active' ? 'reativada' : 
-                     newStatus === 'cancelled' ? 'cancelada' : 'atualizada'} com sucesso.`
+        description: `Assinatura ${actionMessages[newStatus] || 'atualizada'} com sucesso.`
       });
     } catch (error) {
       console.error('Error updating subscription:', error);
@@ -153,6 +176,16 @@ export const SubscriptionAdminView = () => {
 
     setActionLoading(subscriptionId);
     try {
+      // Log the action for audit before deletion
+      try {
+        await supabase.rpc('log_subscription_action', {
+          p_subscription_id: subscriptionId,
+          p_action: 'SUBSCRIPTION_DELETED'
+        });
+      } catch (auditError) {
+        console.error('Erro ao registrar ação de auditoria:', auditError);
+      }
+
       const { error } = await supabase
         .from('subscriptions')
         .delete()
@@ -187,6 +220,9 @@ export const SubscriptionAdminView = () => {
 
     setActionLoading(editingSubscription.id);
     try {
+      // Get original subscription for audit
+      const originalSub = subscriptions.find(sub => sub.id === editingSubscription.id);
+      
       const { error } = await supabase
         .from('subscriptions')
         .update({
@@ -198,6 +234,18 @@ export const SubscriptionAdminView = () => {
         .eq('id', editingSubscription.id);
 
       if (error) throw error;
+
+      // Log the action for audit
+      try {
+        await supabase.rpc('log_subscription_action', {
+          p_subscription_id: editingSubscription.id,
+          p_action: 'SUBSCRIPTION_UPDATED',
+          p_old_status: originalSub?.status,
+          p_new_status: editingSubscription.status
+        });
+      } catch (auditError) {
+        console.error('Erro ao registrar ação de auditoria:', auditError);
+      }
 
       await loadSubscriptions();
       setIsEditModalOpen(false);
@@ -262,6 +310,30 @@ export const SubscriptionAdminView = () => {
 
   return (
     <div className="space-y-6">
+      {/* Informações do Sistema de Suspensão */}
+      <Card className="border-orange-200 bg-orange-50/50">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-full bg-orange-100 p-2">
+              <Pause className="h-4 w-4 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-orange-900 mb-1">Sistema de Suspensão de Acesso</h3>
+              <p className="text-sm text-orange-700 mb-2">
+                Clientes suspensos <strong>não podem fazer login</strong> até regularização da assinatura. 
+                Todos os dados permanecem intactos no sistema.
+              </p>
+              <div className="text-xs text-orange-600 space-y-1">
+                <div>• <strong>Suspender:</strong> Bloqueia acesso imediato, mantém dados seguros</div>
+                <div>• <strong>Reativar:</strong> Restaura acesso completo instantaneamente</div>
+                <div>• <strong>Trial → Suspenso:</strong> Automaticamente quando expira sem pagamento</div>
+                <div>• <strong>Auditoria:</strong> Todas as ações são registradas nos logs do sistema</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
@@ -372,6 +444,7 @@ export const SubscriptionAdminView = () => {
                           variant="outline"
                           onClick={() => updateSubscriptionStatus(subscription.id, 'suspended')}
                           disabled={actionLoading === subscription.id}
+                          title="Suspender acesso da empresa"
                         >
                           <Pause className="h-4 w-4" />
                         </Button>
@@ -383,9 +456,33 @@ export const SubscriptionAdminView = () => {
                           variant="outline"
                           onClick={() => updateSubscriptionStatus(subscription.id, 'active')}
                           disabled={actionLoading === subscription.id}
+                          title="Reativar acesso da empresa"
                         >
                           <RefreshCw className="h-4 w-4" />
                         </Button>
+                      )}
+                      
+                      {subscription.status === 'trial' && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateSubscriptionStatus(subscription.id, 'suspended')}
+                            disabled={actionLoading === subscription.id}
+                            title="Suspender acesso da empresa"
+                          >
+                            <Pause className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateSubscriptionStatus(subscription.id, 'active')}
+                            disabled={actionLoading === subscription.id}
+                            title="Converter para assinatura paga"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        </>
                       )}
                       
                       {(subscription.status === 'trial' || subscription.status === 'suspended') && (

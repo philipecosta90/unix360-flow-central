@@ -47,6 +47,31 @@ export const SignupFormTab = ({
     setIsLoading(true);
 
     try {
+      // Verificar se já existe uma empresa suspensa com este e-mail
+      const { data: existingCompany, error: companyError } = await supabase
+        .from('empresas')
+        .select(`
+          id,
+          nome,
+          email,
+          subscriptions!inner(
+            status
+          )
+        `)
+        .eq('email', signupForm.email)
+        .single();
+
+      if (!companyError && existingCompany) {
+        const subscription = existingCompany.subscriptions[0];
+        if (subscription?.status === 'suspended') {
+          toast({
+            title: "Conta Suspensa",
+            description: "Existe uma conta suspensa associada a este e-mail. Entre em contato com o suporte para reativação.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
 
       // Create user with signup
       const { data, error } = await supabase.auth.signUp({

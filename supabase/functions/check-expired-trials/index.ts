@@ -64,29 +64,18 @@ serve(async (req) => {
       updatedCount = expiredTrials.length;
       logStep("Successfully updated expired trials", { updatedCount });
 
-      // Create notifications for each expired trial
-      const notifications = expiredTrials.map(trial => ({
-        empresa_id: trial.empresa_id,
-        user_id: null, // Will be handled by admin notifications
-        type: 'subscription_expired',
-        title: 'Trial Expirado',
-        message: 'Seu período de trial expirou. Para continuar usando o sistema, realize o pagamento da assinatura.',
-        read: false,
-        created_at: now.toISOString(),
-        updated_at: now.toISOString()
-      }));
-
-      // Insert notifications (if there are users to notify)
-      if (notifications.length > 0) {
-        const { error: notificationError } = await supabaseAdmin
-          .from('notifications')
-          .insert(notifications);
-
-        if (notificationError) {
-          logStep("Error creating notifications", { error: notificationError });
-          // Don't throw here, notifications are not critical
-        } else {
-          logStep("Created notifications for expired trials", { count: notifications.length });
+      // Log audit entries for each suspended trial
+      for (const trial of expiredTrials) {
+        try {
+          await supabaseAdmin.rpc('log_subscription_action', {
+            p_subscription_id: trial.id,
+            p_action: 'AUTO_SUSPEND_TRIAL_EXPIRED',
+            p_old_status: 'trial',
+            p_new_status: 'suspended'
+          });
+        } catch (auditError) {
+          logStep("Error logging audit for trial", { trialId: trial.id, error: auditError });
+          // Continue with other trials even if one audit fails
         }
       }
     }
