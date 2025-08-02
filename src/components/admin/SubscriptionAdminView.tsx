@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, DollarSign, Edit, Pause, XCircle, Trash2, RefreshCw } from "lucide-react";
+import { Search, DollarSign, Edit, Pause, XCircle, Trash2, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
 
 type SubscriptionStatus = 'trial' | 'active' | 'suspended' | 'cancelled';
 
@@ -29,21 +30,29 @@ interface SubscriptionWithCompany {
 
 export const SubscriptionAdminView = () => {
   const [subscriptions, setSubscriptions] = useState<SubscriptionWithCompany[]>([]);
-  const [filteredSubscriptions, setFilteredSubscriptions] = useState<SubscriptionWithCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingSubscription, setEditingSubscription] = useState<SubscriptionWithCompany | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState({
+    active: true,
+    trial: true, 
+    suspended: false,
+    cancelled: false
+  });
   const { toast } = useToast();
 
   useEffect(() => {
     loadSubscriptions();
   }, []);
 
-  useEffect(() => {
-    filterSubscriptions();
-  }, [searchTerm, subscriptions]);
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const loadSubscriptions = async () => {
     try {
@@ -72,17 +81,17 @@ export const SubscriptionAdminView = () => {
     }
   };
 
-  const filterSubscriptions = () => {
-    if (!searchTerm) {
-      setFilteredSubscriptions(subscriptions);
-      return;
+  const filterSubscriptionsByStatus = (status: SubscriptionStatus) => {
+    let statusSubs = subscriptions.filter(sub => sub.status === status);
+    
+    if (searchTerm) {
+      statusSubs = statusSubs.filter(sub =>
+        sub.empresas.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sub.empresas.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
-
-    const filtered = subscriptions.filter(sub =>
-      sub.empresas.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.empresas.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredSubscriptions(filtered);
+    
+    return statusSubs;
   };
 
   const getStatusBadge = (status: string) => {
@@ -311,6 +320,150 @@ export const SubscriptionAdminView = () => {
     return { total, active, trial, suspended, cancelled, revenue };
   };
 
+  const renderSubscriptionCard = (subscription: SubscriptionWithCompany) => (
+    <div key={subscription.id} className="flex items-center justify-between p-4 border rounded-lg">
+      <div className="space-y-1 flex-1">
+        <div className="font-medium">{subscription.empresas.nome}</div>
+        <div className="text-sm text-muted-foreground">{subscription.empresas.email}</div>
+        <div className="text-xs text-muted-foreground">
+          Criada em: {new Date(subscription.trial_start_date).toLocaleDateString('pt-BR')}
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-4">
+        <div className="text-right space-y-2">
+          <div className="flex gap-2">
+            {getStatusBadge(subscription.status)}
+            {getTrialStatus(subscription)}
+          </div>
+          <div className="text-sm font-medium">R$ {subscription.monthly_value.toFixed(2)}/mês</div>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => openEditModal(subscription)}
+            disabled={actionLoading === subscription.id}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          
+          {subscription.status === 'active' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => updateSubscriptionStatus(subscription.id, 'suspended')}
+              disabled={actionLoading === subscription.id}
+              title="Suspender acesso da empresa"
+            >
+              <Pause className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {subscription.status === 'suspended' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => updateSubscriptionStatus(subscription.id, 'active')}
+              disabled={actionLoading === subscription.id}
+              title="Reativar acesso da empresa"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {subscription.status === 'trial' && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => updateSubscriptionStatus(subscription.id, 'active')}
+                disabled={actionLoading === subscription.id}
+                title="Ativar assinatura"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => updateSubscriptionStatus(subscription.id, 'suspended')}
+                disabled={actionLoading === subscription.id}
+                title="Suspender assinatura"
+              >
+                <Pause className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          
+          {(subscription.status === 'cancelled' || subscription.status === 'suspended') && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => deleteSubscription(subscription.id)}
+              disabled={actionLoading === subscription.id}
+              title="Excluir assinatura"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSubscriptionSection = (
+    status: SubscriptionStatus,
+    title: string,
+    icon: React.ReactNode,
+    badgeVariant: "default" | "secondary" | "destructive" | "outline"
+  ) => {
+    const sectionSubscriptions = filterSubscriptionsByStatus(status);
+    const isExpanded = expandedSections[status];
+    
+    return (
+      <Card key={status}>
+        <Collapsible open={isExpanded} onOpenChange={() => toggleSection(status)}>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {icon}
+                  <span>{title}</span>
+                  <Badge variant={badgeVariant} className="ml-2">
+                    {sectionSubscriptions.length}
+                  </Badge>
+                </div>
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </CardTitle>
+            </CardHeader>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent>
+            <CardContent>
+              {sectionSubscriptions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  {searchTerm ? 
+                    `Nenhuma assinatura ${title.toLowerCase()} encontrada com o termo de busca.` : 
+                    `Nenhuma assinatura ${title.toLowerCase()}.`
+                  }
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {sectionSubscriptions.map(renderSubscriptionCard)}
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+    );
+  };
+
   if (loading) {
     return <div className="p-4">Carregando...</div>;
   }
@@ -383,7 +536,7 @@ export const SubscriptionAdminView = () => {
         </Card>
       </div>
 
-      {/* Lista de Assinaturas */}
+      {/* Controles Globais */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -411,116 +564,15 @@ export const SubscriptionAdminView = () => {
             />
           </div>
         </CardHeader>
-        <CardContent>
-          {filteredSubscriptions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
-              {searchTerm ? "Nenhuma assinatura encontrada." : "Nenhuma assinatura cadastrada."}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {filteredSubscriptions.map((subscription) => (
-                <div key={subscription.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1 flex-1">
-                    <div className="font-medium">{subscription.empresas.nome}</div>
-                    <div className="text-sm text-muted-foreground">{subscription.empresas.email}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Criada em: {new Date(subscription.trial_start_date).toLocaleDateString('pt-BR')}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="text-right space-y-2">
-                      <div className="flex gap-2">
-                        {getStatusBadge(subscription.status)}
-                        {getTrialStatus(subscription)}
-                      </div>
-                      <div className="text-sm font-medium">R$ {subscription.monthly_value.toFixed(2)}/mês</div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openEditModal(subscription)}
-                        disabled={actionLoading === subscription.id}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      
-                      {subscription.status === 'active' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateSubscriptionStatus(subscription.id, 'suspended')}
-                          disabled={actionLoading === subscription.id}
-                          title="Suspender acesso da empresa"
-                        >
-                          <Pause className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      {subscription.status === 'suspended' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateSubscriptionStatus(subscription.id, 'active')}
-                          disabled={actionLoading === subscription.id}
-                          title="Reativar acesso da empresa"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      {subscription.status === 'trial' && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateSubscriptionStatus(subscription.id, 'suspended')}
-                            disabled={actionLoading === subscription.id}
-                            title="Suspender acesso da empresa"
-                          >
-                            <Pause className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateSubscriptionStatus(subscription.id, 'active')}
-                            disabled={actionLoading === subscription.id}
-                            title="Converter para assinatura paga"
-                          >
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                      
-                      {(subscription.status === 'trial' || subscription.status === 'suspended') && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateSubscriptionStatus(subscription.id, 'cancelled')}
-                          disabled={actionLoading === subscription.id}
-                        >
-                          <XCircle className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => deleteSubscription(subscription.id)}
-                        disabled={actionLoading === subscription.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
       </Card>
+
+      {/* Seções de Assinaturas por Status */}
+      <div className="space-y-4">
+        {renderSubscriptionSection('active', 'Assinaturas Ativas', <RefreshCw className="h-5 w-5 text-green-600" />, 'default')}
+        {renderSubscriptionSection('trial', 'Período de Trial', <DollarSign className="h-5 w-5 text-blue-600" />, 'secondary')}
+        {renderSubscriptionSection('suspended', 'Assinaturas Suspensas', <Pause className="h-5 w-5 text-orange-600" />, 'destructive')}
+        {renderSubscriptionSection('cancelled', 'Assinaturas Canceladas', <XCircle className="h-5 w-5 text-gray-600" />, 'outline')}
+      </div>
 
       {/* Modal de Edição */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
