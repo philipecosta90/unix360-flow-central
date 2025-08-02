@@ -4,8 +4,9 @@ import { CompanyList } from "./CompanyList";
 import { CreateUserForm } from "./CreateUserForm";
 import { FeedbackList } from "./FeedbackList";
 import { SubscriptionAdminView } from "./SubscriptionAdminView";
+import { SystemHealth } from "./SystemHealth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, UserPlus, BarChart3, MessageSquare, CreditCard } from "lucide-react";
+import { Building2, Users, UserPlus, BarChart3, MessageSquare, CreditCard, Activity } from "lucide-react";
 
 export const AdminDashboard = () => {
   return (
@@ -43,7 +44,7 @@ export const AdminDashboard = () => {
             <span className="sm:hidden">Feed.</span>
           </TabsTrigger>
           <TabsTrigger value="system" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
-            <Users className="h-4 w-4" />
+            <Activity className="h-4 w-4" />
             <span className="hidden sm:inline">Sistema</span>
             <span className="sm:hidden">Sist.</span>
           </TabsTrigger>
@@ -70,10 +71,7 @@ export const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="system" className="space-y-4 sm:space-y-6">
-          <div className="bg-white rounded-lg border p-4 sm:p-6">
-            <h3 className="text-lg font-semibold mb-4">Configurações do Sistema</h3>
-            <p className="text-gray-600">Em desenvolvimento...</p>
-          </div>
+          <SystemHealth />
         </TabsContent>
       </Tabs>
     </div>
