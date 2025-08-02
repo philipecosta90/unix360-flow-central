@@ -1,4 +1,3 @@
-
 import { useDroppable } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,9 +35,6 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
     return colorMap[color] || 'bg-gray-50 border-gray-200';
   };
 
-  console.log(`🔍 CRMColumn "${stage.nome}" - Total de ${prospects.length} prospects para renderizar`);
-  console.log(`🎯 DnD Column "${stage.nome}" - isOver:`, isOver, 'droppable ID:', stage.id);
-
   return (
     <div className="min-w-[320px] max-w-[320px] flex-shrink-0">
       <Card className={`${getBackgroundColor(stage.cor)} border-2 ${isOver ? 'ring-2 ring-blue-400 bg-blue-100' : ''} flex flex-col h-[calc(100vh-280px)]`}>
@@ -58,16 +54,13 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
             className="h-full p-4 overflow-y-auto"
           >
             <div className="space-y-3">
-              {prospects.map((prospect) => {
-                console.log(`📋 Renderizando prospect: "${prospect.nome}" (ID: ${prospect.id}) na stage "${stage.nome}"`);
-                return (
-                  <CRMCard 
-                    key={prospect.id} 
-                    prospect={prospect} 
-                    onProspectClick={onProspectClick}
-                  />
-                );
-              })}
+              {prospects.map((prospect) => (
+                <CRMCard
+                  key={prospect.id} 
+                  prospect={prospect} 
+                  onProspectClick={onProspectClick}
+                />
+              ))}
             </div>
             
             {prospects.length === 0 && (

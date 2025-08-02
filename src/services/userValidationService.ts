@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 
 /**
  * Valida se o usuário atual tem um perfil ativo no sistema
@@ -6,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const validateActiveUser = async (userId: string): Promise<boolean> => {
   try {
-    console.log('🔒 Validando usuário ativo:', userId);
+    logger.security('Validando usuário ativo', { userId });
     
     const { data, error } = await supabase
       .from('perfis')
@@ -16,16 +17,16 @@ export const validateActiveUser = async (userId: string): Promise<boolean> => {
       .maybeSingle();
 
     if (error) {
-      console.error('❌ Erro ao validar usuário ativo:', error);
+      logger.error('Erro ao validar usuário ativo:', error);
       return false;
     }
 
     const isActive = !!data;
-    console.log('🔒 Resultado validação:', isActive ? 'Ativo' : 'Inativo/Inexistente');
+    logger.security('Resultado validação', { isActive, status: isActive ? 'Ativo' : 'Inativo/Inexistente' });
     
     return isActive;
   } catch (error) {
-    console.error('💥 Erro inesperado ao validar usuário:', error);
+    logger.error('Erro inesperado ao validar usuário:', error);
     return false;
   }
 };
@@ -53,7 +54,7 @@ export const validateUserStatus = async (): Promise<{ valid: boolean; message?: 
 
     return { valid: true };
   } catch (error) {
-    console.error('💥 Erro ao validar status do usuário:', error);
+    logger.error('Erro ao validar status do usuário:', error);
     return { 
       valid: false, 
       message: 'Erro interno. Tente novamente.' 

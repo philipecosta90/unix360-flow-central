@@ -2,6 +2,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useUserValidation } from "@/hooks/useUserValidation";
 import { useLocation } from "react-router-dom";
+import { logger } from "@/utils/logger";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { Header } from "@/components/layout/Header";
 import { CompanyLogo } from "@/components/layout/CompanyLogo";
@@ -35,14 +36,13 @@ const Index = () => {
   // Ativar validação periódica de usuário ativo
   useUserValidation();
 
-  console.log('📄 Index component render:', {
+  logger.debug('Index component render', {
     user: user ? 'Present' : 'Null',
     loading,
     pathname: location.pathname
   });
 
   if (loading) {
-    console.log('⏳ Still loading...');
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
@@ -54,11 +54,8 @@ const Index = () => {
   }
 
   if (!user) {
-    console.log('👤 No user, showing AuthPage');
     return <AuthPage />;
   }
-
-  console.log('✅ User authenticated, rendering dashboard');
 
   const menuItems = [
     { icon: BarChart3, label: "Dashboard", path: "/dashboard" },

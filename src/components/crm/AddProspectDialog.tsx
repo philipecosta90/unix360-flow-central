@@ -101,10 +101,7 @@ export const AddProspectDialog = ({ open, onOpenChange }: AddProspectDialogProps
         // Ordenar por ordem e pegar o primeiro
         const firstStage = stages.sort((a, b) => a.ordem - b.ordem)[0];
         selectedStageId = firstStage.id;
-        console.log('🎯 Stage não selecionado, usando o primeiro:', firstStage.nome, firstStage.id);
       }
-
-      console.log('📝 Criando prospect com stage:', selectedStageId);
       
       const { error } = await supabase
         .from('crm_prospects')

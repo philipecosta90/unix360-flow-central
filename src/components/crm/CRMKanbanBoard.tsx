@@ -37,24 +37,15 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
   const safeStages = Array.isArray(stages) ? stages : [];
   const safeProspects = Array.isArray(prospects) ? prospects : [];
 
-  console.log('🔍 CRMKanbanBoard - Stages carregados:', safeStages.length);
-  console.log('🔍 CRMKanbanBoard - Prospects carregados:', safeProspects.length);
-  console.log('🔍 CRMKanbanBoard - Stages disponíveis:', safeStages.map(s => ({ id: s?.id, nome: s?.nome, ordem: s?.ordem })));
-
   const getProspectsByStage = (stageId: string) => {
     if (!stageId) {
-      console.warn('⚠️ Stage ID vazio fornecido para getProspectsByStage');
       return [];
     }
     
     const stageProspects = safeProspects.filter(prospect => {
       if (!prospect) return false;
-      const matches = prospect.stage === stageId;
-      return matches;
+      return prospect.stage === stageId;
     });
-    
-    console.log(`🎯 Stage "${stageId}" - ${stageProspects.length} prospects encontrados:`,
-      stageProspects.map(p => ({ id: p?.id, nome: p?.nome, stage: p?.stage })));
     
     return stageProspects;
   };
@@ -71,12 +62,10 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
   };
 
   if (stagesLoading || prospectsLoading) {
-    console.log('⏳ Carregando stages ou prospects...');
     return <CRMKanbanLoadingSkeleton />;
   }
 
   if (safeStages.length === 0) {
-    console.warn('⚠️ Nenhum stage encontrado');
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -89,7 +78,6 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
 
   // Ordenar stages por ordem
   const sortedStages = safeStages.sort((a, b) => a.ordem - b.ordem);
-  console.log('📊 Stages ordenados:', sortedStages.map(s => ({ nome: s.nome, ordem: s.ordem })));
 
   return (
     <>
@@ -101,14 +89,11 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         <div className="flex gap-6 overflow-x-auto pb-4 min-h-[calc(100vh-250px)]">
           {sortedStages.map((stage) => {
             if (!stage || !stage.id) {
-              console.warn('⚠️ Stage inválido encontrado:', stage);
               return null;
             }
             
             const stageProspects = getProspectsByStage(stage.id);
             const stageValue = getTotalValueByStage(stage.id);
-            
-            console.log(`📊 Renderizando stage "${stage.nome}" (ID: ${stage.id}) com ${stageProspects.length} prospects`);
             
             return (
               <CRMColumn

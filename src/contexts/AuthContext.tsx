@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthContextType, UserProfile } from "@/types/auth";
 import { fetchUserProfile } from "@/services/profileService";
 import { securityMonitor } from "@/utils/securityMonitor";
+import { logger } from "@/utils/logger";
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -44,23 +45,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }, 100);
       }
     } catch (error) {
-      console.error('Erro ao fazer logout forçado:', error);
+      logger.error('Erro ao fazer logout forçado:', error);
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    console.log('🚀 Inicializando AuthProvider...');
+    logger.debug('Inicializando AuthProvider...');
     
     let isMounted = true;
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 Auth state changed:', event, session ? 'Session exists' : 'No session');
+        logger.auth(`Auth state changed: ${event}`, { hasSession: !!session });
         
         if (!isMounted) {
-          console.log('🚫 Component unmounted, ignoring auth change');
           return;
         }
         
@@ -68,23 +68,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('👤 User logged in, fetching profile...');
-          
           // Log successful login (but don't await to avoid blocking)
-          securityMonitor.logLoginAttempt(session.user.email || '', true).catch(console.error);
+          securityMonitor.logLoginAttempt(session.user.email || '', true).catch(logger.error);
           
         // Use setTimeout to defer profile fetching and avoid blocking auth flow
         setTimeout(async () => {
           if (!isMounted) return;
           
           try {
-            console.log('🔍 Fetching user profile...');
             const profile = await fetchUserProfile(session.user.id);
             
             // Complete signup process if needed (new user without profile)
             if (!profile && session.user.user_metadata?.nome) {
               try {
-                console.log('🚀 Completing signup process...');
+                logger.business('Completing signup process...');
                 const { error } = await supabase.functions.invoke('signup-complete');
                 if (!error) {
                   // Refresh profile after completion
@@ -98,17 +95,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   }, 1000);
                   return;
                 }
-              } catch (error) {
-                console.error('Erro ao completar cadastro:', error);
+                } catch (error) {
+                logger.error('Erro ao completar cadastro:', error);
               }
             }
             
             if (isMounted) {
-              console.log('👤 Profile loaded:', profile ? 'Success' : 'Failed');
-              
               // Verificar se o perfil existe e se o usuário pode acessar o sistema
               if (!profile) {
-                console.warn('🚫 Perfil não encontrado, fazendo logout...');
+                logger.warn('Perfil não encontrado, fazendo logout...');
                 await handleUserAccessDenied('Perfil não encontrado. Entre em contato com o administrador.');
                 return;
               }
@@ -120,21 +115,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   });
                   
                   if (accessError) {
-                    console.error('Erro ao verificar acesso:', accessError);
+                    logger.error('Erro ao verificar acesso:', accessError);
                     await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
                     return;
                   }
                   
                   const accessData = accessCheck as any; // Type assertion para contornar tipo Json
                   if (!accessData?.can_access) {
-                    console.warn('🚫 Acesso negado:', accessData?.reason);
+                    logger.warn('Acesso negado', { reason: accessData?.reason });
                     await handleUserAccessDenied(accessData?.message || 'Acesso negado');
                     return;
                   }
                   
-                  console.log('✅ Acesso autorizado:', accessData?.reason);
+                  logger.security('Acesso autorizado', { reason: accessData?.reason });
                 } catch (error) {
-                  console.error('Erro ao verificar acesso do sistema:', error);
+                  logger.error('Erro ao verificar acesso do sistema:', error);
                   await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
                   return;
                 }
@@ -143,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               setLoading(false);
             }
           } catch (error) {
-            console.error('💥 Error loading profile:', error);
+            logger.error('Error loading profile:', error);
             if (isMounted) {
               setUserProfile(null);
               setLoading(false);
@@ -151,7 +146,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }, 0);
         } else {
-          console.log('👋 User logged out');
           setUserProfile(null);
           setLoading(false);
         }
@@ -159,9 +153,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // Check for existing session
-    console.log('🔍 Checking for existing session...');
     supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('📋 Initial session check:', session ? 'Found' : 'Not found', error);
+      if (error) {
+        logger.error('Error in initial session check:', error);
+      }
       
       if (!isMounted) return;
       
@@ -169,7 +164,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        console.log('👤 Existing user found, fetching profile...');
         
         // Use setTimeout to avoid blocking initial render
         setTimeout(async () => {
@@ -181,7 +175,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (isMounted) {
               // Verificar se o perfil existe e se o usuário pode acessar o sistema
               if (!profile) {
-                console.warn('🚫 Perfil não encontrado na verificação inicial, fazendo logout...');
+                logger.warn('Perfil não encontrado na verificação inicial, fazendo logout...');
                 await handleUserAccessDenied('Perfil não encontrado. Entre em contato com o administrador.');
                 return;
               }
@@ -193,21 +187,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   });
                   
                   if (accessError) {
-                    console.error('Erro ao verificar acesso inicial:', accessError);
+                    logger.error('Erro ao verificar acesso inicial:', accessError);
                     await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
                     return;
                   }
                   
                   const accessData = accessCheck as any; // Type assertion para contornar tipo Json
                   if (!accessData?.can_access) {
-                    console.warn('🚫 Acesso negado na verificação inicial:', accessData?.reason);
+                    logger.warn('Acesso negado na verificação inicial', { reason: accessData?.reason });
                     await handleUserAccessDenied(accessData?.message || 'Acesso negado');
                     return;
                   }
                   
-                  console.log('✅ Acesso autorizado na verificação inicial:', accessData?.reason);
+                  logger.security('Acesso autorizado na verificação inicial', { reason: accessData?.reason });
                 } catch (error) {
-                  console.error('Erro ao verificar acesso inicial do sistema:', error);
+                  logger.error('Erro ao verificar acesso inicial do sistema:', error);
                   await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
                   return;
                 }
@@ -216,7 +210,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setLoading(false);
               }
             } catch (error) {
-              console.error('💥 Error loading initial profile:', error);
+              logger.error('Error loading initial profile:', error);
               if (isMounted) {
                 setUserProfile(null);
                 setLoading(false);
@@ -227,14 +221,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     }).catch(error => {
-      console.error('💥 Error checking initial session:', error);
+      logger.error('Error checking initial session:', error);
       if (isMounted) {
         setLoading(false);
       }
     });
 
     return () => {
-      console.log('🧹 Cleaning up AuthProvider...');
       isMounted = false;
       subscription.unsubscribe();
     };
@@ -242,7 +235,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      console.log('🚪 Signing out...');
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw new Error('Erro ao fazer logout');
@@ -256,9 +248,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(null);
       setUserProfile(null);
       
-      console.log('✅ Signed out successfully');
+      logger.auth('Signed out successfully');
     } catch (error) {
-      console.error('💥 Error signing out:', error);
+      logger.error('Error signing out:', error);
       throw error;
     }
   };
@@ -267,7 +259,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading) {
-        console.warn('⏰ Loading took too long, forcing completion');
+        logger.warn('Loading took too long, forcing completion');
         setLoading(false);
       }
     }, 10000); // 10 second timeout

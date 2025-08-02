@@ -35,8 +35,6 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
     opacity: isDragging || isSortableDragging ? 0.8 : 1,
   };
 
-  console.log(`🎯 DnD Card "${prospect.nome}" - isDragging:`, isSortableDragging, 'sortable ID:', prospect.id);
-
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-edit-button]') || 
         (e.target as HTMLElement).closest('[data-drag-handle]')) {
