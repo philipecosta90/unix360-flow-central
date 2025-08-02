@@ -15,7 +15,7 @@ interface PaymentFormProps {
 }
 
 export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormProps) => {
-  const [selectedMethod, setSelectedMethod] = useState<'CREDIT_CARD' | 'BOLETO' | 'PIX'>('CREDIT_CARD');
+  const [selectedMethod, setSelectedMethod] = useState<'CREDIT_CARD' | 'BOLETO' | 'PIX'>('PIX');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -23,10 +23,44 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
     cpfCnpj: '',
     phone: ''
   });
+  const [formValid, setFormValid] = useState(false);
   const { toast } = useToast();
+
+  // Validação do formulário
+  const validateForm = () => {
+    const isValid = formData.name.trim() !== '' && 
+                   formData.email.trim() !== '' && 
+                   formData.cpfCnpj.trim() !== '' && 
+                   formData.phone.trim() !== '';
+    setFormValid(isValid);
+    return isValid;
+  };
+
+  // Atualizar validação quando dados mudarem
+  const updateFormData = (field: string, value: string) => {
+    const newFormData = { ...formData, [field]: value };
+    setFormData(newFormData);
+    
+    // Revalidar formulário
+    const isValid = newFormData.name.trim() !== '' && 
+                   newFormData.email.trim() !== '' && 
+                   newFormData.cpfCnpj.trim() !== '' && 
+                   newFormData.phone.trim() !== '';
+    setFormValid(isValid);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast({
+        title: "Dados incompletos",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -142,9 +176,10 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => updateFormData('name', e.target.value)}
                 placeholder="Seu nome completo"
                 required
+                className="w-full"
               />
             </div>
 
@@ -154,9 +189,10 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => updateFormData('email', e.target.value)}
                 placeholder="seu@email.com"
                 required
+                className="w-full"
               />
             </div>
 
@@ -165,9 +201,10 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
               <Input
                 id="cpfCnpj"
                 value={formData.cpfCnpj}
-                onChange={(e) => setFormData({ ...formData, cpfCnpj: e.target.value })}
+                onChange={(e) => updateFormData('cpfCnpj', e.target.value)}
                 placeholder="000.000.000-00"
                 required
+                className="w-full"
               />
             </div>
 
@@ -176,9 +213,10 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) => updateFormData('phone', e.target.value)}
                 placeholder="(11) 99999-9999"
                 required
+                className="w-full"
               />
             </div>
           </div>
@@ -201,12 +239,31 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          {/* Botões de Ação - Sempre visíveis */}
+          <div className="flex gap-3 pt-4 border-t">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose} 
+              className="flex-1"
+              disabled={loading}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? "Processando..." : "Confirmar"}
+            <Button 
+              type="submit" 
+              disabled={loading || !formValid} 
+              className="flex-1 font-semibold"
+              style={{ minHeight: '40px' }}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Processando...
+                </div>
+              ) : (
+                "Finalizar Pagamento"
+              )}
             </Button>
           </div>
         </form>
