@@ -14,23 +14,11 @@ interface CompanyListProps {
 }
 
 export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
-  const { data: companies, isLoading, refetch } = useQuery({
-    queryKey: ['admin-companies', searchTerm, selectedPlan],
+  const { data: allCompanies, isLoading, refetch } = useQuery({
+    queryKey: ['admin-companies'],
     queryFn: async () => {
-      let query = supabase
-        .from('admin_empresa_stats')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (searchTerm) {
-        query = query.ilike('nome', `%${searchTerm}%`);
-      }
-
-      if (selectedPlan) {
-        query = query.eq('plano', selectedPlan);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .rpc('get_admin_empresa_stats');
 
       if (error) {
         console.error('Erro ao buscar empresas:', error);
@@ -39,6 +27,14 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
 
       return data || [];
     }
+  });
+
+  // Filtrar dados no frontend
+  const companies = allCompanies?.filter(company => {
+    const matchesSearch = !searchTerm || 
+      company.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPlan = !selectedPlan || company.plano === selectedPlan;
+    return matchesSearch && matchesPlan;
   });
 
   const handleUpdatePlan = async (companyId: string, newPlan: string) => {

@@ -9,8 +9,7 @@ export const AdminMetrics = () => {
     queryKey: ['admin-metrics'],
     queryFn: async () => {
       const { data: empresas, error: empresasError } = await supabase
-        .from('admin_empresa_stats')
-        .select('*');
+        .rpc('get_admin_empresa_stats');
 
       if (empresasError) {
         console.error('Erro ao buscar estatísticas das empresas:', empresasError);

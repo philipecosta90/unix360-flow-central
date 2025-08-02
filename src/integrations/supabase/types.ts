@@ -137,6 +137,13 @@ export type Database = {
             foreignKeyName: "clientes_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -308,6 +315,13 @@ export type Database = {
             foreignKeyName: "crm_prospects_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_prospects_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -352,6 +366,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "crm_stages_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "crm_stages_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -410,6 +431,13 @@ export type Database = {
             foreignKeyName: "cs_interacoes_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cs_interacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -452,6 +480,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cs_nps_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
             referencedColumns: ["id"]
           },
           {
@@ -509,6 +544,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cs_onboarding_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
             referencedColumns: ["id"]
           },
           {
@@ -650,6 +692,13 @@ export type Database = {
             foreignKeyName: "financeiro_lancamentos_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financeiro_lancamentos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -702,6 +751,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financeiro_tarefas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
             referencedColumns: ["id"]
           },
           {
@@ -850,6 +906,13 @@ export type Database = {
             foreignKeyName: "perfis_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "perfis_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -903,6 +966,13 @@ export type Database = {
             foreignKeyName: "subscriptions_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
+            referencedRelation: "admin_empresa_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -910,7 +980,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_empresa_stats: {
+        Row: {
+          ativa: boolean | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          nome: string | null
+          plano: string | null
+          total_usuarios: number | null
+          usuarios_ativos: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_user_access_system: {
