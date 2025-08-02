@@ -16,20 +16,17 @@ interface CreateUserRequest {
 }
 
 serve(async (req: Request): Promise<Response> => {
-  console.log('🚀 [CREATE-USER] Função iniciada');
+  // Function initiated
   
   if (req.method === 'OPTIONS') {
-    console.log('📋 [CREATE-USER] Respondendo preflight CORS');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     // Verificar Authorization header
     const authHeader = req.headers.get('authorization');
-    console.log('🔑 [CREATE-USER] Auth header presente:', !!authHeader);
-    
+    // Check auth header
     if (!authHeader) {
-      console.error('❌ [CREATE-USER] Authorization header ausente');
       return new Response(
         JSON.stringify({
           success: false,
@@ -54,11 +51,9 @@ serve(async (req: Request): Promise<Response> => {
     );
 
     // Verificar usuário autenticado
-    console.log('👤 [CREATE-USER] Verificando usuário autenticado...');
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     
     if (userError || !user) {
-      console.error('❌ [CREATE-USER] Usuário não autenticado:', userError?.message);
       return new Response(
         JSON.stringify({
           success: false,
@@ -71,10 +66,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('✅ [CREATE-USER] Usuário autenticado:', user.id);
-
     // Buscar perfil do admin para verificar permissões
-    console.log('🏢 [CREATE-USER] Buscando perfil do admin...');
     const { data: adminProfile, error: profileError } = await supabaseUser
       .from('perfis')
       .select('empresa_id, nivel_permissao, nome')
@@ -82,7 +74,6 @@ serve(async (req: Request): Promise<Response> => {
       .single();
 
     if (profileError || !adminProfile) {
-      console.error('❌ [CREATE-USER] Erro ao buscar perfil:', profileError?.message);
       return new Response(
         JSON.stringify({
           success: false,

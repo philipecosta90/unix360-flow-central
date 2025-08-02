@@ -25,35 +25,22 @@ export const CreateUserForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('📋 [FORM] Formulário enviado');
-    
+    // Form validation
     if (!formData.nome.trim() || !formData.email.trim() || !formData.password.trim() || !formData.nome_empresa.trim()) {
-      console.error('❌ [FORM] Campos obrigatórios não preenchidos');
       return;
     }
 
     if (!userProfile) {
-      console.error('❌ [FORM] Usuário não autenticado');
       return;
     }
 
     if (user?.id !== 'b0896210-8487-4456-a5f1-056a0685ee7f') {
-      console.error('❌ [FORM] Usuário não é super admin');
       return;
     }
-
-    console.log('📤 [FORM] Enviando dados:', {
-      nome: formData.nome,
-      email: formData.email,
-      nivel_permissao: formData.nivel_permissao,
-      nome_empresa: formData.nome_empresa,
-      password: '***'
-    });
 
     const success = await createUser(formData);
     
     if (success) {
-      console.log('✅ [FORM] Usuário criado com sucesso, limpando formulário');
       setFormData({
         nome: '',
         email: '',

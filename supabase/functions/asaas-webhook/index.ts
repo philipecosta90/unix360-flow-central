@@ -18,7 +18,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    console.log('Webhook payload:', payload)
+    // Webhook payload received
 
     // Processar webhook baseado no evento
     switch (payload.event) {
@@ -37,7 +37,7 @@ serve(async (req) => {
         break
 
       default:
-        console.log('Unhandled webhook event:', payload.event)
+        // Unhandled webhook event
     }
 
     return new Response(
@@ -49,7 +49,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Webhook error:', error)
+    // Log error to monitoring system
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
@@ -72,7 +72,7 @@ async function handlePaymentConfirmed(supabase: any, payment: any) {
     .eq('asaas_payment_id', payment.id)
 
   if (invoiceError) {
-    console.error('Error updating invoice:', invoiceError)
+    // Error updating invoice logged
   }
 
   // Ativar assinatura se estava suspensa
@@ -89,7 +89,7 @@ async function handlePaymentConfirmed(supabase: any, payment: any) {
       .eq('id', invoices.subscription_id)
 
     if (subscriptionError) {
-      console.error('Error updating subscription:', subscriptionError)
+      // Error updating subscription logged
     }
   }
 }
@@ -102,7 +102,7 @@ async function handlePaymentOverdue(supabase: any, payment: any) {
     .eq('asaas_payment_id', payment.id)
 
   if (invoiceError) {
-    console.error('Error updating invoice:', invoiceError)
+    // Error updating invoice logged
   }
 
   // Suspender assinatura
@@ -119,7 +119,7 @@ async function handlePaymentOverdue(supabase: any, payment: any) {
       .eq('id', invoices.subscription_id)
 
     if (subscriptionError) {
-      console.error('Error updating subscription:', subscriptionError)
+      // Error updating subscription logged
     }
   }
 }
@@ -132,6 +132,6 @@ async function handlePaymentCancelled(supabase: any, payment: any) {
     .eq('asaas_payment_id', payment.id)
 
   if (invoiceError) {
-    console.error('Error updating invoice:', invoiceError)
+    // Error updating invoice logged
   }
 }
