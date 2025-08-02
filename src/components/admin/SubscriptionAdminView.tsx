@@ -186,23 +186,32 @@ export const SubscriptionAdminView = () => {
         console.error('Erro ao registrar ação de auditoria:', auditError);
       }
 
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('subscriptions')
         .delete()
-        .eq('id', subscriptionId);
+        .eq('id', subscriptionId)
+        .select();
 
       if (error) throw error;
 
-      await loadSubscriptions();
+      // Verify if the deletion was successful
+      if (!count || count === 0) {
+        throw new Error('Nenhuma assinatura foi excluída. Verifique suas permissões.');
+      }
+
+      // Remove from local state immediately for better UX
+      setSubscriptions(prev => prev.filter(sub => sub.id !== subscriptionId));
+      
       toast({
         title: "Sucesso",
         description: "Assinatura excluída com sucesso."
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting subscription:', error);
+      await loadSubscriptions(); // Refresh to show current state
       toast({
         title: "Erro",
-        description: "Falha ao excluir assinatura",
+        description: error.message || "Falha ao excluir assinatura",
         variant: "destructive"
       });
     } finally {
