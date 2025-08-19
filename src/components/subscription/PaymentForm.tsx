@@ -143,122 +143,124 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-            {/* Seleção do Método de Pagamento */}
-            <div className="space-y-3">
-              <Label className={isMobile ? 'text-sm' : 'text-base'}>Forma de Pagamento</Label>
-              <div className="grid gap-2">
-                {paymentMethods.map((method) => {
-                  const Icon = method.icon;
-                  return (
-                    <Card
-                      key={method.id}
-                      className={`cursor-pointer transition-colors ${
-                        selectedMethod === method.id ? 'ring-2 ring-primary' : ''
-                      }`}
-                      onClick={() => setSelectedMethod(method.id)}
-                    >
-                      <CardContent className={isMobile ? 'p-2.5' : 'p-3'}>
-                        <div className="flex items-center gap-3">
-                          <Icon className={isMobile ? 'h-4 w-4' : 'h-5 w-5'} />
-                          <div>
-                            <div className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>
-                              {method.name}
-                            </div>
-                            <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                              {method.description}
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto">
+            <div className={`space-y-${isMobile ? '4' : '6'} pb-6`}>
+              {/* Seleção do Método de Pagamento */}
+              <div className="space-y-3">
+                <Label className={isMobile ? 'text-sm' : 'text-base'}>Forma de Pagamento</Label>
+                <div className="grid gap-2">
+                  {paymentMethods.map((method) => {
+                    const Icon = method.icon;
+                    return (
+                      <Card
+                        key={method.id}
+                        className={`cursor-pointer transition-colors ${
+                          selectedMethod === method.id ? 'ring-2 ring-primary' : ''
+                        }`}
+                        onClick={() => setSelectedMethod(method.id)}
+                      >
+                        <CardContent className={isMobile ? 'p-2.5' : 'p-3'}>
+                          <div className="flex items-center gap-3">
+                            <Icon className={isMobile ? 'h-4 w-4' : 'h-5 w-5'} />
+                            <div>
+                              <div className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>
+                                {method.name}
+                              </div>
+                              <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                                {method.description}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Dados do Cliente */}
-            <div className={`space-y-${isMobile ? '3' : '4'}`}>
-              <div className="space-y-2">
-                <Label htmlFor="name" className={isMobile ? 'text-sm' : 'text-base'}>
-                  Nome Completo
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => updateFormData('name', e.target.value)}
-                  placeholder="Seu nome completo"
-                  required
-                  className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className={isMobile ? 'text-sm' : 'text-base'}>
-                  E-mail
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => updateFormData('email', e.target.value)}
-                  placeholder="seu@email.com"
-                  required
-                  className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cpfCnpj" className={isMobile ? 'text-sm' : 'text-base'}>
-                  CPF/CNPJ
-                </Label>
-                <Input
-                  id="cpfCnpj"
-                  value={formData.cpfCnpj}
-                  onChange={(e) => updateFormData('cpfCnpj', e.target.value)}
-                  placeholder="000.000.000-00"
-                  required
-                  className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone" className={isMobile ? 'text-sm' : 'text-base'}>
-                  Telefone
-                </Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => updateFormData('phone', e.target.value)}
-                  placeholder="(11) 99999-9999"
-                  required
-                  className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
-                />
-              </div>
-            </div>
-
-            {/* Resumo */}
-            <div className={`${isMobile ? 'p-3' : 'p-4'} bg-muted rounded-lg`}>
-              <div className={`${isMobile ? 'text-xs' : 'text-sm'} space-y-1`}>
-                <div className="flex justify-between">
-                  <span>Plano:</span>
-                  <span>UniX360 Mensal</span>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
-                <div className="flex justify-between">
-                  <span>Valor:</span>
-                  <span className="font-semibold">R$ 75,00/mês</span>
+              </div>
+
+              {/* Dados do Cliente */}
+              <div className={`space-y-${isMobile ? '3' : '4'}`}>
+                <div className="space-y-2">
+                  <Label htmlFor="name" className={isMobile ? 'text-sm' : 'text-base'}>
+                    Nome Completo
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => updateFormData('name', e.target.value)}
+                    placeholder="Seu nome completo"
+                    required
+                    className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span>Método:</span>
-                  <span>{paymentMethods.find(m => m.id === selectedMethod)?.name}</span>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className={isMobile ? 'text-sm' : 'text-base'}>
+                    E-mail
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => updateFormData('email', e.target.value)}
+                    placeholder="seu@email.com"
+                    required
+                    className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cpfCnpj" className={isMobile ? 'text-sm' : 'text-base'}>
+                    CPF/CNPJ
+                  </Label>
+                  <Input
+                    id="cpfCnpj"
+                    value={formData.cpfCnpj}
+                    onChange={(e) => updateFormData('cpfCnpj', e.target.value)}
+                    placeholder="000.000.000-00"
+                    required
+                    className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className={isMobile ? 'text-sm' : 'text-base'}>
+                    Telefone
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => updateFormData('phone', e.target.value)}
+                    placeholder="(11) 99999-9999"
+                    required
+                    className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
+                  />
+                </div>
+              </div>
+
+              {/* Resumo */}
+              <div className={`${isMobile ? 'p-3' : 'p-4'} bg-muted rounded-lg`}>
+                <div className={`${isMobile ? 'text-xs' : 'text-sm'} space-y-1`}>
+                  <div className="flex justify-between">
+                    <span>Plano:</span>
+                    <span>UniX360 Mensal</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Valor:</span>
+                    <span className="font-semibold">R$ 75,00/mês</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Método:</span>
+                    <span>{paymentMethods.find(m => m.id === selectedMethod)?.name}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Botões de Ação - Sempre visíveis */}
-          <div className={`flex gap-${isMobile ? '2' : '3'} pt-4 border-t flex-shrink-0 sticky bottom-0 bg-background`}>
+          {/* Botões de Ação - Fixos no final */}
+          <div className={`flex gap-${isMobile ? '2' : '3'} pt-4 border-t bg-background`}>
             <Button 
               type="button" 
               variant="outline" 
