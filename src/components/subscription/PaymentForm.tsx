@@ -136,19 +136,19 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className={`max-w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col ${isMobile ? 'p-4' : 'p-6'}`}>
+      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col p-4 sm:p-6">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className={isMobile ? 'text-lg' : 'text-xl'}>
+          <DialogTitle className="text-lg sm:text-xl">
             Cadastrar Forma de Pagamento
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto">
-            <div className={`space-y-${isMobile ? '4' : '6'} pb-6`}>
+            <div className="space-y-4 sm:space-y-6 pb-6">
               {/* Seleção do Método de Pagamento */}
               <div className="space-y-3">
-                <Label className={isMobile ? 'text-sm' : 'text-base'}>Forma de Pagamento</Label>
+                <Label className="text-sm sm:text-base">Forma de Pagamento</Label>
                 <div className="grid gap-2">
                   {paymentMethods.map((method) => {
                     const Icon = method.icon;
@@ -160,14 +160,14 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
                         }`}
                         onClick={() => setSelectedMethod(method.id)}
                       >
-                        <CardContent className={isMobile ? 'p-2.5' : 'p-3'}>
+                        <CardContent className="p-2.5 sm:p-3">
                           <div className="flex items-center gap-3">
-                            <Icon className={isMobile ? 'h-4 w-4' : 'h-5 w-5'} />
+                            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                             <div>
-                              <div className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>
+                              <div className="font-medium text-sm sm:text-base">
                                 {method.name}
                               </div>
-                              <div className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                              <div className="text-muted-foreground text-xs">
                                 {method.description}
                               </div>
                             </div>
@@ -180,9 +180,9 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
               </div>
 
               {/* Dados do Cliente */}
-              <div className={`space-y-${isMobile ? '3' : '4'}`}>
+              <div className="space-y-3 sm:space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className={isMobile ? 'text-sm' : 'text-base'}>
+                  <Label htmlFor="name" className="text-sm sm:text-base">
                     Nome Completo
                   </Label>
                   <Input
@@ -191,12 +191,12 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
                     onChange={(e) => updateFormData('name', e.target.value)}
                     placeholder="Seu nome completo"
                     required
-                    className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
+                    className="w-full h-10 sm:h-11"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className={isMobile ? 'text-sm' : 'text-base'}>
+                  <Label htmlFor="email" className="text-sm sm:text-base">
                     E-mail
                   </Label>
                   <Input
@@ -206,12 +206,12 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
                     onChange={(e) => updateFormData('email', e.target.value)}
                     placeholder="seu@email.com"
                     required
-                    className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
+                    className="w-full h-10 sm:h-11"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cpfCnpj" className={isMobile ? 'text-sm' : 'text-base'}>
+                  <Label htmlFor="cpfCnpj" className="text-sm sm:text-base">
                     CPF/CNPJ
                   </Label>
                   <Input
@@ -220,12 +220,12 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
                     onChange={(e) => updateFormData('cpfCnpj', e.target.value)}
                     placeholder="000.000.000-00"
                     required
-                    className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
+                    className="w-full h-10 sm:h-11"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className={isMobile ? 'text-sm' : 'text-base'}>
+                  <Label htmlFor="phone" className="text-sm sm:text-base">
                     Telefone
                   </Label>
                   <Input
@@ -234,14 +234,14 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
                     onChange={(e) => updateFormData('phone', e.target.value)}
                     placeholder="(11) 99999-9999"
                     required
-                    className={`w-full ${isMobile ? 'h-10' : 'h-11'}`}
+                    className="w-full h-10 sm:h-11"
                   />
                 </div>
               </div>
 
               {/* Resumo */}
-              <div className={`${isMobile ? 'p-3' : 'p-4'} bg-muted rounded-lg`}>
-                <div className={`${isMobile ? 'text-xs' : 'text-sm'} space-y-1`}>
+              <div className="p-3 sm:p-4 bg-muted rounded-lg">
+                <div className="text-xs sm:text-sm space-y-1">
                   <div className="flex justify-between">
                     <span>Plano:</span>
                     <span>UniX360 Mensal</span>
@@ -260,12 +260,12 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
           </div>
 
           {/* Botões de Ação - Fixos no final */}
-          <div className={`flex gap-${isMobile ? '2' : '3'} pt-4 border-t bg-background`}>
+          <div className="flex gap-2 sm:gap-3 pt-4 border-t bg-background">
             <Button 
               type="button" 
               variant="outline" 
               onClick={onClose} 
-              className={`flex-1 ${isMobile ? 'h-10 text-sm' : 'h-11'}`}
+              className="flex-1 h-10 sm:h-11 text-sm"
               disabled={loading}
             >
               Cancelar
@@ -273,15 +273,15 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
             <Button 
               type="submit" 
               disabled={loading || !formValid} 
-              className={`flex-1 font-semibold ${isMobile ? 'h-10 text-sm' : 'h-11'}`}
+              className="flex-1 font-semibold h-10 sm:h-11 text-sm"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <div className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} border-2 border-white border-t-transparent rounded-full animate-spin`}></div>
-                  <span className={isMobile ? 'text-xs' : 'text-sm'}>Processando...</span>
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-xs sm:text-sm">Processando...</span>
                 </div>
               ) : (
-                <span className={isMobile ? 'text-xs' : 'text-sm'}>Finalizar Pagamento</span>
+                <span className="text-xs sm:text-sm">Finalizar Pagamento</span>
               )}
             </Button>
           </div>
