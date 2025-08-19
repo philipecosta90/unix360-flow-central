@@ -123,6 +123,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   const accessData = accessCheck as any; // Type assertion para contornar tipo Json
                   if (!accessData?.can_access) {
                     logger.warn('Acesso negado', { reason: accessData?.reason });
+                    
+                    // Allow suspended/expired users to login for subscription renewal
+                    if (accessData?.reason === 'SUBSCRIPTION_SUSPENDED' || accessData?.reason === 'TRIAL_EXPIRED') {
+                      logger.info('Permitindo acesso para renovação de assinatura', { reason: accessData?.reason });
+                      // Set profile and continue - user can access platform to renew
+                      setUserProfile(profile);
+                      setLoading(false);
+                      return;
+                    }
+                    
                     await handleUserAccessDenied(accessData?.message || 'Acesso negado');
                     return;
                   }
@@ -195,6 +205,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   const accessData = accessCheck as any; // Type assertion para contornar tipo Json
                   if (!accessData?.can_access) {
                     logger.warn('Acesso negado na verificação inicial', { reason: accessData?.reason });
+                    
+                    // Allow suspended/expired users to login for subscription renewal
+                    if (accessData?.reason === 'SUBSCRIPTION_SUSPENDED' || accessData?.reason === 'TRIAL_EXPIRED') {
+                      logger.info('Permitindo acesso inicial para renovação de assinatura', { reason: accessData?.reason });
+                      // Set profile and continue - user can access platform to renew
+                      setUserProfile(profile);
+                      setLoading(false);
+                      return;
+                    }
+                    
                     await handleUserAccessDenied(accessData?.message || 'Acesso negado');
                     return;
                   }
