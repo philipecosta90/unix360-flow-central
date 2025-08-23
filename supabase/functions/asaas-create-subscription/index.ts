@@ -6,94 +6,192 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Helper logging function
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[ASAAS-CREATE-SUBSCRIPTION] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { customerId, subscriptionId } = await req.json()
+    logStep("Function started");
+    
+    const { customerId, subscriptionId, selectedMethod } = await req.json()
+    logStep("Request data received", { customerId, subscriptionId, selectedMethod });
 
-    const asaasApiKey = Deno.env.get('ASAAS_API_KEY')
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
+    // Determine environment and API key
+    const asaasEnv = Deno.env.get('ASAAS_ENV') || 'sandbox';
+    const asaasApiKey = asaasEnv === 'production' 
+      ? Deno.env.get('ASAAS_PRODUCTION_API_KEY') 
+      : Deno.env.get('ASAAS_API_KEY');
+    
     if (!asaasApiKey) {
-      throw new Error('ASAAS_API_KEY not found')
+      throw new Error(`ASAAS API key not found for environment: ${asaasEnv}`)
     }
 
+    // Define API base URL based on environment
+    const apiBaseUrl = asaasEnv === 'production' 
+      ? 'https://api.asaas.com/api/v3' 
+      : 'https://sandbox.asaas.com/api/v3';
+
+    logStep("Using environment", { env: asaasEnv, baseUrl: apiBaseUrl });
+
+    // Initialize Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Buscar dados da assinatura atual para calcular dias restantes do trial
-    const { data: currentSubscription } = await supabase
+    // Get current subscription data to determine nextDueDate
+    const { data: currentSubscription, error: subscriptionError } = await supabase
       .from('subscriptions')
-      .select('trial_end_date, status')
+      .select('trial_end_date, monthly_value')
       .eq('id', subscriptionId)
       .single()
 
-    let nextDueDate = new Date()
-    
-    // Se está em trial e ainda não expirou, usar a data de fim do trial como primeira cobrança
-    if (currentSubscription?.status === 'trial') {
-      const trialEndDate = new Date(currentSubscription.trial_end_date)
-      const now = new Date()
-      
-      if (trialEndDate > now) {
-        // Trial ainda ativo - primeira cobrança será na data de fim do trial
-        nextDueDate = trialEndDate
-      } else {
-        // Trial expirado - cobrar imediatamente
-        nextDueDate = new Date(Date.now() + 24 * 60 * 60 * 1000) // Amanhã
-      }
-    } else {
-      // Não é trial - cobrar imediatamente
-      nextDueDate = new Date(Date.now() + 24 * 60 * 60 * 1000) // Amanhã
+    if (subscriptionError || !currentSubscription) {
+      throw new Error('Subscription not found')
     }
 
-    // Criar assinatura no Asaas
-    const subscriptionResponse = await fetch('https://sandbox.asaas.com/api/v3/subscriptions', {
+    logStep("Current subscription found", { 
+      trialEndDate: currentSubscription.trial_end_date,
+      monthlyValue: currentSubscription.monthly_value 
+    });
+
+    // Calculate next due date (after trial ends)
+    const nextDueDate = new Date(currentSubscription.trial_end_date);
+    const nextDueDateStr = nextDueDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+    logStep("Calculated next due date", { nextDueDate: nextDueDateStr });
+
+    // Create subscription in Asaas
+    const subscriptionData = {
+      customer: customerId,
+      billingType: selectedMethod, // Use the selected method (PIX, BOLETO)
+      value: currentSubscription.monthly_value,
+      nextDueDate: nextDueDateStr,
+      cycle: 'MONTHLY',
+      description: 'Assinatura UniX360 - Gestão Empresarial',
+      endDate: null,
+      maxPayments: null
+    };
+
+    logStep("Creating Asaas subscription", subscriptionData);
+
+    const asaasResponse = await fetch(`${apiBaseUrl}/subscriptions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'access_token': asaasApiKey,
       },
-      body: JSON.stringify({
-        customer: customerId,
-        billingType: 'UNDEFINED', // Permite todos os métodos
-        value: 75.00,
-        nextDueDate: nextDueDate.toISOString().split('T')[0],
-        cycle: 'MONTHLY',
-        description: 'Assinatura UniX360 - Plano Mensal'
-      })
-    })
+      body: JSON.stringify(subscriptionData)
+    });
 
-    if (!subscriptionResponse.ok) {
-      const errorData = await subscriptionResponse.text()
-      console.error('Asaas Subscription API Error:', errorData)
-      throw new Error(`Failed to create subscription: ${subscriptionResponse.status}`)
+    if (!asaasResponse.ok) {
+      const errorData = await asaasResponse.text()
+      logStep('Asaas API Error', { status: asaasResponse.status, error: errorData });
+      throw new Error(`Failed to create Asaas subscription: ${asaasResponse.status} - ${errorData}`)
     }
 
-    const subscription = await subscriptionResponse.json()
+    const asaasSubscription = await asaasResponse.json()
+    logStep("Asaas subscription created", { asaasId: asaasSubscription.id });
 
-    // Atualizar assinatura no Supabase
-    const { error } = await supabase
+    // Generate first payment charge
+    const paymentData = {
+      customer: customerId,
+      billingType: selectedMethod,
+      value: currentSubscription.monthly_value,
+      dueDate: nextDueDateStr,
+      description: 'Primeira cobrança - Assinatura UniX360',
+      externalReference: subscriptionId,
+    };
+
+    logStep("Creating first payment charge", paymentData);
+
+    const paymentResponse = await fetch(`${apiBaseUrl}/payments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'access_token': asaasApiKey,
+      },
+      body: JSON.stringify(paymentData)
+    });
+
+    if (!paymentResponse.ok) {
+      const errorData = await paymentResponse.text()
+      logStep('Payment creation error', { status: paymentResponse.status, error: errorData });
+      throw new Error(`Failed to create payment: ${paymentResponse.status} - ${errorData}`)
+    }
+
+    const payment = await paymentResponse.json()
+    logStep("Payment created", { paymentId: payment.id, billingType: payment.billingType });
+
+    // Update subscription in database with Asaas IDs - keep status as 'trial' until payment
+    const { error: updateError } = await supabase
       .from('subscriptions')
       .update({
         asaas_customer_id: customerId,
-        asaas_subscription_id: subscription.id,
-        status: 'active', // Muda para ativo imediatamente
+        asaas_subscription_id: asaasSubscription.id,
         current_period_start: new Date().toISOString(),
-        current_period_end: nextDueDate.toISOString() // Primeiro período vai até a próxima cobrança
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+        // Keep status as 'trial' - will be updated to 'active' by webhook after payment
       })
       .eq('id', subscriptionId)
 
-    if (error) {
-      console.error('Supabase error:', error)
+    if (updateError) {
+      logStep('Database update error', updateError);
       throw new Error('Failed to update subscription in database')
     }
 
+    // Create invoice record
+    const invoiceData = {
+      subscription_id: subscriptionId,
+      asaas_payment_id: payment.id,
+      amount: currentSubscription.monthly_value,
+      due_date: nextDueDateStr,
+      status: 'pending',
+      ...(payment.bankSlipUrl && { boleto_url: payment.bankSlipUrl }),
+      ...(payment.invoiceUrl && { invoice_url: payment.invoiceUrl }),
+      ...(payment.pixTransaction && { pix_qr_code: payment.pixTransaction.qrCode?.payload })
+    };
+
+    logStep("Creating invoice record", invoiceData);
+
+    const { error: invoiceError } = await supabase
+      .from('invoices')
+      .insert(invoiceData)
+
+    if (invoiceError) {
+      logStep('Invoice creation error', invoiceError);
+      throw new Error('Failed to create invoice record')
+    }
+
+    // Prepare response data based on payment method
+    const responseData = {
+      success: true,
+      subscription: asaasSubscription,
+      payment: {
+        id: payment.id,
+        billingType: payment.billingType,
+        status: payment.status,
+        dueDate: payment.dueDate,
+        ...(payment.bankSlipUrl && { boleto_url: payment.bankSlipUrl }),
+        ...(payment.invoiceUrl && { invoice_url: payment.invoiceUrl }),
+        ...(payment.pixTransaction && { 
+          pix_qr_code: payment.pixTransaction.qrCode?.payload,
+          pix_copy_paste: payment.pixTransaction.qrCode?.payload 
+        })
+      }
+    };
+
+    logStep("Success response prepared", { billingType: payment.billingType });
+
     return new Response(
-      JSON.stringify({ success: true, subscription }),
+      JSON.stringify(responseData),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
@@ -101,9 +199,10 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 

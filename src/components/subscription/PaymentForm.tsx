@@ -3,11 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { CreditCard, FileText, Smartphone } from "lucide-react";
 
 interface PaymentFormProps {
   subscription: any;
@@ -16,8 +13,9 @@ interface PaymentFormProps {
 }
 
 export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormProps) => {
-  const [selectedMethod, setSelectedMethod] = useState<'CREDIT_CARD' | 'BOLETO' | 'PIX'>('PIX');
+  const [selectedMethod, setSelectedMethod] = useState<'PIX' | 'BOLETO'>('PIX');
   const [loading, setLoading] = useState(false);
+  const [paymentInstructions, setPaymentInstructions] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -26,7 +24,6 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
   });
   const [formValid, setFormValid] = useState(false);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
 
   // Validação do formulário
   const validateForm = () => {
@@ -88,117 +85,92 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
       const { data: subscriptionData, error: subscriptionError } = await supabase.functions.invoke('asaas-create-subscription', {
         body: {
           customerId: customerData.customer.id,
-          subscriptionId: subscription.id
+          subscriptionId: subscription.id,
+          selectedMethod: selectedMethod
         }
       });
 
-      if (subscriptionError) throw subscriptionError;
+      if (subscriptionError) {
+        throw subscriptionError;
+      }
 
+      // Show payment instructions
+      setPaymentInstructions(subscriptionData.payment);
+      
       toast({
-        title: "Sucesso!",
-        description: "Forma de pagamento cadastrada com sucesso.",
+        title: "Cobrança gerada com sucesso!",
+        description: `Instruções de pagamento via ${selectedMethod} foram geradas. O acesso será ativado após a confirmação do pagamento.`,
       });
 
-      onSuccess();
-
-    } catch (error) {
-      console.error('Error setting up payment:', error);
+    } catch (error: any) {
+      console.error('Erro ao processar pagamento:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao cadastrar forma de pagamento. Tente novamente.",
-        variant: "destructive"
+        title: "Erro ao processar pagamento",
+        description: error.message || "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const paymentMethods = [
-    {
-      id: 'CREDIT_CARD' as const,
-      name: 'Cartão de Crédito',
-      icon: CreditCard,
-      description: 'Pagamento automático mensal'
-    },
-    {
-      id: 'BOLETO' as const,
-      name: 'Boleto Bancário',
-      icon: FileText,
-      description: 'Boleto gerado mensalmente'
-    },
-    {
-      id: 'PIX' as const,
-      name: 'PIX',
-      icon: Smartphone,
-      description: 'Pagamento via PIX'
-    }
-  ];
-
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col p-4 sm:p-6">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-lg sm:text-xl">
-            Cadastrar Forma de Pagamento
-          </DialogTitle>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Cadastrar Forma de Pagamento</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto">
-            <div className="space-y-4 sm:space-y-6 pb-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {!paymentInstructions && (
+            <>
               {/* Seleção do Método de Pagamento */}
               <div className="space-y-3">
-                <Label className="text-sm sm:text-base">Forma de Pagamento</Label>
-                <div className="grid gap-2">
-                  {paymentMethods.map((method) => {
-                    const Icon = method.icon;
-                    return (
-                      <Card
-                        key={method.id}
-                        className={`cursor-pointer transition-colors ${
-                          selectedMethod === method.id ? 'ring-2 ring-primary' : ''
-                        }`}
-                        onClick={() => setSelectedMethod(method.id)}
-                      >
-                        <CardContent className="p-2.5 sm:p-3">
-                          <div className="flex items-center gap-3">
-                            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                            <div>
-                              <div className="font-medium text-sm sm:text-base">
-                                {method.name}
-                              </div>
-                              <div className="text-muted-foreground text-xs">
-                                {method.description}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                <Label>Forma de Pagamento</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div 
+                    className={`cursor-pointer rounded-lg border-2 p-4 text-center transition-colors ${
+                      selectedMethod === 'PIX' ? 'border-primary bg-primary/10' : 'border-muted'
+                    }`}
+                    onClick={() => setSelectedMethod('PIX')}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-2xl">📱</span>
+                      <span className="text-sm font-medium">PIX</span>
+                      <span className="text-xs text-muted-foreground">Instantâneo</span>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={`cursor-pointer rounded-lg border-2 p-4 text-center transition-colors ${
+                      selectedMethod === 'BOLETO' ? 'border-primary bg-primary/10' : 'border-muted'
+                    }`}
+                    onClick={() => setSelectedMethod('BOLETO')}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-2xl">🏦</span>
+                      <span className="text-sm font-medium">Boleto</span>
+                      <span className="text-xs text-muted-foreground">1-3 dias úteis</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Dados do Cliente */}
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm sm:text-base">
-                    Nome Completo
-                  </Label>
+                  <Label htmlFor="name">Nome Completo</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => updateFormData('name', e.target.value)}
                     placeholder="Seu nome completo"
                     required
-                    className="w-full h-10 sm:h-11"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm sm:text-base">
-                    E-mail
-                  </Label>
+                  <Label htmlFor="email">E-mail</Label>
                   <Input
                     id="email"
                     type="email"
@@ -206,86 +178,116 @@ export const PaymentForm = ({ subscription, onClose, onSuccess }: PaymentFormPro
                     onChange={(e) => updateFormData('email', e.target.value)}
                     placeholder="seu@email.com"
                     required
-                    className="w-full h-10 sm:h-11"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cpfCnpj" className="text-sm sm:text-base">
-                    CPF/CNPJ
-                  </Label>
+                  <Label htmlFor="cpfCnpj">CPF/CNPJ</Label>
                   <Input
                     id="cpfCnpj"
                     value={formData.cpfCnpj}
                     onChange={(e) => updateFormData('cpfCnpj', e.target.value)}
                     placeholder="000.000.000-00"
                     required
-                    className="w-full h-10 sm:h-11"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm sm:text-base">
-                    Telefone
-                  </Label>
+                  <Label htmlFor="phone">Telefone</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => updateFormData('phone', e.target.value)}
                     placeholder="(11) 99999-9999"
                     required
-                    className="w-full h-10 sm:h-11"
                   />
                 </div>
               </div>
 
-              {/* Resumo */}
-              <div className="p-3 sm:p-4 bg-muted rounded-lg">
-                <div className="text-xs sm:text-sm space-y-1">
+              <div className="rounded-lg bg-muted p-4">
+                <h4 className="font-medium text-sm">Resumo do Pedido</h4>
+                <div className="mt-2 space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span>Plano:</span>
-                    <span>UniX360 Mensal</span>
+                    <span>Plano UniX360</span>
+                    <span>R$ 75,00/mês</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Valor:</span>
-                    <span className="font-semibold">R$ 75,00/mês</span>
-                  </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between font-medium">
                     <span>Método:</span>
-                    <span>{paymentMethods.find(m => m.id === selectedMethod)?.name}</span>
+                    <span>{selectedMethod === 'PIX' ? 'PIX' : 'Boleto Bancário'}</span>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
 
-          {/* Botões de Ação - Fixos no final */}
-          <div className="flex gap-2 sm:gap-3 pt-4 border-t bg-background">
+          {paymentInstructions && (
+            <div className="rounded-lg border bg-background p-4 space-y-4">
+              <h4 className="font-medium text-sm text-success">🎉 Cobrança Gerada!</h4>
+              
+              {selectedMethod === 'PIX' && paymentInstructions.pix_qr_code && (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">Escaneie o QR Code ou copie o código PIX:</p>
+                  <div className="flex flex-col gap-2">
+                    <textarea 
+                      readOnly 
+                      value={paymentInstructions.pix_copy_paste} 
+                      className="resize-none rounded border p-2 text-xs font-mono"
+                      rows={3}
+                    />
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => {
+                        navigator.clipboard.writeText(paymentInstructions.pix_copy_paste);
+                        toast({ title: "Código PIX copiado!" });
+                      }}
+                    >
+                      Copiar código PIX
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {selectedMethod === 'BOLETO' && paymentInstructions.boleto_url && (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">Clique no botão abaixo para abrir seu boleto:</p>
+                  <Button 
+                    onClick={() => window.open(paymentInstructions.boleto_url, '_blank')}
+                    className="w-full"
+                  >
+                    Abrir Boleto
+                  </Button>
+                </div>
+              )}
+              
+              <div className="text-xs text-muted-foreground border-t pt-3">
+                ⏱️ Seu acesso será ativado automaticamente após a confirmação do pagamento.
+              </div>
+            </div>
+          )}
+        </form>
+
+        <div className="flex justify-end gap-3 pt-6">
+          <Button variant="outline" onClick={onClose} disabled={loading}>
+            {paymentInstructions ? 'Fechar' : 'Cancelar'}
+          </Button>
+          {!paymentInstructions && (
             <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose} 
-              className="flex-1 h-10 sm:h-11 text-sm"
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !formValid} 
-              className="flex-1 font-semibold h-10 sm:h-11 text-sm"
+              onClick={handleSubmit} 
+              disabled={!formValid || loading}
+              className="min-w-[140px]"
             >
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-xs sm:text-sm">Processando...</span>
-                </div>
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Processando...
+                </>
               ) : (
-                <span className="text-xs sm:text-sm">Finalizar Pagamento</span>
+                'Finalizar Pagamento'
               )}
             </Button>
-          </div>
-        </form>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
