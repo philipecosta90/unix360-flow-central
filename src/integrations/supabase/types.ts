@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -716,7 +716,6 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
-          asaas_payment_id: string | null
           boleto_url: string | null
           created_at: string
           due_date: string
@@ -731,7 +730,6 @@ export type Database = {
         }
         Insert: {
           amount: number
-          asaas_payment_id?: string | null
           boleto_url?: string | null
           created_at?: string
           due_date: string
@@ -746,7 +744,6 @@ export type Database = {
         }
         Update: {
           amount?: number
-          asaas_payment_id?: string | null
           boleto_url?: string | null
           created_at?: string
           due_date?: string
@@ -857,8 +854,6 @@ export type Database = {
       }
       subscriptions: {
         Row: {
-          asaas_customer_id: string | null
-          asaas_subscription_id: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
@@ -871,8 +866,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          asaas_customer_id?: string | null
-          asaas_subscription_id?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -885,8 +878,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          asaas_customer_id?: string | null
-          asaas_subscription_id?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -928,12 +919,12 @@ export type Database = {
       get_admin_empresa_stats: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          nome: string
-          email: string
-          plano: string
           ativa: boolean
           created_at: string
+          email: string
+          id: string
+          nome: string
+          plano: string
           total_usuarios: number
           usuarios_ativos: number
         }[]
@@ -971,15 +962,15 @@ export type Database = {
         Returns: boolean
       }
       log_sensitive_access: {
-        Args: { p_action: string; p_table_name: string; p_record_id?: string }
+        Args: { p_action: string; p_record_id?: string; p_table_name: string }
         Returns: undefined
       }
       log_subscription_action: {
         Args: {
-          p_subscription_id: string
           p_action: string
-          p_old_status?: string
           p_new_status?: string
+          p_old_status?: string
+          p_subscription_id: string
         }
         Returns: undefined
       }

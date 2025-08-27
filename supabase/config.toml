@@ -40,15 +40,6 @@ major_version = 15
 [edge_functions]
 inspector_port = 5858
 
-[functions.asaas-create-customer]
-verify_jwt = true
-
-[functions.asaas-create-subscription]
-verify_jwt = true
-
-[functions.asaas-webhook]
-verify_jwt = false
-
 [functions.check-expired-trials]
 verify_jwt = false
 

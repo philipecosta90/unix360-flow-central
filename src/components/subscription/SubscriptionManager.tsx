@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, CreditCard, DollarSign } from "lucide-react";
-import { PaymentForm } from "./PaymentForm";
 
 interface Subscription {
   id: string;
@@ -30,7 +29,6 @@ export const SubscriptionManager = () => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -167,12 +165,12 @@ export const SubscriptionManager = () => {
             <div className="p-4 bg-red-50 rounded-lg">
               <p className="text-sm text-red-800 mb-3">
                 {subscription.status === 'suspended' 
-                  ? 'Sua assinatura está suspensa. Regularize o pagamento para continuar usando o sistema.'
-                  : 'Seu trial expirou. Cadastre uma forma de pagamento para continuar usando o sistema.'
+                  ? 'Sua assinatura está suspensa. Entre em contato com o suporte para reativar.'
+                  : 'Seu trial expirou. Entre em contato com o suporte para ativar sua assinatura.'
                 }
               </p>
-              <Button onClick={() => setShowPaymentForm(true)} className="w-full">
-                Cadastrar Forma de Pagamento
+              <Button disabled className="w-full bg-gray-400 cursor-not-allowed">
+                Sistema em Desenvolvimento
               </Button>
             </div>
           )}
@@ -224,18 +222,6 @@ export const SubscriptionManager = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Modal de Pagamento */}
-      {showPaymentForm && (
-        <PaymentForm
-          subscription={subscription}
-          onClose={() => setShowPaymentForm(false)}
-          onSuccess={() => {
-            setShowPaymentForm(false);
-            loadSubscriptionData();
-          }}
-        />
-      )}
     </div>
   );
 };

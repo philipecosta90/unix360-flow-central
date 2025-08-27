@@ -11,8 +11,6 @@ interface Subscription {
   monthly_value: number;
   current_period_start: string | null;
   current_period_end: string | null;
-  asaas_customer_id: string | null;
-  asaas_subscription_id: string | null;
 }
 
 export const useSubscription = () => {
