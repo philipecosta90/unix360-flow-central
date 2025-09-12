@@ -7,7 +7,7 @@ interface CheckoutUrlParams {
 }
 
 export const buildCheckoutUrl = (params: CheckoutUrlParams = {}): string | null => {
-  const base = process.env.NEXT_PUBLIC_CAKTO_CHECKOUT_BASE_URL || process.env.CAKTO_CHECKOUT_BASE_URL;
+  const base = "https://pay.cakto.com.br/chho9do_565429";
   
   if (!base) {
     // Show toast about missing configuration instead of throwing
