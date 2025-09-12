@@ -101,48 +101,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             
             if (isMounted) {
-              // Verificar se o perfil existe e se o usuário pode acessar o sistema
+              // Verificar se o perfil existe
               if (!profile) {
                 logger.warn('Perfil não encontrado, fazendo logout...');
                 await handleUserAccessDenied('Perfil não encontrado. Entre em contato com o administrador.');
                 return;
               }
-              
-                // Verificar acesso completo do sistema usando função do banco
-                try {
-                  const { data: accessCheck, error: accessError } = await supabase.rpc('can_user_access_system', {
-                    user_uuid: session.user.id
-                  });
-                  
-                  if (accessError) {
-                    logger.error('Erro ao verificar acesso:', accessError);
-                    await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
-                    return;
-                  }
-                  
-                  const accessData = accessCheck as any; // Type assertion para contornar tipo Json
-                  if (!accessData?.can_access) {
-                    logger.warn('Acesso negado', { reason: accessData?.reason });
-                    
-                    // Allow suspended/expired users to login for subscription renewal
-                    if (accessData?.reason === 'SUBSCRIPTION_SUSPENDED' || accessData?.reason === 'TRIAL_EXPIRED') {
-                      logger.info('Permitindo acesso para renovação de assinatura', { reason: accessData?.reason });
-                      // Set profile and continue - user can access platform to renew
-                      setUserProfile(profile);
-                      setLoading(false);
-                      return;
-                    }
-                    
-                    await handleUserAccessDenied(accessData?.message || 'Acesso negado');
-                    return;
-                  }
-                  
-                  logger.security('Acesso autorizado', { reason: accessData?.reason });
-                } catch (error) {
-                  logger.error('Erro ao verificar acesso do sistema:', error);
-                  await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
-                  return;
-                }
               
               setUserProfile(profile);
               setLoading(false);
@@ -183,48 +147,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const profile = await fetchUserProfile(session.user.id);
             
             if (isMounted) {
-              // Verificar se o perfil existe e se o usuário pode acessar o sistema
+              // Verificar se o perfil existe
               if (!profile) {
                 logger.warn('Perfil não encontrado na verificação inicial, fazendo logout...');
                 await handleUserAccessDenied('Perfil não encontrado. Entre em contato com o administrador.');
                 return;
               }
-              
-                // Verificar acesso completo do sistema usando função do banco
-                try {
-                  const { data: accessCheck, error: accessError } = await supabase.rpc('can_user_access_system', {
-                    user_uuid: session.user.id
-                  });
-                  
-                  if (accessError) {
-                    logger.error('Erro ao verificar acesso inicial:', accessError);
-                    await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
-                    return;
-                  }
-                  
-                  const accessData = accessCheck as any; // Type assertion para contornar tipo Json
-                  if (!accessData?.can_access) {
-                    logger.warn('Acesso negado na verificação inicial', { reason: accessData?.reason });
-                    
-                    // Allow suspended/expired users to login for subscription renewal
-                    if (accessData?.reason === 'SUBSCRIPTION_SUSPENDED' || accessData?.reason === 'TRIAL_EXPIRED') {
-                      logger.info('Permitindo acesso inicial para renovação de assinatura', { reason: accessData?.reason });
-                      // Set profile and continue - user can access platform to renew
-                      setUserProfile(profile);
-                      setLoading(false);
-                      return;
-                    }
-                    
-                    await handleUserAccessDenied(accessData?.message || 'Acesso negado');
-                    return;
-                  }
-                  
-                  logger.security('Acesso autorizado na verificação inicial', { reason: accessData?.reason });
-                } catch (error) {
-                  logger.error('Erro ao verificar acesso inicial do sistema:', error);
-                  await handleUserAccessDenied('Erro interno. Tente novamente mais tarde.');
-                  return;
-                }
                 
                 setUserProfile(profile);
                 setLoading(false);

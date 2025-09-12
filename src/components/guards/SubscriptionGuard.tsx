@@ -30,13 +30,18 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
     );
   }
 
-  // Always allow access to subscription-related pages
-  if (SUBSCRIPTION_ALLOWED_PATHS.includes(location.pathname)) {
+  // Always allow access to subscription-related pages and root
+  if (SUBSCRIPTION_ALLOWED_PATHS.includes(location.pathname) || location.pathname === '/') {
     return <>{children}</>;
   }
 
   // If user is not authenticated, let the auth system handle it
   if (!user || !userProfile) {
+    return <>{children}</>;
+  }
+
+  // Bypass for admin/owner roles
+  if (userProfile.nivel_permissao === 'admin') {
     return <>{children}</>;
   }
 

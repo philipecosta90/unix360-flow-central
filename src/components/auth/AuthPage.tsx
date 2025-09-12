@@ -7,7 +7,6 @@ import { ValidationErrors } from "./ValidationErrors";
 import { LockoutWarning } from "./LockoutWarning";
 import { LoginFormTab } from "./LoginFormTab";
 import { SignupFormTab } from "./SignupFormTab";
-import { AccessDeniedMessage } from "./AccessDeniedMessage";
 import { CompanyLogo } from "@/components/layout/CompanyLogo";
 
 export const AuthPage = () => {
@@ -35,7 +34,6 @@ export const AuthPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#43B26D]/10 to-[#43B26D]/5 flex items-center justify-center p-4">
-      <AccessDeniedMessage />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex flex-col items-center mb-4">
