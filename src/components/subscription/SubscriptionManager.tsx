@@ -6,6 +6,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { buildCheckoutUrl, getPlans } from "@/utils/checkoutUtils";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const SubscriptionManager = () => {
   const { userProfile } = useAuth();
@@ -16,10 +18,40 @@ export const SubscriptionManager = () => {
     isTrialActive,
     isTrialExpired,
     getDaysLeftInTrial,
-    needsUpgrade
+    needsUpgrade,
+    refetch,
   } = useSubscription();
 
   const plans = getPlans();
+
+  // Ativação administrativa pontual para a empresa Mamateam
+  useEffect(() => {
+    const TARGET_EMPRESA = "60f94a7d-a9c3-4984-968a-a702bb4bda2e";
+    const flagKey = `manual-activation-${TARGET_EMPRESA}`;
+
+    const run = async () => {
+      try {
+        // Evita chamadas repetidas na mesma sessão
+        if (sessionStorage.getItem(flagKey)) return;
+
+        const { data: isSA, error: saErr } = await supabase.rpc("is_super_admin");
+        if (saErr || !isSA) return; // apenas super admin
+
+        const { error } = await supabase.functions.invoke("admin-activate-subscription", {
+          body: { empresa_id: TARGET_EMPRESA },
+        });
+        if (error) throw error;
+
+        sessionStorage.setItem(flagKey, "1");
+        toast({ title: "Assinatura ativada", description: "Acesso liberado para Mamateam." });
+        refetch();
+      } catch (e) {
+        console.error("Falha ao ativar assinatura manualmente", e);
+      }
+    };
+
+    run();
+  }, [refetch, toast]);
 
   const goCheckout = () => {
     if (!userProfile?.empresa_id || !userProfile.empresas?.email) {

@@ -57,3 +57,6 @@ verify_jwt = false
 
 [functions.cakto-webhook]
 verify_jwt = false
+
+[functions.admin-activate-subscription]
+verify_jwt = true
