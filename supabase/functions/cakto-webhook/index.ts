@@ -1,225 +1,217 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
+/* deno-lint-ignore-file no-explicit-any */
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-signature',
-};
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const CAKTO_WEBHOOK_SECRET = Deno.env.get("CAKTO_WEBHOOK_SECRET")!;
 
-// Initialize Supabase client with service role key for full access
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const webhookSecret = Deno.env.get('CAKTO_WEBHOOK_SECRET')!;
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-interface CaktoEvent {
-  type: string;
-  id: string;
-  data: {
-    id?: string;
-    subscription_id?: string;
-    customer_email?: string;
-    amount_cents?: number;
-    currency?: string;
-    payment_method?: string;
-    status?: string;
-    metadata?: {
-      empresa_id?: string;
-    };
-  };
-}
-
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    // Verify webhook signature
-    const signature = req.headers.get('x-webhook-signature');
-    if (!signature) {
-      console.error('Missing webhook signature');
-      return new Response('Unauthorized', { status: 401 });
-    }
-
-    const body = await req.text();
-    
-    // Simple signature verification (adjust based on Cakto's implementation)
-    const expectedSignature = webhookSecret; // Simplified - implement proper HMAC if needed
-    if (signature !== expectedSignature) {
-      console.error('Invalid webhook signature');
-      return new Response('Unauthorized', { status: 401 });
-    }
-
-    const event: CaktoEvent = JSON.parse(body);
-    
-    console.log('Cakto webhook received:', {
-      event: event.type,
-      external_event_id: event.id,
-      empresa_id: event.data.metadata?.empresa_id
-    });
-
-    // Check for idempotency - ignore duplicate events
-    const { data: existingPayment } = await supabase
-      .from('payments')
-      .select('id')
-      .eq('external_event_id', event.id)
-      .single();
-
-    if (existingPayment) {
-      console.log('Event already processed, skipping:', event.id);
-      return new Response(JSON.stringify({ success: true, message: 'Event already processed' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const empresaId = event.data.metadata?.empresa_id;
-    
-    switch (event.type) {
-      case 'pix_gerado':
-        await handlePixGenerated(event, empresaId);
-        break;
-      
-      case 'purchase_approved':
-        await handlePurchaseApproved(event, empresaId);
-        break;
-      
-      case 'purchase_refused':
-        await handlePurchaseRefused(event, empresaId);
-        break;
-      
-      case 'refund':
-      case 'chargeback':
-        await handleRefundOrChargeback(event, empresaId);
-        break;
-      
-      case 'subscription_canceled':
-        await handleSubscriptionCanceled(event, empresaId);
-        break;
-      
-      default:
-        console.log('Unhandled event type:', event.type);
-        break;
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
-  } catch (error) {
-    console.error('Error processing webhook:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
 });
 
-async function handlePixGenerated(event: CaktoEvent, empresaId?: string) {
-  await supabase.from('payments').insert({
-    external_event_id: event.id,
-    subscription_id: event.data.subscription_id,
-    empresa_id: empresaId,
-    customer_email: event.data.customer_email,
-    amount_cents: event.data.amount_cents,
-    currency: event.data.currency || 'BRL',
-    method: 'pix',
-    status: 'pending',
-    occurred_at: new Date().toISOString()
-  });
+function toCents(n: any): number | null {
+  const v = typeof n === "string" ? parseFloat(n) : typeof n === "number" ? n : null;
+  if (v == null || Number.isNaN(v)) return null;
+  return Math.round(v * 100);
 }
 
-async function handlePurchaseApproved(event: CaktoEvent, empresaId?: string) {
-  // Insert payment record
-  await supabase.from('payments').insert({
-    external_event_id: event.id,
-    subscription_id: event.data.subscription_id,
-    empresa_id: empresaId,
-    customer_email: event.data.customer_email,
-    amount_cents: event.data.amount_cents,
-    currency: event.data.currency || 'BRL',
-    method: event.data.payment_method || 'unknown',
-    status: 'approved',
-    occurred_at: new Date().toISOString()
-  });
+function isoNow() {
+  return new Date().toISOString();
+}
 
-  // Update or create subscription
-  if (empresaId) {
-    const now = new Date();
-    const nextMonth = new Date(now);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
+// Gera uma chave idempotente por evento + id relevante do payload
+function makeExternalEventId(event: string, data: any) {
+  const base = data?.id || data?.subscription?.id || data?.refId || "unknown";
+  return `${event}:${base}`;
+}
 
-    await supabase.from('subscriptions').upsert({
-      empresa_id: empresaId,
-      cakto_subscription_id: event.data.subscription_id,
-      status: 'active',
-      current_period_start: now.toISOString(),
-      current_period_end: nextMonth.toISOString(),
-      is_recurring: true,
-      updated_at: now.toISOString()
-    }, {
-      onConflict: 'empresa_id'
+Deno.serve(async (req) => {
+  try {
+    if (req.method !== "POST") {
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+
+    const body = await req.json();
+    const secret = body?.secret;
+    const event = body?.event as string | undefined;
+    const data = body?.data ?? {};
+
+    // 1) Validação do segredo (vem no body, não no header)
+    if (!secret || secret !== CAKTO_WEBHOOK_SECRET) {
+      return new Response("invalid secret", { status: 401 });
+    }
+    if (!event) {
+      return new Response("missing event", { status: 400 });
+    }
+
+    // 2) Extração de campos comuns
+    const empresa_id: string | null =
+      data?.refId ?? null; // refId = empresaId enviado no checkout
+
+    const external_event_id = makeExternalEventId(event, data);
+
+    const customer_email: string | null =
+      data?.customer?.email ?? null;
+
+    const amount_cents: number | null = toCents(data?.amount ?? data?.offer?.price);
+    const currency = "BRL";
+    const method: string | null =
+      data?.paymentMethod ?? data?.subscription?.paymentMethod ?? null;
+
+    const occurred_at: string =
+      data?.paidAt ?? data?.createdAt ?? isoNow();
+
+    // 3) Idempotência: ignorar se já inserimos payments com esse external_event_id
+    const { data: existingPay, error: findPayErr } = await supabase
+      .from("payments")
+      .select("id")
+      .eq("external_event_id", external_event_id)
+      .maybeSingle();
+    if (findPayErr) throw findPayErr;
+    if (existingPay) {
+      console.log("cakto-webhook duplicate", { event, external_event_id, empresa_id });
+      return new Response("ok (duplicate)", { status: 200 });
+    }
+
+    // 4) Decisão por evento
+    // status para tabela payments
+    let payStatus: "pending" | "approved" | "refused" | "refunded" = "pending";
+    // alterações na assinatura
+    let subChange:
+      | null
+      | {
+          status?: "active" | "suspended" | "canceled" | "trial";
+          is_recurring?: boolean;
+          cps?: string;
+          cpe?: string;
+          cancel_at?: string | null;
+          cakto_subscription_id?: string | null;
+          cakto_customer_id?: string | null;
+        } = null;
+
+    // Datas vindas da Cakto quando for recorrência
+    const cktSub = data?.subscription;
+    const periodStartISO = cktSub?.updatedAt ?? data?.paidAt ?? data?.createdAt ?? isoNow();
+    // Heurística de 1 mês quando não houver no payload
+    const monthMs = 30 * 24 * 60 * 60 * 1000;
+    const periodEndISO = cktSub?.next_payment_date
+      ? new Date(cktSub.next_payment_date).toISOString()
+      : new Date(new Date(periodStartISO).getTime() + monthMs).toISOString();
+
+    switch (event) {
+      case "pix_gerado":
+      case "boleto_gerado":
+      case "picpay_gerado":
+        payStatus = "pending";
+        break;
+
+      case "purchase_approved":
+        payStatus = "approved";
+        // Se for assinatura (subscription), ativar; se for compra única, só registrar pagamento
+        if (data?.product?.type === "subscription" || cktSub) {
+          subChange = {
+            status: "active",
+            is_recurring: true,
+            cps: periodStartISO,
+            cpe: periodEndISO,
+            cakto_subscription_id: cktSub?.id ?? null,
+            cakto_customer_id: data?.customer?.email ?? null,
+          };
+        }
+        break;
+
+      case "purchase_refused":
+        payStatus = "refused";
+        break;
+
+      case "refund":
+      case "chargeback":
+        payStatus = "refunded";
+        subChange = { status: "suspended" };
+        break;
+
+      case "subscription_canceled":
+        payStatus = "approved"; // só para registrar um payment-event; não representa cobrança
+        subChange = { status: "canceled", cancel_at: isoNow() };
+        break;
+
+      case "subscription_renewed":
+        payStatus = "approved";
+        subChange = {
+          status: "active",
+          is_recurring: true,
+          cps: periodStartISO,
+          cpe: periodEndISO,
+          cakto_subscription_id: cktSub?.id ?? null,
+          cakto_customer_id: data?.customer?.email ?? null,
+        };
+        break;
+
+      case "checkout_abandonment":
+        // Apenas log; opcionalmente inserir como pending para analytics
+        console.log("cakto checkout_abandonment", { empresa_id, external_event_id });
+        break;
+
+      default:
+        console.log("cakto unknown event", { event });
+        return new Response("ignored", { status: 200 });
+    }
+
+    // 5) Insert em payments
+    await supabase.from("payments").insert({
+      external_event_id,
+      subscription_id: cktSub?.id ?? null,
+      empresa_id,
+      customer_email,
+      amount_cents,
+      currency,
+      method,
+      status: payStatus,
+      occurred_at,
     });
 
-    console.log('Subscription activated for empresa:', empresaId);
+    // 6) Atualizar subscriptions quando aplicável
+    if (subChange) {
+      // precisamos do empresa_id para relacionar; se não veio, não atualiza subscription
+      if (empresa_id) {
+        const match = cktSub?.id
+          ? { cakto_subscription_id: cktSub.id }
+          : { empresa_id };
+
+        const updates: any = {
+          ...(subChange.status ? { status: subChange.status } : {}),
+          ...(subChange.is_recurring !== undefined ? { is_recurring: subChange.is_recurring } : {}),
+          ...(subChange.cps ? { current_period_start: subChange.cps } : {}),
+          ...(subChange.cpe ? { current_period_end: subChange.cpe } : {}),
+          ...(subChange.cancel_at ? { cancel_at: subChange.cancel_at } : {}),
+          ...(subChange.cakto_subscription_id ? { cakto_subscription_id: subChange.cakto_subscription_id } : {}),
+          ...(subChange.cakto_customer_id ? { cakto_customer_id: subChange.cakto_customer_id } : {}),
+        };
+
+        const { data: existingSub, error: findSubErr } = await supabase
+          .from("subscriptions")
+          .select("id")
+          .match(match)
+          .maybeSingle();
+        if (findSubErr) throw findSubErr;
+
+        if (existingSub) {
+          const { error: upErr } = await supabase.from("subscriptions").update(updates).eq("id", existingSub.id);
+          if (upErr) throw upErr;
+        } else {
+          const { error: insErr } = await supabase.from("subscriptions").insert({ ...match, ...updates });
+          if (insErr) throw insErr;
+        }
+      } else {
+        console.log("cakto no empresa_id (refId) provided; skipping subscription update", { external_event_id });
+      }
+    }
+
+    console.log("cakto-webhook ok", { event, external_event_id, empresa_id });
+    return new Response("ok", { status: 200 });
+  } catch (e) {
+    console.error("cakto-webhook error", { message: (e as Error).message });
+    return new Response("error", { status: 500 });
   }
-}
-
-async function handlePurchaseRefused(event: CaktoEvent, empresaId?: string) {
-  await supabase.from('payments').insert({
-    external_event_id: event.id,
-    subscription_id: event.data.subscription_id,
-    empresa_id: empresaId,
-    customer_email: event.data.customer_email,
-    amount_cents: event.data.amount_cents,
-    currency: event.data.currency || 'BRL',
-    method: event.data.payment_method || 'unknown',
-    status: 'refused',
-    occurred_at: new Date().toISOString()
-  });
-}
-
-async function handleRefundOrChargeback(event: CaktoEvent, empresaId?: string) {
-  // Insert payment record
-  await supabase.from('payments').insert({
-    external_event_id: event.id,
-    subscription_id: event.data.subscription_id,
-    empresa_id: empresaId,
-    customer_email: event.data.customer_email,
-    amount_cents: event.data.amount_cents,
-    currency: event.data.currency || 'BRL',
-    method: event.data.payment_method || 'unknown',
-    status: 'refunded',
-    occurred_at: new Date().toISOString()
-  });
-
-  // Suspend subscription
-  if (empresaId) {
-    await supabase.from('subscriptions')
-      .update({ 
-        status: 'suspended',
-        updated_at: new Date().toISOString()
-      })
-      .eq('empresa_id', empresaId);
-      
-    console.log('Subscription suspended for empresa:', empresaId);
-  }
-}
-
-async function handleSubscriptionCanceled(event: CaktoEvent, empresaId?: string) {
-  if (empresaId) {
-    const now = new Date();
-    await supabase.from('subscriptions')
-      .update({ 
-        status: 'cancelled',
-        cancel_at: now.toISOString(),
-        updated_at: now.toISOString()
-      })
-      .eq('empresa_id', empresaId);
-      
-    console.log('Subscription cancelled for empresa:', empresaId);
-  }
-}
+});

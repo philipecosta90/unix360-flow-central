@@ -36,6 +36,7 @@ export const buildCheckoutUrl = (params: CheckoutUrlParams = {}): string | null 
   }
   
   addParam('planId', planId);
+  addParam('refId', empresaId); // Source of truth for empresa_id in webhook
   addParam('empresaId', empresaId);
   addParam('email', email);
   addParam('success_url', successUrl);
