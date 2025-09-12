@@ -54,3 +54,6 @@ verify_jwt = false
 
 [functions.signup-complete]
 verify_jwt = false
+
+[functions.cakto-webhook]
+verify_jwt = false

@@ -11,6 +11,9 @@ import { InactiveUserMessage } from "@/components/auth/InactiveUserMessage";
 import { AccessDeniedMessage } from "@/components/auth/AccessDeniedMessage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import SubscriptionPage from "./pages/Subscription";
+import SubscriptionSuccessPage from "./pages/SubscriptionSuccess";
+import SubscriptionCancelPage from "./pages/SubscriptionCancel";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +52,9 @@ const App = () => {
               <Route path="/sucesso-cliente" element={<Index />} />
               <Route path="/configuracoes" element={<Index />} />
               <Route path="/admin" element={<Index />} />
+              <Route path="/subscription" element={<SubscriptionPage />} />
+              <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
+              <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

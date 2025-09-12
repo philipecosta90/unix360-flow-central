@@ -76,14 +76,14 @@ export const SubscriptionBanner = () => {
           {canUpgrade && (
             <div className="flex flex-col gap-2">
               <Button 
-                disabled
-                className="bg-gray-400 cursor-not-allowed"
+                onClick={() => window.location.href = '/subscription'}
+                className="bg-primary hover:bg-primary/90"
               >
-                Em Breve
+                Ver Planos
               </Button>
               
               <span className="text-xs text-center text-gray-600">
-                Sistema em desenvolvimento
+                Escolha seu plano ideal
               </span>
             </div>
           )}

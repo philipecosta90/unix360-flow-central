@@ -1,77 +1,19 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Calendar, CreditCard, DollarSign } from "lucide-react";
-
-interface Subscription {
-  id: string;
-  status: string;
-  trial_start_date: string;
-  trial_end_date: string;
-  monthly_value: number;
-  current_period_start: string | null;
-  current_period_end: string | null;
-}
-
-interface Invoice {
-  id: string;
-  amount: number;
-  status: string;
-  due_date: string;
-  payment_date: string | null;
-  payment_method: string | null;
-}
+import { Calendar, CreditCard, DollarSign, Crown } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
+import { CaktoCheckout } from "./CaktoCheckout";
 
 export const SubscriptionManager = () => {
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    loadSubscriptionData();
-  }, []);
-
-  const loadSubscriptionData = async () => {
-    try {
-      // Carregar assinatura
-      const { data: subscriptionData, error: subError } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .single();
-
-      if (subError && subError.code !== 'PGRST116') {
-        throw subError;
-      }
-
-      setSubscription(subscriptionData);
-
-      // Carregar faturas se houver assinatura
-      if (subscriptionData) {
-        const { data: invoicesData, error: invError } = await supabase
-          .from('invoices')
-          .select('*')
-          .eq('subscription_id', subscriptionData.id)
-          .order('due_date', { ascending: false });
-
-        if (invError) throw invError;
-        setInvoices(invoicesData || []);
-      }
-
-    } catch (error) {
-      console.error('Error loading subscription data:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar dados da assinatura",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    subscription, 
+    isLoading: loading, 
+    isTrialActive,
+    isTrialExpired,
+    getDaysLeftInTrial,
+    needsUpgrade
+  } = useSubscription();
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -85,28 +27,11 @@ export const SubscriptionManager = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getInvoiceStatusBadge = (status: string) => {
-    const statusMap = {
-      pending: { label: "Pendente", variant: "secondary" as const },
-      confirmed: { label: "Pago", variant: "default" as const },
-      overdue: { label: "Vencido", variant: "destructive" as const },
-      cancelled: { label: "Cancelado", variant: "outline" as const }
-    };
-
-    const config = statusMap[status as keyof typeof statusMap] || { label: status, variant: "outline" as const };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const isTrialExpired = () => {
-    if (!subscription) return false;
-    return new Date() > new Date(subscription.trial_end_date);
-  };
-
-  const getDaysLeftInTrial = () => {
-    if (!subscription) return 0;
+  const getCurrentPeriodDaysLeft = () => {
+    if (!subscription?.current_period_end) return 0;
     const now = new Date();
-    const trialEnd = new Date(subscription.trial_end_date);
-    const diffTime = trialEnd.getTime() - now.getTime();
+    const periodEnd = new Date(subscription.current_period_end);
+    const diffTime = periodEnd.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return Math.max(0, diffDays);
   };
@@ -117,14 +42,8 @@ export const SubscriptionManager = () => {
 
   if (!subscription) {
     return (
-      <div className="p-4">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-center text-muted-foreground">
-              Nenhuma assinatura encontrada.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="space-y-6">
+        <CaktoCheckout />
       </div>
     );
   }
@@ -150,10 +69,24 @@ export const SubscriptionManager = () => {
             <span className="font-semibold">R$ {subscription.monthly_value.toFixed(2)}</span>
           </div>
 
-          {subscription.status === 'trial' && (
+          {subscription.status === 'active' && subscription.current_period_end && (
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown className="h-4 w-4 text-green-600" />
+                <p className="text-sm text-green-800 font-semibold">
+                  Assinatura Ativa
+                </p>
+              </div>
+              <p className="text-xs text-green-600">
+                Próxima cobrança em {getCurrentPeriodDaysLeft()} dias ({new Date(subscription.current_period_end).toLocaleDateString('pt-BR')})
+              </p>
+            </div>
+          )}
+
+          {subscription.status === 'trial' && isTrialActive && (
             <div className="p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>Trial gratuito:</strong> {getDaysLeftInTrial()} dias restantes
+                <strong>Trial gratuito:</strong> {getDaysLeftInTrial} dias restantes
               </p>
               <p className="text-xs text-blue-600 mt-1">
                 Seu trial expira em {new Date(subscription.trial_end_date).toLocaleDateString('pt-BR')}
@@ -161,67 +94,25 @@ export const SubscriptionManager = () => {
             </div>
           )}
 
-          {(subscription.status === 'trial' && isTrialExpired()) || subscription.status === 'suspended' && (
-            <div className="p-4 bg-red-50 rounded-lg">
-              <p className="text-sm text-red-800 mb-3">
+          {needsUpgrade && (
+            <div className="p-4 bg-red-50 rounded-lg space-y-3">
+              <p className="text-sm text-red-800">
                 {subscription.status === 'suspended' 
-                  ? 'Sua assinatura está suspensa. Entre em contato com o suporte para reativar.'
-                  : 'Seu trial expirou. Entre em contato com o suporte para ativar sua assinatura.'
+                  ? 'Sua assinatura está suspensa. Renove para reativar o acesso.'
+                  : 'Seu trial expirou. Assine agora para continuar usando o sistema.'
                 }
               </p>
-              <Button disabled className="w-full bg-gray-400 cursor-not-allowed">
-                Sistema em Desenvolvimento
+              <Button 
+                onClick={() => window.location.href = '/subscription'}
+                className="w-full"
+              >
+                Ver Planos
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Histórico de Faturas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Histórico de Faturas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {invoices.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
-              Nenhuma fatura encontrada.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {invoices.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-sm">
-                        Vencimento: {new Date(invoice.due_date).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
-                    {invoice.payment_date && (
-                      <div className="text-xs text-muted-foreground">
-                        Pago em: {new Date(invoice.payment_date).toLocaleDateString('pt-BR')}
-                      </div>
-                    )}
-                    {invoice.payment_method && (
-                      <div className="text-xs text-muted-foreground">
-                        Método: {invoice.payment_method}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-right space-y-1">
-                    <div className="font-semibold">R$ {invoice.amount.toFixed(2)}</div>
-                    {getInvoiceStatusBadge(invoice.status)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 };
