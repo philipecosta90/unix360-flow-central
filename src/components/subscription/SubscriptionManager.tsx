@@ -5,9 +5,11 @@ import { Calendar, CreditCard, DollarSign, Crown } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { buildCheckoutUrl, getPlans } from "@/utils/checkoutUtils";
+import { useToast } from "@/hooks/use-toast";
 
 export const SubscriptionManager = () => {
   const { userProfile } = useAuth();
+  const { toast } = useToast();
   const { 
     subscription, 
     isLoading: loading, 
@@ -19,25 +21,31 @@ export const SubscriptionManager = () => {
 
   const plans = getPlans();
 
-  const handleSubscribe = (planId: string) => {
+  const goCheckout = () => {
     if (!userProfile?.empresa_id || !userProfile.empresas?.email) {
-      console.error('Empresa ID ou email não encontrado');
+      toast({
+        title: "Erro",
+        description: "Dados da empresa não encontrados",
+        variant: "destructive"
+      });
       return;
     }
 
-    try {
-      const checkoutUrl = buildCheckoutUrl({
-        empresaId: userProfile.empresa_id,
-        email: userProfile.empresas.email,
-        planId,
-        successUrl: `${window.location.origin}/subscription/success`,
-        cancelUrl: `${window.location.origin}/subscription/cancel`
+    const href = buildCheckoutUrl({
+      empresaId: userProfile.empresa_id,
+      email: userProfile.empresas.email
+    });
+    
+    if (!href) {
+      toast({
+        title: "Erro",
+        description: "Configuração de checkout ausente",
+        variant: "destructive"
       });
-      
-      window.location.href = checkoutUrl;
-    } catch (error) {
-      console.error('Erro ao gerar URL de checkout:', error);
+      return;
     }
+    
+    window.location.href = href;
   };
 
   const getStatusBadge = (status: string) => {
@@ -76,12 +84,9 @@ export const SubscriptionManager = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex justify-center">
               {plans.map((plan) => (
-                <div key={plan.id} className={`border rounded-lg p-6 ${plan.popular ? 'border-primary shadow-md' : 'border-gray-200'}`}>
-                  {plan.popular && (
-                    <Badge className="mb-4">Mais Popular</Badge>
-                  )}
+                <div key={plan.id} className="border border-primary shadow-md rounded-lg p-6 max-w-md">
                   <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
                   <div className="text-3xl font-bold mb-4">
                     R$ {plan.price.toFixed(2)}
@@ -96,9 +101,9 @@ export const SubscriptionManager = () => {
                     ))}
                   </ul>
                   <Button 
-                    onClick={() => handleSubscribe(plan.id)}
+                    type="button"
+                    onClick={goCheckout}
                     className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
                   >
                     Assinar Agora
                   </Button>
@@ -166,7 +171,8 @@ export const SubscriptionManager = () => {
                 }
               </p>
               <Button 
-                onClick={() => handleSubscribe('basic')}
+                type="button"
+                onClick={goCheckout}
                 className="w-full"
               >
                 Renovar Agora
