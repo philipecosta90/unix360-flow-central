@@ -23,7 +23,7 @@
 #### Infraestrutura
 - ✅ **Supabase Database** - Schema completo, RLS, functions
 - ✅ **Edge Functions** - 8 functions implementadas
-- ✅ **Sistema de Assinaturas** - Integração Asaas completa
+- ✅ **Sistema de Assinaturas** - Integração Cakto completa
 - ✅ **Webhooks** - Processamento de pagamentos
 - ✅ **Rate Limiting** - Implementado para segurança
 - ✅ **User Validation** - Validação periódica de usuários

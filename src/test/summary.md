@@ -54,7 +54,7 @@
 6. **Dados sensíveis em cache do navegador** - CRÍTICO
 
 ### **SISTEMA DE PAGAMENTO**
-7. **Webhook do Asaas pode falhar silenciosamente** - ALTO
+7. **Webhook do Cakto pode falhar silenciosamente** - ALTO
 8. **Status de assinatura pode ficar inconsistente** - ALTO
 9. **Não há retry para falhas de pagamento** - MÉDIO
 10. **Validação de CPF/CNPJ não implementada** - MÉDIO
@@ -102,7 +102,7 @@
 
 5. **Implementar retry e reconciliação para webhooks**
    ```typescript
-   // Job periódico para verificar status no Asaas
+   // Job periódico para verificar status no Cakto
    ```
 
 6. **Adicionar verificação periódica de status**
@@ -152,7 +152,7 @@ Recomenda-se implementar monitoramento para:
 - Tentativas de login > 100/min por IP
 - Queries que demoram > 5s
 - Erros de validação > 10%
-- Status inconsistentes entre Asaas e DB
+- Status inconsistentes entre Cakto e DB
 
 ---
 

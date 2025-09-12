@@ -104,7 +104,7 @@ describe('Sistema UniX360 - Auditoria de Segurança e Testes', () => {
     it('SISTEMA DE PAGAMENTO - Riscos de Falha', () => {
       const paymentRisks = [
         {
-          issue: 'Webhook do Asaas pode falhar silenciosamente',
+          issue: 'Webhook do Cakto pode falhar silenciosamente',
           severity: 'ALTO',
           recommendation: 'Implementar job de reconciliação periódica'
         },
@@ -188,7 +188,7 @@ describe('Sistema UniX360 - Auditoria de Segurança e Testes', () => {
     it('SEMANA 2 - AÇÕES DE ALTO IMPACTO', () => {
       const week2Actions = [
         'Centralizar validação com schemas Zod',
-        'Implementar retry para webhooks Asaas',
+        'Implementar retry para webhooks Cakto',
         'Criar job de reconciliação de status',
         'Implementar auditoria de operações sensíveis'
       ]
@@ -247,7 +247,7 @@ describe('Sistema UniX360 - Auditoria de Segurança e Testes', () => {
         {
           metric: 'Falhas de webhook',
           threshold: '> 5%',
-          action: 'Investigar integração Asaas'
+          action: 'Investigar integração Cakto'
         },
         {
           metric: 'Tentativas de login',
@@ -266,7 +266,7 @@ describe('Sistema UniX360 - Auditoria de Segurança e Testes', () => {
         },
         {
           metric: 'Status inconsistentes',
-          threshold: 'Diferença entre Asaas e DB',
+          threshold: 'Diferença entre Cakto e DB',
           action: 'Executar reconciliação'
         }
       ]

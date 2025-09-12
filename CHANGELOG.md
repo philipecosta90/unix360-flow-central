@@ -17,11 +17,11 @@
 - Sistema de notificações robusto
 
 ### 💳 Sistema de Pagamento
-- Integração completa com Asaas
-- Suporte a PIX, Boleto e Cartão de Crédito
-- Webhooks para atualizações automáticas
+- Integração completa com Cakto
+- Checkout hospedado com redirecionamento
+- Webhooks para ativação automática de assinaturas
 - Gestão de trials e renovações
-- Interface de pagamento aprimorada
+- Interface de planos aprimorada
 
 ### 🎛️ Painel Administrativo
 - Assinaturas organizadas por status (Ativas, Trial, Suspensas, Canceladas)
