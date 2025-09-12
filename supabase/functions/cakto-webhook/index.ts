@@ -73,8 +73,10 @@ Deno.serve(async (req) => {
     if (!empresa_uuid && customer_email) {
       const { data: empresaRow, error: empresaErr } = await supabase
         .from("empresas")
-        .select("id")
+        .select("id, created_at")
         .eq("email", customer_email)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (empresaErr) console.error("cakto resolve empresa by email error", { customer_email, error: empresaErr.message });
       if (empresaRow?.id) {
@@ -90,7 +92,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (findPayErr) throw findPayErr;
     if (existingPay) {
-      console.log("cakto-webhook duplicate", { event, external_event_id, empresa_id });
+      console.log("cakto-webhook duplicate", { event, external_event_id, empresa_id: empresa_uuid });
       return new Response("ok (duplicate)", { status: 200 });
     }
 
@@ -128,7 +130,7 @@ Deno.serve(async (req) => {
 
       case "purchase_approved":
         payStatus = "approved";
-        // Se for assinatura (subscription), ativar; se for compra única, só registrar pagamento
+        // Preferencialmente ativa quando houver payload de assinatura; caso contrário, fallback para período de 1 mês
         if (data?.product?.type === "subscription" || cktSub) {
           subChange = {
             status: "active",
@@ -136,6 +138,16 @@ Deno.serve(async (req) => {
             cps: periodStartISO,
             cpe: periodEndISO,
             cakto_subscription_id: cktSub?.id ?? null,
+            cakto_customer_id: data?.customer?.email ?? null,
+          };
+        } else {
+          // Fallback: tratar compra aprovada como ativação de assinatura
+          subChange = {
+            status: "active",
+            is_recurring: true,
+            cps: periodStartISO,
+            cpe: periodEndISO,
+            cakto_subscription_id: null,
             cakto_customer_id: data?.customer?.email ?? null,
           };
         }
@@ -170,7 +182,7 @@ Deno.serve(async (req) => {
 
       case "checkout_abandonment":
         // Apenas log; opcionalmente inserir como pending para analytics
-        console.log("cakto checkout_abandonment", { empresa_id, external_event_id });
+        console.log("cakto checkout_abandonment", { empresa_id: empresa_uuid, external_event_id });
         break;
 
       default:
@@ -199,10 +211,6 @@ Deno.serve(async (req) => {
     if (subChange) {
       // precisamos do empresa_id para relacionar; se não veio, não atualiza subscription
       if (empresa_uuid) {
-        const match = cktSub?.id
-          ? { cakto_subscription_id: cktSub.id, empresa_id: empresa_uuid }
-          : { empresa_id: empresa_uuid };
-
         const updates: any = {
           ...(subChange.status ? { status: subChange.status } : {}),
           ...(subChange.is_recurring !== undefined ? { is_recurring: subChange.is_recurring } : {}),
@@ -215,16 +223,28 @@ Deno.serve(async (req) => {
 
         const { data: existingSub, error: findSubErr } = await supabase
           .from("subscriptions")
-          .select("id")
-          .match(match)
+          .select("id, cakto_subscription_id")
+          .eq("empresa_id", empresa_uuid)
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
         if (findSubErr) throw findSubErr;
 
         if (existingSub) {
-          const { error: upErr } = await supabase.from("subscriptions").update(updates).eq("id", existingSub.id);
+          const { error: upErr } = await supabase
+            .from("subscriptions")
+            .update(updates)
+            .eq("id", existingSub.id);
           if (upErr) throw upErr;
         } else {
-          const { error: insErr } = await supabase.from("subscriptions").insert({ ...match, ...updates });
+          const insertPayload: any = {
+            empresa_id: empresa_uuid,
+            ...updates,
+          };
+          if (cktSub?.id) {
+            insertPayload.cakto_subscription_id = cktSub.id;
+          }
+          const { error: insErr } = await supabase.from("subscriptions").insert(insertPayload);
           if (insErr) throw insErr;
         }
       } else {

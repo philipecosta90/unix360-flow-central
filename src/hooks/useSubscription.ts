@@ -21,6 +21,8 @@ export const useSubscription = () => {
         .from('subscriptions')
         .select('id, status, trial_start_date, trial_end_date, monthly_value, current_period_start, current_period_end')
         .eq('empresa_id', userProfile.empresa_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) {
