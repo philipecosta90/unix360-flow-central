@@ -7,10 +7,9 @@ import { useSubscription } from "@/hooks/useSubscription";
 export const SubscriptionBanner = () => {
   const { 
     subscription, 
-    isTrialActive, 
-    isTrialExpired, 
-    getDaysLeftInTrial, 
-    canUpgrade,
+    isActiveOrTrial, 
+    daysLeft, 
+    status,
     needsUpgrade 
   } = useSubscription();
 
@@ -48,17 +47,17 @@ export const SubscriptionBanner = () => {
               <div className={`text-sm ${
                 needsUpgrade ? 'text-red-700' : 'text-blue-700'
               }`}>
-                {subscription.status === 'trial' && isTrialActive && (
+                {subscription.status === 'trial' && isActiveOrTrial && (
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      {getDaysLeftInTrial} dias restantes - Expira em{' '}
+                      {daysLeft} dias restantes - Expira em{' '}
                       {new Date(subscription.trial_end_date).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
                 )}
                 
-                {subscription.status === 'trial' && isTrialExpired && (
+                {subscription.status === 'trial' && !isActiveOrTrial && (
                   <span>
                     Seu trial expirou. Entre em contato com o suporte para ativar sua assinatura.
                   </span>
@@ -73,7 +72,7 @@ export const SubscriptionBanner = () => {
             </div>
           </div>
           
-          {canUpgrade && (
+          {needsUpgrade && (
             <div className="flex flex-col gap-2">
               <Button 
                 onClick={() => window.location.href = '/subscription'}

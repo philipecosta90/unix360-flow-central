@@ -2,16 +2,12 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import type { Database } from "@/integrations/supabase/types";
 
-interface Subscription {
-  id: string;
-  status: string;
-  trial_start_date: string;
-  trial_end_date: string;
-  monthly_value: number;
-  current_period_start: string | null;
-  current_period_end: string | null;
-}
+type Subscription = Pick<
+  Database['public']['Tables']['subscriptions']['Row'],
+  'id' | 'status' | 'trial_start_date' | 'trial_end_date' | 'monthly_value' | 'current_period_start' | 'current_period_end'
+>;
 
 export const useSubscription = () => {
   const { userProfile } = useAuth();
@@ -23,11 +19,11 @@ export const useSubscription = () => {
       
       const { data, error } = await supabase
         .from('subscriptions')
-        .select('*')
+        .select('id, status, trial_start_date, trial_end_date, monthly_value, current_period_start, current_period_end')
         .eq('empresa_id', userProfile.empresa_id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
@@ -89,6 +85,39 @@ export const useSubscription = () => {
     );
   };
 
+  const isActiveOrTrial = () => {
+    if (!subscription) return false;
+    
+    if (subscription.status === 'active') return true;
+    
+    if (subscription.status === 'trial') {
+      // Check if trial is still valid using current_period_end if available, fallback to trial_end_date
+      const endDate = subscription.current_period_end || subscription.trial_end_date;
+      return new Date() <= new Date(endDate);
+    }
+    
+    return false;
+  };
+
+  const getDaysLeft = () => {
+    if (!subscription) return 0;
+    
+    let endDate: string | null = null;
+    
+    if (subscription.status === 'trial') {
+      endDate = subscription.current_period_end || subscription.trial_end_date;
+    } else if (subscription.status === 'active' && subscription.current_period_end) {
+      endDate = subscription.current_period_end;
+    }
+    
+    if (!endDate) return 0;
+    
+    const now = new Date();
+    const end = new Date(endDate);
+    const diffTime = end.getTime() - now.getTime();
+    return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  };
+
   return {
     subscription,
     isLoading,
@@ -97,6 +126,9 @@ export const useSubscription = () => {
     isTrialExpired: isTrialExpired(),
     getDaysLeftInTrial: getDaysLeftInTrial(),
     canUpgrade: canUpgrade(),
-    needsUpgrade: needsUpgrade()
+    needsUpgrade: needsUpgrade(),
+    isActiveOrTrial: isActiveOrTrial(),
+    daysLeft: getDaysLeft(),
+    status: subscription?.status || null
   };
 };
