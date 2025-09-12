@@ -87,13 +87,22 @@ Deno.serve(async (req) => {
     // 3) Idempotência: ignorar se já inserimos payments com esse external_event_id
     const { data: existingPay, error: findPayErr } = await supabase
       .from("payments")
-      .select("id")
+      .select("id, empresa_id")
       .eq("external_event_id", external_event_id)
       .maybeSingle();
     if (findPayErr) throw findPayErr;
-    if (existingPay) {
+    const isDuplicate = !!existingPay;
+    if (isDuplicate) {
       console.log("cakto-webhook duplicate", { event, external_event_id, empresa_id: empresa_uuid });
-      return new Response("ok (duplicate)", { status: 200 });
+      // Backfill empresa_id caso tenha sido nulo anteriormente
+      if (empresa_uuid && existingPay.empresa_id == null) {
+        const { error: upPayErr } = await supabase
+          .from("payments")
+          .update({ empresa_id: empresa_uuid })
+          .eq("id", existingPay.id);
+        if (upPayErr) console.error("cakto backfill payment empresa_id error", { external_event_id, upPayErr: upPayErr.message });
+      }
+      // Não retornamos aqui para permitir atualização/ativação da assinatura
     }
 
     // 4) Decisão por evento
@@ -190,21 +199,23 @@ Deno.serve(async (req) => {
         return new Response("ignored", { status: 200 });
     }
 
-    // 5) Insert em payments
-    const { error: payErr } = await supabase.from("payments").insert({
-      external_event_id,
-      subscription_id: null,
-      empresa_id: empresa_uuid,
-      customer_email,
-      amount_cents,
-      currency,
-      method,
-      status: payStatus,
-      occurred_at,
-    });
-    if (payErr) {
-      console.error("cakto payments insert error", { external_event_id, err: payErr.message, empresa_uuid, cakto_subscription: cktSub?.id });
-      return new Response("payment insert error", { status: 500 });
+    // 5) Insert em payments (somente se não duplicado)
+    if (!isDuplicate) {
+      const { error: payErr } = await supabase.from("payments").insert({
+        external_event_id,
+        subscription_id: null,
+        empresa_id: empresa_uuid,
+        customer_email,
+        amount_cents,
+        currency,
+        method,
+        status: payStatus,
+        occurred_at,
+      });
+      if (payErr) {
+        console.error("cakto payments insert error", { external_event_id, err: payErr.message, empresa_uuid, cakto_subscription: cktSub?.id });
+        return new Response("payment insert error", { status: 500 });
+      }
     }
 
     // 6) Atualizar subscriptions quando aplicável
