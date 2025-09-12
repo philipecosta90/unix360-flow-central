@@ -4,6 +4,7 @@ import { CompanyList } from "./CompanyList";
 import { CreateUserForm } from "./CreateUserForm";
 import { FeedbackList } from "./FeedbackList";
 import { SystemHealth } from "./SystemHealth";
+import { AdminSubscriptionsList } from "./AdminSubscriptionsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, UserPlus, BarChart3, MessageSquare, CreditCard, Activity } from "lucide-react";
 
@@ -62,11 +63,7 @@ export const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="subscriptions" className="space-y-4 sm:space-y-6">
-          <div className="text-center p-8 bg-gray-50 rounded-lg">
-            <p className="text-gray-600">
-              Sistema de assinaturas foi removido. Apenas controle de trial ativo.
-            </p>
-          </div>
+          <AdminSubscriptionsList />
         </TabsContent>
 
         <TabsContent value="feedbacks" className="space-y-4 sm:space-y-6">

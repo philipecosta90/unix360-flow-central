@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, CreditCard, DollarSign, Crown } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
-import { CaktoCheckout } from "./CaktoCheckout";
+import { useAuth } from "@/hooks/useAuth";
+import { buildCheckoutUrl, getPlans } from "@/utils/checkoutUtils";
 
 export const SubscriptionManager = () => {
+  const { userProfile } = useAuth();
   const { 
     subscription, 
     isLoading: loading, 
@@ -14,6 +16,29 @@ export const SubscriptionManager = () => {
     getDaysLeftInTrial,
     needsUpgrade
   } = useSubscription();
+
+  const plans = getPlans();
+
+  const handleSubscribe = (planId: string) => {
+    if (!userProfile?.empresa_id || !userProfile.empresas?.email) {
+      console.error('Empresa ID ou email não encontrado');
+      return;
+    }
+
+    try {
+      const checkoutUrl = buildCheckoutUrl({
+        empresaId: userProfile.empresa_id,
+        email: userProfile.empresas.email,
+        planId,
+        successUrl: `${window.location.origin}/subscription/success`,
+        cancelUrl: `${window.location.origin}/subscription/cancel`
+      });
+      
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error('Erro ao gerar URL de checkout:', error);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -43,7 +68,45 @@ export const SubscriptionManager = () => {
   if (!subscription) {
     return (
       <div className="space-y-6">
-        <CaktoCheckout />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Escolha seu Plano
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {plans.map((plan) => (
+                <div key={plan.id} className={`border rounded-lg p-6 ${plan.popular ? 'border-primary shadow-md' : 'border-gray-200'}`}>
+                  {plan.popular && (
+                    <Badge className="mb-4">Mais Popular</Badge>
+                  )}
+                  <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
+                  <div className="text-3xl font-bold mb-4">
+                    R$ {plan.price.toFixed(2)}
+                    <span className="text-base font-normal text-muted-foreground">/mês</span>
+                  </div>
+                  <ul className="space-y-2 mb-6">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2 text-sm">
+                        <span className="w-2 h-2 bg-primary rounded-full"></span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button 
+                    onClick={() => handleSubscribe(plan.id)}
+                    className="w-full"
+                    variant={plan.popular ? "default" : "outline"}
+                  >
+                    Assinar Agora
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -103,10 +166,10 @@ export const SubscriptionManager = () => {
                 }
               </p>
               <Button 
-                onClick={() => window.location.href = '/subscription'}
+                onClick={() => handleSubscribe('basic')}
                 className="w-full"
               >
-                Ver Planos
+                Renovar Agora
               </Button>
             </div>
           )}
