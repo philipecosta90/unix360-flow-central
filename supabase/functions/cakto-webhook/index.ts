@@ -258,6 +258,19 @@ Deno.serve(async (req) => {
           const { error: insErr } = await supabase.from("subscriptions").insert(insertPayload);
           if (insErr) throw insErr;
         }
+
+        // 7) Ativar usuários da empresa quando pagamento for aprovado
+        if (subChange.status === "active") {
+          const { error: activateUsersErr } = await supabase
+            .from("perfis")
+            .update({ ativo: true })
+            .eq("empresa_id", empresa_uuid);
+          if (activateUsersErr) {
+            console.error("cakto activate users error", { empresa_uuid, error: activateUsersErr.message });
+          } else {
+            console.log("cakto users activated", { empresa_uuid, event });
+          }
+        }
       } else {
         console.log("cakto no empresa_uuid (refId) provided; skipping subscription update", { external_event_id });
       }
