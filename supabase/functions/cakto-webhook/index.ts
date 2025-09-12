@@ -20,6 +20,12 @@ function isoNow() {
   return new Date().toISOString();
 }
 
+// Util: valida UUID
+function isUuid(v: unknown): v is string {
+  return typeof v === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+}
+
 // Gera uma chave idempotente por evento + id relevante do payload
 function makeExternalEventId(event: string, data: any) {
   const base = data?.id || data?.subscription?.id || data?.refId || "unknown";
@@ -46,8 +52,9 @@ Deno.serve(async (req) => {
     }
 
     // 2) Extração de campos comuns
-    const empresa_id: string | null =
-      data?.refId ?? null; // refId = empresaId enviado no checkout
+    const empresaRef: string | null =
+      (data?.refId ?? data?.empresaId ?? null);
+    let empresa_uuid: string | null = isUuid(empresaRef) ? empresaRef : null;
 
     const external_event_id = makeExternalEventId(event, data);
 
@@ -61,6 +68,19 @@ Deno.serve(async (req) => {
 
     const occurred_at: string =
       data?.paidAt ?? data?.createdAt ?? isoNow();
+
+    // Resolve empresa_uuid se não veio um UUID válido no refId
+    if (!empresa_uuid && customer_email) {
+      const { data: empresaRow, error: empresaErr } = await supabase
+        .from("empresas")
+        .select("id")
+        .eq("email", customer_email)
+        .maybeSingle();
+      if (empresaErr) console.error("cakto resolve empresa by email error", { customer_email, error: empresaErr.message });
+      if (empresaRow?.id) {
+        empresa_uuid = empresaRow.id as string;
+      }
+    }
 
     // 3) Idempotência: ignorar se já inserimos payments com esse external_event_id
     const { data: existingPay, error: findPayErr } = await supabase
@@ -159,10 +179,10 @@ Deno.serve(async (req) => {
     }
 
     // 5) Insert em payments
-    await supabase.from("payments").insert({
+    const { error: payErr } = await supabase.from("payments").insert({
       external_event_id,
-      subscription_id: cktSub?.id ?? null,
-      empresa_id,
+      subscription_id: null,
+      empresa_id: empresa_uuid,
       customer_email,
       amount_cents,
       currency,
@@ -170,14 +190,18 @@ Deno.serve(async (req) => {
       status: payStatus,
       occurred_at,
     });
+    if (payErr) {
+      console.error("cakto payments insert error", { external_event_id, err: payErr.message, empresa_uuid, cakto_subscription: cktSub?.id });
+      return new Response("payment insert error", { status: 500 });
+    }
 
     // 6) Atualizar subscriptions quando aplicável
     if (subChange) {
       // precisamos do empresa_id para relacionar; se não veio, não atualiza subscription
-      if (empresa_id) {
+      if (empresa_uuid) {
         const match = cktSub?.id
-          ? { cakto_subscription_id: cktSub.id }
-          : { empresa_id };
+          ? { cakto_subscription_id: cktSub.id, empresa_id: empresa_uuid }
+          : { empresa_id: empresa_uuid };
 
         const updates: any = {
           ...(subChange.status ? { status: subChange.status } : {}),
@@ -204,11 +228,11 @@ Deno.serve(async (req) => {
           if (insErr) throw insErr;
         }
       } else {
-        console.log("cakto no empresa_id (refId) provided; skipping subscription update", { external_event_id });
+        console.log("cakto no empresa_uuid (refId) provided; skipping subscription update", { external_event_id });
       }
     }
 
-    console.log("cakto-webhook ok", { event, external_event_id, empresa_id });
+    console.log("cakto-webhook ok", { event, external_event_id, empresa_id: empresa_uuid });
     return new Response("ok", { status: 200 });
   } catch (e) {
     console.error("cakto-webhook error", { message: (e as Error).message });
