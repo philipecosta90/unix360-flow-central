@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExternalLink, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { CreateSubscriptionDialog } from "./CreateSubscriptionDialog";
+import { SubscriptionActionsDropdown } from "./SubscriptionActionsDropdown";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -15,7 +17,7 @@ export const AdminSubscriptionsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const { data: subscriptions, isLoading } = useQuery({
+  const { data: subscriptions, isLoading, refetch } = useQuery({
     queryKey: ['admin-subscriptions', searchTerm, statusFilter],
     queryFn: async () => {
       let query = supabase
@@ -80,9 +82,12 @@ export const AdminSubscriptionsList = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          Assinaturas do Sistema
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Assinaturas do Sistema
+          </div>
+          <CreateSubscriptionDialog onSuccess={() => refetch()} />
         </CardTitle>
         <div className="flex flex-col sm:flex-row gap-4">
           <Input
@@ -165,14 +170,20 @@ export const AdminSubscriptionsList = () => {
                   </TableCell>
                   <TableCell>{formatDate(subscription.updated_at)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(`/subscription?empresa_id=${subscription.empresa_id}`, '_blank')}
-                    >
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      Ver
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/subscription?empresa_id=${subscription.empresa_id}`, '_blank')}
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        Ver
+                      </Button>
+                      <SubscriptionActionsDropdown 
+                        subscription={subscription} 
+                        onSuccess={() => refetch()} 
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
