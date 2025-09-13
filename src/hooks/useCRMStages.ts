@@ -38,11 +38,13 @@ export const useCRMStages = () => {
         console.log('📝 Criando stages padrão incluindo Fechado...');
         
         const defaultStages = [
-          { nome: 'Lead', ordem: 1, cor: '#3B82F6' },
-          { nome: 'Qualificado', ordem: 2, cor: '#F59E0B' },
-          { nome: 'Proposta', ordem: 3, cor: '#F97316' },
-          { nome: 'Negociação', ordem: 4, cor: '#8B5CF6' },
-          { nome: 'Fechado', ordem: 5, cor: '#10B981' },
+          { nome: 'INBOX', ordem: 1, cor: '#6B7280' },
+          { nome: 'LEAD', ordem: 2, cor: '#3B82F6' },
+          { nome: 'QUALIFICAÇÃO', ordem: 3, cor: '#F59E0B' },
+          { nome: 'CONTATO INICIAL', ordem: 4, cor: '#F97316' },
+          { nome: 'PROPOSTA ENVIADA', ordem: 5, cor: '#8B5CF6' },
+          { nome: 'NEGOCIAÇÃO', ordem: 6, cor: '#EC4899' },
+          { nome: 'FECHAMENTO', ordem: 7, cor: '#10B981' },
         ];
 
         const stagesToInsert = defaultStages.map(stage => ({
@@ -61,18 +63,18 @@ export const useCRMStages = () => {
           throw insertError;
         }
 
-        console.log('✅ Stages padrão criados com Fechado:', newStages);
+        console.log('✅ Stages padrão criados com FECHAMENTO:', newStages);
         stages = newStages;
       } else {
-        // Verificar se existe a etapa "Fechado", se não existir, criar
-        const fechadoExists = stages.some(stage => stage.nome.toLowerCase() === 'fechado');
-        if (!fechadoExists) {
-          console.log('📝 Criando stage Fechado que estava faltando...');
+        // Verificar se existe a etapa "FECHAMENTO", se não existir, criar
+        const fechamentoExists = stages.some(stage => stage.nome.toLowerCase() === 'fechamento');
+        if (!fechamentoExists) {
+          console.log('📝 Criando stage FECHAMENTO que estava faltando...');
           
-          const { data: fechadoStage, error: fechadoError } = await supabase
+          const { data: fechamentoStage, error: fechamentoError } = await supabase
             .from('crm_stages')
             .insert({
-              nome: 'Fechado',
+              nome: 'FECHAMENTO',
               ordem: Math.max(...stages.map(s => s.ordem)) + 1,
               cor: '#10B981',
               empresa_id: userProfile.empresa_id,
@@ -81,16 +83,16 @@ export const useCRMStages = () => {
             .select('*')
             .single();
 
-          if (fechadoError) {
-            console.error('❌ Erro ao criar stage Fechado:', fechadoError);
+          if (fechamentoError) {
+            console.error('❌ Erro ao criar stage FECHAMENTO:', fechamentoError);
           } else {
-            console.log('✅ Stage Fechado criado:', fechadoStage);
-            stages.push(fechadoStage);
+            console.log('✅ Stage FECHAMENTO criado:', fechamentoStage);
+            stages.push(fechamentoStage);
           }
         }
       }
 
-      console.log('✅ Stages carregados (com Fechado):', stages);
+      console.log('✅ Stages carregados (com FECHAMENTO):', stages);
       return stages as CRMStage[];
     },
     enabled: !!userProfile?.empresa_id,

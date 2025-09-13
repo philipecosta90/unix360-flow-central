@@ -1,123 +1,153 @@
-
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Edit, Phone, Mail, Calendar, Trash2 } from "lucide-react";
 import { CRMProspect } from "@/types/crm";
 import { getInitials, formatCurrency, isFollowupOverdue } from "@/utils/crmFormatters";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit, Trash2, Mail, Phone, Calendar, MapPin, MessageCircle, FileText, GripVertical, MoreHorizontal } from "lucide-react";
 
 interface CRMCardContentProps {
   prospect: CRMProspect;
   onEditClick: (e: React.MouseEvent) => void;
   onDeleteClick?: (e: React.MouseEvent) => void;
+  dragListeners?: any;
 }
 
-export const CRMCardContent = ({ prospect, onEditClick, onDeleteClick }: CRMCardContentProps) => {
+export const CRMCardContent = ({ prospect, onEditClick, onDeleteClick, dragListeners }: CRMCardContentProps) => {
+  const handleWhatsApp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (prospect.telefone) {
+      // Preparado para integração futura
+      console.log('WhatsApp integration:', prospect.telefone);
+    }
+  };
+
+  const handleCall = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (prospect.telefone) {
+      window.open(`tel:${prospect.telefone}`, '_self');
+    }
+  };
+
+  const handleEmail = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (prospect.email) {
+      window.open(`mailto:${prospect.email}`, '_self');
+    }
+  };
+
+  const handleDocuments = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Preparado para funcionalidade de documentos
+    console.log('Documents for:', prospect.nome);
+  };
+
   return (
-    <>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-3 flex-1">
-          <Avatar className="w-8 h-8">
-            <AvatarFallback className="bg-[#43B26D] text-white text-xs">
+    <div className="relative">
+      {/* Handle de drag */}
+      <div
+        className="absolute -top-1 -right-1 p-1 cursor-grab active:cursor-grabbing opacity-50 hover:opacity-100 transition-opacity"
+        {...dragListeners}
+      >
+        <GripVertical className="h-3 w-3 text-gray-400" />
+      </div>
+
+      {/* Conteúdo principal */}
+      <div className="space-y-2">
+        {/* Avatar e informações principais */}
+        <div className="flex items-start space-x-3">
+          <Avatar className="h-10 w-10 border-2 border-gray-200">
+            <AvatarFallback className="text-xs font-semibold bg-gray-100 text-gray-700">
               {getInitials(prospect.nome)}
             </AvatarFallback>
           </Avatar>
+          
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-sm text-gray-900 truncate">{prospect.nome}</h4>
+            <p className="text-sm font-semibold text-gray-900 truncate">
+              {prospect.nome}
+            </p>
             {prospect.empresa_cliente && (
-              <p className="text-xs text-gray-600 truncate">{prospect.empresa_cliente}</p>
+              <p className="text-xs text-gray-600 truncate mt-0.5">
+                {prospect.empresa_cliente}
+              </p>
             )}
           </div>
         </div>
-        <div className="flex gap-1">
-          <Button
-            data-edit-button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={onEditClick}
-          >
-            <Edit className="h-3 w-3" />
-          </Button>
-          {onDeleteClick && (
+
+        {/* Linha de ações */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div className="flex items-center space-x-1">
+            {/* Telefone */}
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
-              onClick={onDeleteClick}
+              onClick={handleCall}
+              className="h-8 w-8 p-0 text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              title="Ligar"
             >
-              <Trash2 className="h-3 w-3" />
+              <Phone className="h-4 w-4" />
             </Button>
-          )}
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        {prospect.valor_estimado && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-[#43B26D]">
-              {formatCurrency(prospect.valor_estimado)}
-            </span>
-            {prospect.origem && (
-              <Badge variant="outline" className="text-xs">
-                {prospect.origem}
-              </Badge>
+
+            {/* WhatsApp */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleWhatsApp}
+              className="h-8 w-8 p-0 text-gray-600 hover:text-green-600 hover:bg-green-50"
+              title="WhatsApp"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+
+            {/* Email */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleEmail}
+              className="h-8 w-8 p-0 text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              title="Email"
+            >
+              <Mail className="h-4 w-4" />
+            </Button>
+
+            {/* Documentos */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDocuments}
+              className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+              title="Documentos"
+            >
+              <FileText className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Menu de ações */}
+          <div className="flex items-center space-x-1">
+            <Button
+              data-edit-button
+              variant="ghost"
+              size="sm"
+              onClick={onEditClick}
+              className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+              title="Editar"
+            >
+              <Edit className="h-3 w-3" />
+            </Button>
+            
+            {onDeleteClick && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDeleteClick}
+                className="h-8 w-8 p-0 text-gray-600 hover:text-red-600 hover:bg-red-50"
+                title="Excluir"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
             )}
           </div>
-        )}
-
-        {/* Contact info */}
-        <div className="flex items-center space-x-2 text-xs text-gray-600">
-          {prospect.email && (
-            <div className="flex items-center space-x-1">
-              <Mail className="h-3 w-3" />
-              <span className="truncate max-w-[100px]">{prospect.email}</span>
-            </div>
-          )}
-          {prospect.telefone && (
-            <div className="flex items-center space-x-1">
-              <Phone className="h-3 w-3" />
-              <span>{prospect.telefone}</span>
-            </div>
-          )}
         </div>
-
-        {/* Tags */}
-        {prospect.tags && prospect.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {prospect.tags.slice(0, 2).map((tag, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {prospect.tags.length > 2 && (
-              <Badge variant="secondary" className="text-xs">
-                +{prospect.tags.length - 2}
-              </Badge>
-            )}
-          </div>
-        )}
-
-        {/* Follow-up date */}
-        {prospect.proximo_followup && (
-          <div className={`flex items-center space-x-1 text-xs ${
-            isFollowupOverdue(prospect.proximo_followup) ? 'text-red-600' : 'text-gray-600'
-          }`}>
-            <Calendar className="h-3 w-3" />
-            <span>
-              Follow-up: {new Date(prospect.proximo_followup).toLocaleDateString('pt-BR')}
-            </span>
-          </div>
-        )}
-
-        {/* Responsible - for now just show the ID since we removed the join */}
-        {prospect.responsavel_id && (
-          <div className="text-xs text-gray-600">
-            Responsável: {prospect.responsavel_id}
-          </div>
-        )}
-        
       </div>
-    </>
+    </div>
   );
 };

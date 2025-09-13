@@ -90,31 +90,24 @@ export const CRMCard = ({ prospect, isDragging = false, onProspectClick }: CRMCa
 
   return (
     <>
-      <Card 
+      <div 
         ref={setNodeRef}
         style={style}
-        className={`bg-white shadow-sm hover:shadow-md transition-shadow relative mb-3 ${
-          isSortableDragging ? 'shadow-lg ring-2 ring-blue-400 z-50' : ''
+        className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${
+          isSortableDragging ? 'shadow-lg ring-2 ring-blue-400 z-50 rotate-3' : ''
         }`}
         onClick={handleCardClick}
         {...attributes}
       >
-        <div
-          data-drag-handle
-          className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 z-10 cursor-grab active:cursor-grabbing"
-          {...listeners}
-        >
-          <GripVertical className="h-3 w-3 text-gray-400" />
-        </div>
-
-        <CardContent className="p-4 pr-8">
+        <div className="p-3">
           <CRMCardContent 
             prospect={prospect} 
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
+            dragListeners={listeners}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <EditProspectDialog
         prospect={prospect}

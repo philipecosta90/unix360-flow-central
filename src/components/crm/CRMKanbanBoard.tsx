@@ -86,7 +86,7 @@ export const CRMKanbanBoard = ({ filters }: CRMKanbanBoardProps) => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-6 overflow-x-auto pb-4 min-h-[calc(100vh-250px)]">
+        <div className="flex gap-3 overflow-x-auto pb-4 min-h-[calc(100vh-200px)] bg-white p-4">
           {sortedStages.map((stage) => {
             if (!stage || !stage.id) {
               return null;
