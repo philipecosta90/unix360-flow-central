@@ -55,9 +55,6 @@ verify_jwt = false
 [functions.signup-complete]
 verify_jwt = false
 
-[functions.cakto-webhook]
-verify_jwt = false
-
 [functions.admin-activate-subscription]
 verify_jwt = true
 
@@ -65,4 +62,13 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.admin-manage-subscription]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.create-stripe-checkout]
+verify_jwt = true
+
+[functions.check-stripe-subscription]
 verify_jwt = true

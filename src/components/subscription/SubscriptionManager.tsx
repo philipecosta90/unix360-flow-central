@@ -4,14 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, CreditCard, DollarSign, Crown } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
-import { buildCheckoutUrl, getPlans } from "@/utils/checkoutUtils";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const SubscriptionManager = () => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
   const { 
     subscription, 
     isLoading: loading, 
@@ -21,8 +21,6 @@ export const SubscriptionManager = () => {
     needsUpgrade,
     refetch,
   } = useSubscription();
-
-  const plans = getPlans();
 
   // Ativação administrativa pontual para a empresa Mamateam
   useEffect(() => {
@@ -53,31 +51,39 @@ export const SubscriptionManager = () => {
     run();
   }, [refetch, toast]);
 
-  const goCheckout = () => {
-    if (!userProfile?.empresa_id || !userProfile.empresas?.email) {
+  const handleStripeCheckout = async () => {
+    if (!userProfile) {
       toast({
         title: "Erro",
-        description: "Dados da empresa não encontrados",
-        variant: "destructive"
+        description: "Usuário não autenticado",
+        variant: "destructive",
       });
       return;
     }
 
-    const href = buildCheckoutUrl({
-      empresaId: userProfile.empresa_id,
-      email: userProfile.empresas.email
-    });
-    
-    if (!href) {
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout');
+      
+      if (error) {
+        throw error;
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('URL de checkout não recebida');
+      }
+    } catch (error) {
+      console.error('Erro ao criar checkout:', error);
       toast({
         title: "Erro",
-        description: "Configuração de checkout ausente",
-        variant: "destructive"
+        description: "Não foi possível processar o pagamento. Tente novamente.",
+        variant: "destructive",
       });
-      return;
+    } finally {
+      setIsProcessing(false);
     }
-    
-    window.location.href = href;
   };
 
   const getStatusBadge = (status: string) => {
@@ -112,35 +118,55 @@ export const SubscriptionManager = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
-              Escolha seu Plano
+              Plano de Assinatura
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-center">
-              {plans.map((plan) => (
-                <div key={plan.id} className="border border-primary shadow-md rounded-lg p-6 max-w-md">
-                  <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
-                  <div className="text-3xl font-bold mb-4">
-                    R$ {plan.price.toFixed(2)}
-                    <span className="text-base font-normal text-muted-foreground">/mês</span>
-                  </div>
-                  <ul className="space-y-2 mb-6">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-2 text-sm">
-                        <span className="w-2 h-2 bg-primary rounded-full"></span>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button 
-                    type="button"
-                    onClick={goCheckout}
-                    className="w-full"
-                  >
-                    Assinar Agora
-                  </Button>
+              <div className="border border-primary shadow-md rounded-lg p-6 max-w-md">
+                <div className="text-center mb-4">
+                  <Badge className="mb-2">Recomendado</Badge>
+                  <h3 className="text-xl font-semibold">Plano Starter</h3>
                 </div>
-              ))}
+                <div className="text-3xl font-bold mb-4 text-center">
+                  R$ 87,00
+                  <span className="text-base font-normal text-muted-foreground">/mês</span>
+                </div>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                    CRM completo com pipeline de vendas
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                    Gestão financeira e contratos
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                    Customer Success e NPS
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                    Relatórios e dashboards
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                    Usuários ilimitados
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                    Suporte premium
+                  </li>
+                </ul>
+                <Button 
+                  type="button"
+                  onClick={handleStripeCheckout}
+                  className="w-full"
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? 'Processando...' : 'Assinar Agora'}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -204,10 +230,11 @@ export const SubscriptionManager = () => {
               </p>
               <Button 
                 type="button"
-                onClick={goCheckout}
+                onClick={handleStripeCheckout}
                 className="w-full"
+                disabled={isProcessing}
               >
-                Renovar Agora
+                {isProcessing ? 'Processando...' : 'Renovar Agora'}
               </Button>
             </div>
           )}

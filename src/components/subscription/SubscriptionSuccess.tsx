@@ -69,7 +69,7 @@ export const SubscriptionSuccess = () => {
           {status === 'processing' && (
             <div>
               <p className="text-muted-foreground mb-4">
-                Estamos processando seu pagamento. Isso pode levar alguns minutos.
+                Aguarde enquanto confirmamos seu pagamento via Stripe. A ativação acontece automaticamente em alguns segundos.
               </p>
               <div className="flex justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -80,7 +80,7 @@ export const SubscriptionSuccess = () => {
           {status === 'success' && (
             <div>
               <p className="text-green-700 mb-4">
-                Sua assinatura foi ativada com sucesso! Você já pode usar todas as funcionalidades do sistema.
+                Sua assinatura foi ativada com sucesso via Stripe! Você já pode usar todas as funcionalidades do sistema.
               </p>
               <Button onClick={handleGoToDashboard} className="w-full">
                 Ir para o Dashboard
@@ -91,7 +91,7 @@ export const SubscriptionSuccess = () => {
           {status === 'error' && (
             <div>
               <p className="text-muted-foreground mb-4">
-                Seu pagamento pode estar sendo processado. Você receberá uma confirmação por email quando for aprovado.
+                Pagamento processado via Stripe. A ativação pode levar alguns minutos. Você receberá uma confirmação quando for aprovado.
               </p>
               <Button onClick={handleGoToDashboard} variant="outline" className="w-full">
                 Voltar ao Dashboard
