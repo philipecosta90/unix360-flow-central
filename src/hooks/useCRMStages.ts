@@ -33,9 +33,9 @@ export const useCRMStages = () => {
         throw error;
       }
 
-      // Se não há stages, criar os padrões incluindo "Fechado"
+      // Se não há stages, criar os padrões
       if (!stages || stages.length === 0) {
-        console.log('📝 Criando stages padrão incluindo Fechado...');
+        console.log('📝 Criando stages padrão...');
         
         const defaultStages = [
           { nome: 'INBOX', ordem: 1, cor: '#6B7280' },
@@ -44,7 +44,6 @@ export const useCRMStages = () => {
           { nome: 'CONTATO INICIAL', ordem: 4, cor: '#F97316' },
           { nome: 'PROPOSTA ENVIADA', ordem: 5, cor: '#8B5CF6' },
           { nome: 'NEGOCIAÇÃO', ordem: 6, cor: '#EC4899' },
-          { nome: 'FECHAMENTO', ordem: 7, cor: '#10B981' },
         ];
 
         const stagesToInsert = defaultStages.map(stage => ({
@@ -63,36 +62,11 @@ export const useCRMStages = () => {
           throw insertError;
         }
 
-        console.log('✅ Stages padrão criados com FECHAMENTO:', newStages);
+        console.log('✅ Stages padrão criados:', newStages);
         stages = newStages;
-      } else {
-        // Verificar se existe a etapa "FECHAMENTO", se não existir, criar
-        const fechamentoExists = stages.some(stage => stage.nome.toLowerCase() === 'fechamento');
-        if (!fechamentoExists) {
-          console.log('📝 Criando stage FECHAMENTO que estava faltando...');
-          
-          const { data: fechamentoStage, error: fechamentoError } = await supabase
-            .from('crm_stages')
-            .insert({
-              nome: 'FECHAMENTO',
-              ordem: Math.max(...stages.map(s => s.ordem)) + 1,
-              cor: '#10B981',
-              empresa_id: userProfile.empresa_id,
-              ativo: true
-            })
-            .select('*')
-            .single();
-
-          if (fechamentoError) {
-            console.error('❌ Erro ao criar stage FECHAMENTO:', fechamentoError);
-          } else {
-            console.log('✅ Stage FECHAMENTO criado:', fechamentoStage);
-            stages.push(fechamentoStage);
-          }
-        }
       }
 
-      console.log('✅ Stages carregados (com FECHAMENTO):', stages);
+      console.log('✅ Stages carregados:', stages);
       return stages as CRMStage[];
     },
     enabled: !!userProfile?.empresa_id,
