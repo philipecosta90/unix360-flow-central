@@ -58,7 +58,7 @@ export const useSubscription = () => {
     const checkTrialStatus = async () => {
       if (subscription && subscription.status === 'trial' && isTrialExpired()) {
         try {
-          await supabase.functions.invoke('check-expired-trials');
+          await supabase.rpc('check_and_update_expired_trials');
           refetch(); // Refresh subscription data
         } catch (error) {
           console.error('Failed to check trial status:', error);

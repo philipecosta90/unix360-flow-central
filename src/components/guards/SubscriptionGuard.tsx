@@ -40,8 +40,9 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
     return <>{children}</>;
   }
 
-  // Bypass for admin/owner roles
-  if (userProfile.nivel_permissao === 'admin') {
+  // Super admin bypass - only for the super admin user
+  const SUPER_ADMIN_ID = 'b0896210-8487-4456-a5f1-056a0685ee7f';
+  if (user?.id === SUPER_ADMIN_ID) {
     return <>{children}</>;
   }
 

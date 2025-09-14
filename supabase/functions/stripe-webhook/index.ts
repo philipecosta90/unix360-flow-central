@@ -122,21 +122,16 @@ serve(async (req) => {
         const customer = await stripe.customers.retrieve(invoice.customer as string);
         customerEmail = (customer as Stripe.Customer).email;
 
-        // Find empresa by customer email
+        // Find empresa by customer email using a more efficient approach
         if (customerEmail) {
-          const { data: user } = await supabase.auth.admin.listUsers();
-          const matchingUser = user.users.find(u => u.email === customerEmail);
+          const { data: profile } = await supabase
+            .from('perfis')
+            .select('empresa_id, user_id')
+            .eq('user_id', (await supabase.rpc('get_user_by_email', { user_email: customerEmail })) || '')
+            .maybeSingle();
           
-          if (matchingUser) {
-            const { data: profile } = await supabase
-              .from('perfis')
-              .select('empresa_id')
-              .eq('user_id', matchingUser.id)
-              .maybeSingle();
-            
-            if (profile) {
-              empresaId = profile.empresa_id;
-            }
+          if (profile) {
+            empresaId = profile.empresa_id;
           }
         }
 
