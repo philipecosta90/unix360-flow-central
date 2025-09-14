@@ -122,16 +122,20 @@ serve(async (req) => {
         const customer = await stripe.customers.retrieve(invoice.customer as string);
         customerEmail = (customer as Stripe.Customer).email;
 
-        // Find empresa by customer email using a more efficient approach
+        // Find empresa by customer email using the helper function
         if (customerEmail) {
-          const { data: profile } = await supabase
-            .from('perfis')
-            .select('empresa_id, user_id')
-            .eq('user_id', (await supabase.rpc('get_user_by_email', { user_email: customerEmail })) || '')
-            .maybeSingle();
+          const { data: userId } = await supabase.rpc('get_user_by_email', { user_email: customerEmail });
           
-          if (profile) {
-            empresaId = profile.empresa_id;
+          if (userId) {
+            const { data: profile } = await supabase
+              .from('perfis')
+              .select('empresa_id')
+              .eq('user_id', userId)
+              .maybeSingle();
+            
+            if (profile) {
+              empresaId = profile.empresa_id;
+            }
           }
         }
 
@@ -234,16 +238,15 @@ serve(async (req) => {
         const customer = await stripe.customers.retrieve(subscription.customer as string);
         customerEmail = (customer as Stripe.Customer).email;
 
-        // Find empresa by customer email
+        // Find empresa by customer email using the helper function
         if (customerEmail) {
-          const { data: user } = await supabase.auth.admin.listUsers();
-          const matchingUser = user.users.find(u => u.email === customerEmail);
+          const { data: userId } = await supabase.rpc('get_user_by_email', { user_email: customerEmail });
           
-          if (matchingUser) {
+          if (userId) {
             const { data: profile } = await supabase
               .from('perfis')
               .select('empresa_id')
-              .eq('user_id', matchingUser.id)
+              .eq('user_id', userId)
               .maybeSingle();
             
             if (profile) {
@@ -283,16 +286,15 @@ serve(async (req) => {
         const customer = await stripe.customers.retrieve(subscription.customer as string);
         customerEmail = (customer as Stripe.Customer).email;
 
-        // Find empresa by customer email
+        // Find empresa by customer email using the helper function
         if (customerEmail) {
-          const { data: user } = await supabase.auth.admin.listUsers();
-          const matchingUser = user.users.find(u => u.email === customerEmail);
+          const { data: userId } = await supabase.rpc('get_user_by_email', { user_email: customerEmail });
           
-          if (matchingUser) {
+          if (userId) {
             const { data: profile } = await supabase
               .from('perfis')
               .select('empresa_id')
-              .eq('user_id', matchingUser.id)
+              .eq('user_id', userId)
               .maybeSingle();
             
             if (profile) {
@@ -340,14 +342,13 @@ serve(async (req) => {
           customerEmail = (customer as Stripe.Customer).email;
 
           if (customerEmail) {
-            const { data: user } = await supabase.auth.admin.listUsers();
-            const matchingUser = user.users.find(u => u.email === customerEmail);
+            const { data: userId } = await supabase.rpc('get_user_by_email', { user_email: customerEmail });
             
-            if (matchingUser) {
+            if (userId) {
               const { data: profile } = await supabase
                 .from('perfis')
                 .select('empresa_id')
-                .eq('user_id', matchingUser.id)
+                .eq('user_id', userId)
                 .maybeSingle();
               
               if (profile) {

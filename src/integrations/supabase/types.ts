@@ -802,6 +802,56 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount_cents: number | null
+          currency: string | null
+          customer_email: string | null
+          empresa_id: string | null
+          external_event_id: string | null
+          id: string
+          method: string | null
+          occurred_at: string | null
+          raw: Json | null
+          status: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          currency?: string | null
+          customer_email?: string | null
+          empresa_id?: string | null
+          external_event_id?: string | null
+          id?: string
+          method?: string | null
+          occurred_at?: string | null
+          raw?: Json | null
+          status?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          currency?: string | null
+          customer_email?: string | null
+          empresa_id?: string | null
+          external_event_id?: string | null
+          id?: string
+          method?: string | null
+          occurred_at?: string | null
+          raw?: Json | null
+          status?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis: {
         Row: {
           ativo: boolean
@@ -854,36 +904,51 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          cakto_customer_id: string | null
+          cakto_subscription_id: string | null
+          cancel_at: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
           empresa_id: string
           id: string
+          is_recurring: boolean | null
           monthly_value: number
+          next_invoice_date: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           trial_end_date: string
           trial_start_date: string
           updated_at: string
         }
         Insert: {
+          cakto_customer_id?: string | null
+          cakto_subscription_id?: string | null
+          cancel_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
           empresa_id: string
           id?: string
+          is_recurring?: boolean | null
           monthly_value?: number
+          next_invoice_date?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_end_date?: string
           trial_start_date?: string
           updated_at?: string
         }
         Update: {
+          cakto_customer_id?: string | null
+          cakto_subscription_id?: string | null
+          cancel_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
           empresa_id?: string
           id?: string
+          is_recurring?: boolean | null
           monthly_value?: number
+          next_invoice_date?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_end_date?: string
           trial_start_date?: string
@@ -936,6 +1001,10 @@ export type Database = {
           message: string
           status: boolean
         }[]
+      }
+      get_user_by_email: {
+        Args: { user_email: string }
+        Returns: string
       }
       get_user_empresa_id: {
         Args: Record<PropertyKey, never>
