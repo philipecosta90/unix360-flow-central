@@ -15,12 +15,14 @@ import { MainLogo } from "./MainLogo";
 import { MobileMenu } from "./MobileMenu";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
+import { useNotifications } from "@/hooks/useNotifications";
 
 export const Header = () => {
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const { unreadCount } = useNotifications();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -50,9 +52,11 @@ export const Header = () => {
             onClick={() => setShowNotifications(true)}
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              3
-            </span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
           </Button>
 
           <DropdownMenu>
