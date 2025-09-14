@@ -25,22 +25,29 @@ export const CreateUserForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🚀 [FORM] Iniciando submissão do formulário...', formData);
+    
     // Form validation
     if (!formData.nome.trim() || !formData.email.trim() || !formData.password.trim() || !formData.nome_empresa.trim()) {
+      console.error('❌ [FORM] Campos obrigatórios não preenchidos');
       return;
     }
 
     if (!userProfile) {
+      console.error('❌ [FORM] Perfil do usuário não encontrado'); 
       return;
     }
 
     if (user?.id !== 'b0896210-8487-4456-a5f1-056a0685ee7f') {
+      console.error('❌ [FORM] Usuário não é super admin');
       return;
     }
 
+    console.log('✅ [FORM] Validações passaram, chamando createUser...');
     const success = await createUser(formData);
     
     if (success) {
+      console.log('✅ [FORM] Usuário criado com sucesso, limpando formulário...');
       setFormData({
         nome: '',
         email: '',
@@ -48,6 +55,8 @@ export const CreateUserForm = () => {
         nivel_permissao: 'operacional',
         nome_empresa: ''
       });
+    } else {
+      console.error('❌ [FORM] Falha na criação do usuário');
     }
   };
 
@@ -100,15 +109,19 @@ export const CreateUserForm = () => {
 
           <div className="space-y-2">
             <Label htmlFor="nome">Nome Completo</Label>
-            <Input
-              id="nome"
-              type="text"
-              value={formData.nome}
-              onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-              placeholder="Nome completo do usuário"
-              disabled={isLoading}
-              required
-            />
+              <Input
+                id="nome"
+                type="text"
+                value={formData.nome}
+                onChange={(e) => {
+                  console.log('📝 [FORM] Nome sendo alterado:', e.target.value);
+                  setFormData(prev => ({ ...prev, nome: e.target.value }));
+                }}
+                placeholder="Nome completo do usuário"
+                disabled={isLoading}
+                required
+                autoComplete="off"
+              />
           </div>
 
           <div className="space-y-2">

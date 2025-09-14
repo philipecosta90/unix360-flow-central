@@ -47,6 +47,12 @@ export const SignupFormTab = ({
     setIsLoading(true);
 
     try {
+      console.log('🚀 [SIGNUP] Iniciando processo de cadastro...', {
+        nome: signupForm.nome,
+        email: signupForm.email,
+        nomeEmpresa: signupForm.nomeEmpresa
+      });
+
       // Verificar se já existe uma empresa com este e-mail
       const { data: existingCompany, error: companyError } = await supabase
         .from('empresas')
@@ -55,9 +61,10 @@ export const SignupFormTab = ({
         .single();
 
       if (!companyError && existingCompany) {
+        console.log('⚠️ [SIGNUP] Empresa já existe com este email');
         toast({
           title: "Email já cadastrado",
-          description: "Já existe uma empresa com este email. Entre em contato com o suporte.",
+          description: "Já existe uma empresa com este email. Tente fazer login ou entre em contato com o suporte.",
           variant: "destructive",
         });
         return;
@@ -77,16 +84,30 @@ export const SignupFormTab = ({
       });
 
       if (error) {
-        if (error.message.includes("User already registered")) {
+        console.error('❌ [SIGNUP] Erro no cadastro:', error);
+        
+        if (error.message.includes("User already registered") || error.message.includes("already been registered")) {
           toast({
             title: "Email já cadastrado",
-            description: "Já existe uma conta com este email. Tente fazer login.",
+            description: "Já existe uma conta com este email. Tente fazer login ou use um email diferente.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes("Invalid email")) {
+          toast({
+            title: "Email inválido",
+            description: "Por favor, digite um email válido.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes("Password")) {
+          toast({
+            title: "Senha inválida",
+            description: "A senha deve ter pelo menos 6 caracteres.",
             variant: "destructive",
           });
         } else {
           toast({
             title: "Erro no cadastro",
-            description: error.message,
+            description: `Erro: ${error.message}. Tente novamente.`,
             variant: "destructive",
           });
         }
@@ -94,9 +115,10 @@ export const SignupFormTab = ({
       }
 
       if (data.user) {
+        console.log('✅ [SIGNUP] Cadastro realizado com sucesso!', data.user.id);
         toast({
           title: "Cadastro realizado com sucesso!",
-          description: "Verifique seu email para confirmar a conta.",
+          description: "Verifique seu email para confirmar a conta e ativar o acesso ao sistema.",
         });
         
         // Reset form

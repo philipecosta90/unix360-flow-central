@@ -80,6 +80,12 @@ export const useUserManagement = () => {
 
       if (!result?.success) {
         console.error('❌ [FRONTEND] Edge function retornou erro:', result?.error);
+        
+        // Verificar se é erro de usuário já existente
+        if (result?.error?.includes('já existe') || result?.error?.includes('already exists')) {
+          throw new Error('Já existe um usuário cadastrado com este email. Use um email diferente.');
+        }
+        
         throw new Error(result?.error || 'Erro ao criar usuário');
       }
 
@@ -97,8 +103,8 @@ export const useUserManagement = () => {
       
       let errorMessage = "Erro ao criar usuário";
       
-      if (error.message?.includes('Já existe um usuário com este email')) {
-        errorMessage = "Já existe um usuário com este email";
+      if (error.message?.includes('Já existe um usuário') || error.message?.includes('already exists') || error.message?.includes('já existe')) {
+        errorMessage = "Email já está em uso. Escolha um email diferente ou verifique se o usuário já foi cadastrado anteriormente.";
       } else if (error.message?.includes('Apenas administradores')) {
         errorMessage = "Apenas administradores podem criar usuários";
       } else if (error.message?.includes('Sessão')) {
