@@ -41,23 +41,13 @@ export const SystemHealth = () => {
         });
       }
 
-      // 2. Verificar Edge Functions
-      try {
-        const { error } = await supabase.functions.invoke('check-expired-trials');
-        checks.push({
-          name: 'Edge Functions',
-          status: error ? 'warning' : 'healthy',
-          message: error ? `Aviso: ${error.message}` : 'Funcionando',
-          lastCheck: new Date()
-        });
-      } catch (error) {
-        checks.push({
-          name: 'Edge Functions',
-          status: 'error',
-          message: 'Indisponível',
-          lastCheck: new Date()
-        });
-      }
+      // 2. Verificar Edge Functions (desabilitado após remoção de pagamentos)
+      checks.push({
+        name: 'Edge Functions',
+        status: 'healthy',
+        message: 'Sistema funcionando sem integrações de pagamento',
+        lastCheck: new Date()
+      });
 
       // 3. Verificar integridade dos dados
       try {
@@ -83,30 +73,13 @@ export const SystemHealth = () => {
         });
       }
 
-      // 4. Verificar assinaturas expiradas
-      try {
-        const { data: expiredTrials } = await supabase
-          .from('subscriptions')
-          .select('id')
-          .eq('status', 'trial')
-          .lt('trial_end_date', new Date().toISOString());
-
-        checks.push({
-          name: 'Assinaturas',
-          status: expiredTrials && expiredTrials.length > 0 ? 'warning' : 'healthy',
-          message: expiredTrials && expiredTrials.length > 0 
-            ? `${expiredTrials.length} trials expirados`
-            : 'Todas em dia',
-          lastCheck: new Date()
-        });
-      } catch (error) {
-        checks.push({
-          name: 'Assinaturas',
-          status: 'error',
-          message: 'Erro na verificação',
-          lastCheck: new Date()
-        });
-      }
+      // 4. Sistema de assinaturas removido
+      checks.push({
+        name: 'Sistema de Pagamentos',
+        status: 'healthy',
+        message: 'Sistema limpo - sem integrações de pagamento',
+        lastCheck: new Date()
+      });
 
       // 5. Verificar logs de segurança
       try {

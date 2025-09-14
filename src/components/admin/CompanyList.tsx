@@ -33,24 +33,10 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
   const companies = allCompanies?.filter(company => {
     const matchesSearch = !searchTerm || 
       company.nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPlan = !selectedPlan || company.plano === selectedPlan;
+    const matchesPlan = selectedPlan === "todos" || !selectedPlan;
     return matchesSearch && matchesPlan;
   });
 
-  const handleUpdatePlan = async (companyId: string, newPlan: string) => {
-    try {
-      const { error } = await supabase
-        .from('empresas')
-        .update({ plano: newPlan })
-        .eq('id', companyId);
-
-      if (error) throw error;
-      
-      refetch();
-    } catch (error) {
-      console.error('Erro ao atualizar plano:', error);
-    }
-  };
 
   const handleToggleStatus = async (companyId: string, currentStatus: boolean) => {
     try {
@@ -67,14 +53,6 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
     }
   };
 
-  const getPlanColor = (plano: string) => {
-    switch (plano) {
-      case 'gratuito': return 'bg-gray-100 text-gray-800';
-      case 'pro': return 'bg-blue-100 text-blue-800';
-      case 'enterprise': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   if (isLoading) {
     return (
@@ -131,11 +109,6 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Badge className={getPlanColor(company.plano || 'gratuito')}>
-                    {company.plano || 'gratuito'}
-                  </Badge>
-                </div>
               </div>
               
               <div className="flex flex-wrap gap-2">
@@ -144,17 +117,6 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
                   Ver detalhes
                 </Button>
                 
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const newPlan = company.plano === 'gratuito' ? 'pro' : 'gratuito';
-                    handleUpdatePlan(company.id, newPlan);
-                  }}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Editar plano
-                </Button>
                 
                 <Button 
                   variant={company.ativa ? "destructive" : "default"}

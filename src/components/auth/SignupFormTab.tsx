@@ -47,30 +47,20 @@ export const SignupFormTab = ({
     setIsLoading(true);
 
     try {
-      // Verificar se já existe uma empresa suspensa com este e-mail
+      // Verificar se já existe uma empresa com este e-mail
       const { data: existingCompany, error: companyError } = await supabase
         .from('empresas')
-        .select(`
-          id,
-          nome,
-          email,
-          subscriptions!inner(
-            status
-          )
-        `)
+        .select('id, nome, email')
         .eq('email', signupForm.email)
         .single();
 
       if (!companyError && existingCompany) {
-        const subscription = existingCompany.subscriptions[0];
-        if (subscription?.status === 'suspended') {
-          toast({
-            title: "Conta Suspensa",
-            description: "Existe uma conta suspensa associada a este e-mail. Entre em contato com o suporte para reativação.",
-            variant: "destructive",
-          });
-          return;
-        }
+        toast({
+          title: "Email já cadastrado",
+          description: "Já existe uma empresa com este email. Entre em contato com o suporte.",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Create user with signup
@@ -106,7 +96,7 @@ export const SignupFormTab = ({
       if (data.user) {
         toast({
           title: "Cadastro realizado com sucesso!",
-          description: "Verifique seu email para confirmar a conta. Seu trial de 7 dias começou!",
+          description: "Verifique seu email para confirmar a conta.",
         });
         
         // Reset form
@@ -224,12 +214,12 @@ export const SignupFormTab = ({
         className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
         disabled={isLoading}
       >
-        {isLoading ? "Criando conta..." : "Criar Conta e Iniciar Trial"}
+        {isLoading ? "Criando conta..." : "Criar Conta"}
       </Button>
       
       <div className="text-center">
         <p className="text-xs text-gray-600">
-          Ao criar sua conta, você inicia automaticamente um trial gratuito de 7 dias.
+          Ao criar sua conta, você terá acesso completo ao sistema.
         </p>
       </div>
     </form>

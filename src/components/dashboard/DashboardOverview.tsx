@@ -2,14 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProximasTarefas } from "./ProximasTarefas";
-import { SubscriptionBanner } from "./SubscriptionBanner";
-import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
-import { Crown, Sparkles } from "lucide-react";
 
 export const DashboardOverview = () => {
   const { data: dashboardData, isLoading } = useDashboardData();
-  const { subscription, isTrialActive } = useSubscription();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -120,27 +116,8 @@ export const DashboardOverview = () => {
           <p className="text-gray-600 mt-2">Visão geral do seu negócio</p>
         </div>
         
-        {/* Botão destacado para trial */}
-        {isTrialActive && subscription?.status === 'trial' && (
-          <div className="flex flex-col items-center lg:items-end gap-2">
-            <Button
-              disabled
-              size="lg"
-              className="bg-gray-400 cursor-not-allowed text-white shadow-lg border-0 px-8 py-3 text-lg font-semibold"
-            >
-              <Crown className="mr-2 h-5 w-5" />
-              Em Breve
-              <Sparkles className="ml-2 h-5 w-5" />
-            </Button>
-            <p className="text-sm text-gray-600 text-center">
-              Sistema de pagamento em desenvolvimento
-            </p>
-          </div>
-        )}
       </div>
 
-      {/* Banner de Assinatura */}
-      <SubscriptionBanner />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

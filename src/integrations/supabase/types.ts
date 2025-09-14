@@ -530,7 +530,6 @@ export type Database = {
           endereco: string | null
           id: string
           nome: string
-          plano: string | null
           telefone: string | null
           updated_at: string
         }
@@ -543,7 +542,6 @@ export type Database = {
           endereco?: string | null
           id?: string
           nome: string
-          plano?: string | null
           telefone?: string | null
           updated_at?: string
         }
@@ -556,7 +554,6 @@ export type Database = {
           endereco?: string | null
           id?: string
           nome?: string
-          plano?: string | null
           telefone?: string | null
           updated_at?: string
         }
@@ -713,59 +710,6 @@ export type Database = {
           },
         ]
       }
-      invoices: {
-        Row: {
-          amount: number
-          boleto_url: string | null
-          created_at: string
-          due_date: string
-          id: string
-          invoice_url: string | null
-          payment_date: string | null
-          payment_method: string | null
-          pix_qr_code: string | null
-          status: Database["public"]["Enums"]["payment_status"]
-          subscription_id: string
-          updated_at: string
-        }
-        Insert: {
-          amount: number
-          boleto_url?: string | null
-          created_at?: string
-          due_date: string
-          id?: string
-          invoice_url?: string | null
-          payment_date?: string | null
-          payment_method?: string | null
-          pix_qr_code?: string | null
-          status?: Database["public"]["Enums"]["payment_status"]
-          subscription_id: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          boleto_url?: string | null
-          created_at?: string
-          due_date?: string
-          id?: string
-          invoice_url?: string | null
-          payment_date?: string | null
-          payment_method?: string | null
-          pix_qr_code?: string | null
-          status?: Database["public"]["Enums"]["payment_status"]
-          subscription_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoices_subscription_id_fkey"
-            columns: ["subscription_id"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       notifications: {
         Row: {
           created_at: string
@@ -801,56 +745,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      payments: {
-        Row: {
-          amount_cents: number | null
-          currency: string | null
-          customer_email: string | null
-          empresa_id: string | null
-          external_event_id: string | null
-          id: string
-          method: string | null
-          occurred_at: string | null
-          raw: Json | null
-          status: string | null
-          subscription_id: string | null
-        }
-        Insert: {
-          amount_cents?: number | null
-          currency?: string | null
-          customer_email?: string | null
-          empresa_id?: string | null
-          external_event_id?: string | null
-          id?: string
-          method?: string | null
-          occurred_at?: string | null
-          raw?: Json | null
-          status?: string | null
-          subscription_id?: string | null
-        }
-        Update: {
-          amount_cents?: number | null
-          currency?: string | null
-          customer_email?: string | null
-          empresa_id?: string | null
-          external_event_id?: string | null
-          id?: string
-          method?: string | null
-          occurred_at?: string | null
-          raw?: Json | null
-          status?: string | null
-          subscription_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_subscription_id_fkey"
-            columns: ["subscription_id"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       perfis: {
         Row: {
@@ -902,81 +796,11 @@ export type Database = {
           },
         ]
       }
-      subscriptions: {
-        Row: {
-          cakto_customer_id: string | null
-          cakto_subscription_id: string | null
-          cancel_at: string | null
-          created_at: string
-          current_period_end: string | null
-          current_period_start: string | null
-          empresa_id: string
-          id: string
-          is_recurring: boolean | null
-          monthly_value: number
-          next_invoice_date: string | null
-          status: Database["public"]["Enums"]["subscription_status"]
-          trial_end_date: string
-          trial_start_date: string
-          updated_at: string
-        }
-        Insert: {
-          cakto_customer_id?: string | null
-          cakto_subscription_id?: string | null
-          cancel_at?: string | null
-          created_at?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          empresa_id: string
-          id?: string
-          is_recurring?: boolean | null
-          monthly_value?: number
-          next_invoice_date?: string | null
-          status?: Database["public"]["Enums"]["subscription_status"]
-          trial_end_date?: string
-          trial_start_date?: string
-          updated_at?: string
-        }
-        Update: {
-          cakto_customer_id?: string | null
-          cakto_subscription_id?: string | null
-          cancel_at?: string | null
-          created_at?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          empresa_id?: string
-          id?: string
-          is_recurring?: boolean | null
-          monthly_value?: number
-          next_invoice_date?: string | null
-          status?: Database["public"]["Enums"]["subscription_status"]
-          trial_end_date?: string
-          trial_start_date?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscriptions_empresa_id_fkey"
-            columns: ["empresa_id"]
-            isOneToOne: false
-            referencedRelation: "empresas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      can_user_access_system: {
-        Args: { user_uuid: string }
-        Returns: Json
-      }
-      check_and_update_expired_trials: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       get_active_user_empresa_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1010,10 +834,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      has_active_subscription: {
-        Args: { empresa_uuid: string }
-        Returns: boolean
-      }
       is_active_user: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1034,15 +854,6 @@ export type Database = {
         Args: { p_action: string; p_record_id?: string; p_table_name: string }
         Returns: undefined
       }
-      log_subscription_action: {
-        Args: {
-          p_action: string
-          p_new_status?: string
-          p_old_status?: string
-          p_subscription_id: string
-        }
-        Returns: undefined
-      }
       validate_permission_levels: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1054,9 +865,7 @@ export type Database = {
     }
     Enums: {
       nivel_permissao: "admin" | "operacional" | "visualizacao"
-      payment_status: "pending" | "confirmed" | "overdue" | "cancelled"
       status_cliente: "ativo" | "inativo" | "lead" | "prospecto"
-      subscription_status: "trial" | "active" | "suspended" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1185,9 +994,7 @@ export const Constants = {
   public: {
     Enums: {
       nivel_permissao: ["admin", "operacional", "visualizacao"],
-      payment_status: ["pending", "confirmed", "overdue", "cancelled"],
       status_cliente: ["ativo", "inativo", "lead", "prospecto"],
-      subscription_status: ["trial", "active", "suspended", "cancelled"],
     },
   },
 } as const

@@ -4,10 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NicheSettings } from "@/components/settings/NicheSettings";
 import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 import { NPSSettings } from "@/components/settings/NPSSettings";
-import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
+
 import { DocumentExporter } from "@/components/export/DocumentExporter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Download, Palette, Users, Lock, Star, CreditCard } from "lucide-react";
+import { Settings as SettingsIcon, Download, Palette, Users, Lock, Star } from "lucide-react";
 
 export default function Settings() {
   return (
@@ -21,7 +21,7 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="niche" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto">
           <TabsTrigger value="niche" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Palette className="w-4 h-4" />
             <span>Nicho</span>
@@ -29,11 +29,6 @@ export default function Settings() {
           <TabsTrigger value="password" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Lock className="w-4 h-4" />
             <span>Senha</span>
-          </TabsTrigger>
-          <TabsTrigger value="subscription" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
-            <CreditCard className="w-4 h-4" />
-            <span className="hidden sm:inline">Assinatura</span>
-            <span className="sm:hidden">Subs</span>
           </TabsTrigger>
           <TabsTrigger value="nps" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Star className="w-4 h-4" />
@@ -56,10 +51,6 @@ export default function Settings() {
 
         <TabsContent value="password">
           <ChangePasswordForm />
-        </TabsContent>
-
-        <TabsContent value="subscription">
-          <SubscriptionSettings />
         </TabsContent>
 
         <TabsContent value="nps">
