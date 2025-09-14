@@ -66,7 +66,7 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get('origin') || 'http://localhost:3000';
-    const priceId = 'price_1S6kx5Qy6q48BwIEjS7WXL6u'; // Plano Starter price ID
+    const priceId = 'price_1S74f2QwbMLp8z4fmoI8Q0t9'; // Plano Starter price ID
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
