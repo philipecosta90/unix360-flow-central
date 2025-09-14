@@ -19,7 +19,7 @@ STRIPE_WEBHOOK_SECRET=whsec_... (endpoint secret do webhook)
 
 - **Produto**: Plano Starter
 - **Preço**: R$ 87,00/mês (8700 centavos)
-- **Price ID**: `price_1S74f2QwbMLp8z4fmoI8Q0t9`
+- **Price ID**: `price_1S6kx5Qy6q48BwIEjS7WXL6u`
 - **Moeda**: BRL (Real Brasileiro)
 - **Tipo**: Assinatura recorrente mensal
 
