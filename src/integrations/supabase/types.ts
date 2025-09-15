@@ -93,6 +93,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          data_fim_plano: string | null
+          data_inicio_plano: string | null
           email: string | null
           empresa_id: string
           id: string
@@ -107,6 +109,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          data_fim_plano?: string | null
+          data_inicio_plano?: string | null
           email?: string | null
           empresa_id: string
           id?: string
@@ -121,6 +125,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          data_fim_plano?: string | null
+          data_inicio_plano?: string | null
           email?: string | null
           empresa_id?: string
           id?: string

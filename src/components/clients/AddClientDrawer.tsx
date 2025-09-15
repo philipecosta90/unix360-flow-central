@@ -6,8 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { X } from "lucide-react";
+import { X, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface AddClientDrawerProps {
   open: boolean;
@@ -24,7 +28,9 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     status: "lead" as const,
     plano_contratado: "",
     tags: "",
-    observacoes: ""
+    observacoes: "",
+    data_inicio_plano: null as Date | null,
+    data_fim_plano: null as Date | null
   });
 
   const [loading, setLoading] = useState(false);
@@ -51,7 +57,9 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         status: formData.status,
         plano_contratado: formData.plano_contratado.trim() || null,
         observacoes: formData.observacoes.trim() || null,
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
+        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
+        data_inicio_plano: formData.data_inicio_plano ? formData.data_inicio_plano.toISOString().split('T')[0] : null,
+        data_fim_plano: formData.data_fim_plano ? formData.data_fim_plano.toISOString().split('T')[0] : null
       };
 
       await onSave(clientData);
@@ -64,7 +72,9 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         status: "lead",
         plano_contratado: "",
         tags: "",
-        observacoes: ""
+        observacoes: "",
+        data_inicio_plano: null,
+        data_fim_plano: null
       });
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
@@ -81,7 +91,9 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       status: "lead",
       plano_contratado: "",
       tags: "",
-      observacoes: ""
+      observacoes: "",
+      data_inicio_plano: null,
+      data_fim_plano: null
     });
     onClose();
   };
@@ -170,6 +182,65 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                 onChange={(e) => setFormData({...formData, tags: e.target.value})}
                 placeholder="VIP, Mentor, Coaching, etc..."
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Data de Início do Plano</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.data_inicio_plano && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.data_inicio_plano ? format(formData.data_inicio_plano, "dd/MM/yyyy") : "Selecione a data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.data_inicio_plano || undefined}
+                      onSelect={(date) => setFormData({...formData, data_inicio_plano: date || null})}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data de Término do Plano</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.data_fim_plano && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.data_fim_plano ? format(formData.data_fim_plano, "dd/MM/yyyy") : "Selecione a data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.data_fim_plano || undefined}
+                      onSelect={(date) => setFormData({...formData, data_fim_plano: date || null})}
+                      initialFocus
+                      className="pointer-events-auto"
+                      disabled={(date) => 
+                        formData.data_inicio_plano ? date < formData.data_inicio_plano : false
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div className="space-y-2">

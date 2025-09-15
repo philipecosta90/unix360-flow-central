@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ClientDetail } from "./ClientDetail";
 import { AddClientDrawer } from "./AddClientDrawer";
 import { EditClientDrawer } from "./EditClientDrawer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Search } from "lucide-react";
+import { usePlanExpirationAlerts } from "@/hooks/usePlanExpirationAlerts";
+import { Loader2, Plus, Search, CalendarDays, AlertTriangle } from "lucide-react";
 interface Cliente {
   id: string;
   nome: string;
@@ -23,6 +25,8 @@ interface Cliente {
   tags?: string[];
   created_at: string;
   updated_at: string;
+  data_inicio_plano?: string;
+  data_fim_plano?: string;
 }
 export const ClientsModule = () => {
   const {
@@ -31,6 +35,7 @@ export const ClientsModule = () => {
   const {
     toast
   } = useToast();
+  const { expiringPlans } = usePlanExpirationAlerts();
   const [clients, setClients] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
@@ -202,6 +207,28 @@ export const ClientsModule = () => {
         </Button>
       </div>
 
+      {/* Alertas de Vencimento */}
+      {expiringPlans.length > 0 && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertTriangle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <div className="font-medium mb-2">Planos próximos ao vencimento:</div>
+            <div className="space-y-1">
+              {expiringPlans.slice(0, 3).map((plan) => (
+                <div key={plan.clientId} className="text-sm">
+                  • {plan.clientName} - {plan.daysUntilExpiration === 0 ? 'Vence hoje' : `${plan.daysUntilExpiration} dias`}
+                </div>
+              ))}
+              {expiringPlans.length > 3 && (
+                <div className="text-sm font-medium">
+                  E mais {expiringPlans.length - 3} clientes...
+                </div>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Filtros e Busca */}
       <Card>
         <CardContent className="p-6">
@@ -274,11 +301,33 @@ export const ClientsModule = () => {
                               </Badge>)}
                           </div>}
 
-                        <div className="flex items-center justify-between pt-2 border-t">
-                          <span className="text-sm text-gray-600">
-                            Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '-'}
-                          </span>
-                          <div className="flex gap-2">
+                         {client.data_fim_plano && (
+                           <div className="flex items-center gap-2 text-sm">
+                             <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                             <span className="text-muted-foreground">
+                               Plano vence: {new Date(client.data_fim_plano).toLocaleDateString('pt-BR')}
+                             </span>
+                             {(() => {
+                               const today = new Date();
+                               const endDate = new Date(client.data_fim_plano);
+                               const diffDays = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                               if (diffDays <= 30 && diffDays >= 0) {
+                                 return (
+                                   <Badge variant={diffDays <= 7 ? "destructive" : "secondary"} className="ml-2">
+                                     {diffDays === 0 ? "Vence hoje" : `${diffDays} dias`}
+                                   </Badge>
+                                 );
+                               }
+                               return null;
+                             })()}
+                           </div>
+                         )}
+
+                         <div className="flex items-center justify-between pt-2 border-t">
+                           <span className="text-sm text-gray-600">
+                             Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '-'}
+                           </span>
+                           <div className="flex gap-2">
                             <Button variant="ghost" size="sm" onClick={e => {
                       e.stopPropagation();
                       console.log('✏️ Editando cliente:', client.nome);
