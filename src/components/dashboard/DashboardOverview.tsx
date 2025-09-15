@@ -18,8 +18,8 @@ export const DashboardOverview = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Visão geral do seu negócio</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">Visão geral do seu negócio</p>
         </div>
 
         {/* Loading skeleton */}
@@ -112,8 +112,8 @@ export const DashboardOverview = () => {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Visão geral do seu negócio</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">Visão geral do seu negócio</p>
         </div>
         
       </div>
@@ -124,7 +124,7 @@ export const DashboardOverview = () => {
         {kpis.map((kpi, index) => (
           <Card key={index} className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-gray-600 leading-tight">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight">
                 {kpi.title}
               </CardTitle>
               <span className={`text-xl sm:text-2xl ${kpi.color}`}>{kpi.icon}</span>
@@ -132,7 +132,7 @@ export const DashboardOverview = () => {
             <CardContent>
               <div className={`text-lg sm:text-2xl font-bold ${kpi.color} break-words`}>{kpi.value}</div>
               {kpi.title.includes("Mensal") && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Referente ao mês atual
                 </p>
               )}

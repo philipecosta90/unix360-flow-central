@@ -73,8 +73,8 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
                 onClick={() => onOpenChange(false)}
                 className={`flex items-center gap-3 px-3 py-3 rounded-md transition-colors ${
                   location.pathname === item.path
-                    ? 'bg-[#43B26D] text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
                 }`}
               >
                 <item.icon className="h-5 w-5" />

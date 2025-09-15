@@ -233,16 +233,16 @@ export const SignupFormTab = ({
       
       <Button 
         type="submit" 
-        className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
+        className="w-full bg-primary hover:bg-primary/90"
         disabled={isLoading}
       >
         {isLoading ? "Criando conta..." : "Criar Conta"}
       </Button>
       
       <div className="text-center">
-        <p className="text-xs text-gray-600">
-          Ao criar sua conta, você terá acesso completo ao sistema.
-        </p>
+          <p className="text-xs text-muted-foreground">
+            Ao criar sua conta, você terá acesso completo ao sistema.
+          </p>
       </div>
     </form>
   );

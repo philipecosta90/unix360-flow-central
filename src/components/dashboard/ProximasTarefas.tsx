@@ -37,7 +37,7 @@ export const ProximasTarefas = () => {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, index) => (
-          <div key={index} className="p-3 rounded-lg bg-gray-50">
+          <div key={index} className="p-3 rounded-lg bg-muted">
             <Skeleton className="h-4 w-40 mb-2" />
             <Skeleton className="h-3 w-20" />
           </div>
@@ -52,7 +52,7 @@ export const ProximasTarefas = () => {
   if (!safeTasks.length) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Nenhuma tarefa próxima</p>
+        <p className="text-muted-foreground">Nenhuma tarefa próxima</p>
       </div>
     );
   }
@@ -99,10 +99,10 @@ export const ProximasTarefas = () => {
         
         const prioridade = getPrioridade(task.vencimento);
         return (
-          <div key={task.id || index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+          <div key={task.id || index} className="flex items-center justify-between p-3 rounded-lg bg-muted">
             <div>
-              <p className="text-sm font-medium text-gray-900">{task.descricao || 'Tarefa sem descrição'}</p>
-              <p className="text-xs text-gray-600">{formatarDataVencimento(task.vencimento)}</p>
+              <p className="text-sm font-medium text-foreground">{task.descricao || 'Tarefa sem descrição'}</p>
+              <p className="text-xs text-muted-foreground">{formatarDataVencimento(task.vencimento)}</p>
             </div>
             <Badge className={`px-2 py-1 text-xs rounded-full ${prioridade.color}`}>
               {prioridade.label}

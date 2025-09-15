@@ -165,7 +165,7 @@ export const LoginFormTab = ({
       <div className="space-y-4">
         <div className="text-center mb-4">
           <h3 className="text-lg font-medium">Recuperar Senha</h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Digite seu email para receber as instruções de recuperação
           </p>
         </div>
@@ -201,7 +201,7 @@ export const LoginFormTab = ({
             <Button
               type="submit"
               disabled={isResettingPassword}
-              className="w-full xs:flex-1 bg-[#43B26D] hover:bg-[#37A05B]"
+              className="w-full xs:flex-1 bg-primary hover:bg-primary/90"
             >
               {isResettingPassword ? "Enviando..." : "Enviar Email"}
             </Button>
@@ -232,7 +232,7 @@ export const LoginFormTab = ({
           <button
             type="button"
             onClick={() => setShowForgotPassword(true)}
-            className="text-sm text-[#43B26D] hover:text-[#37A05B] hover:underline transition-colors"
+            className="text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
             disabled={isLockedOut || isLoading}
           >
             Esqueci minha senha
@@ -256,7 +256,7 @@ export const LoginFormTab = ({
       )}
       <Button 
         type="submit" 
-        className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
+        className="w-full bg-primary hover:bg-primary/90"
         disabled={isLoading || isLockedOut}
       >
         {isLoading ? "Entrando..." : "Entrar"}

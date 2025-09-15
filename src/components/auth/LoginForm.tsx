@@ -72,11 +72,11 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-gray-100 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-[#43B26D] rounded-xl flex items-center justify-center mb-4">
-            <span className="text-white text-2xl font-bold">X</span>
+          <div className="mx-auto w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-4">
+            <span className="text-primary-foreground text-2xl font-bold">X</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">UniX360</h1>
-          <p className="text-gray-600 mt-2">Gestão unificada. Performance real.</p>
+          <h1 className="text-3xl font-bold text-foreground">UniX360</h1>
+          <p className="text-muted-foreground mt-2">Gestão unificada. Performance real.</p>
         </div>
 
         <Card className="w-full shadow-lg">
@@ -119,7 +119,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
+                    className="w-full bg-primary hover:bg-primary/90"
                     disabled={isLoading}
                   >
                     {isLoading ? "Entrando..." : "Entrar"}
@@ -173,7 +173,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-[#43B26D] hover:bg-[#37A05B]"
+                    className="w-full bg-primary hover:bg-primary/90"
                     disabled={isLoading}
                   >
                     {isLoading ? "Criando conta..." : "Criar conta"}

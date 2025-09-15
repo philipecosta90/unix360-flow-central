@@ -46,8 +46,8 @@ const Index = () => {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#43B26D] mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
@@ -101,10 +101,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row w-full">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row w-full">
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-        <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-white border-r border-gray-200">
+        <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-sidebar border-r border-sidebar-border">
           <div className="flex items-center flex-shrink-0 px-4">
             <MainLogo className="h-16 w-48" />
           </div>
@@ -116,15 +116,15 @@ const Index = () => {
                   to={item.path}
                   className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                     location.pathname === item.path
-                      ? 'bg-[#43B26D] text-white'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                   }`}
                 >
                   <item.icon 
                     className={`mr-3 h-5 w-5 ${
                       location.pathname === item.path
-                        ? 'text-white'
-                        : 'text-gray-400 group-hover:text-gray-500'
+                        ? 'text-sidebar-primary-foreground'
+                        : 'text-muted-foreground group-hover:text-sidebar-accent-foreground'
                     }`}
                   />
                   {item.label}
@@ -138,7 +138,7 @@ const Index = () => {
       {/* Main content */}
       <div className="flex flex-col flex-1 lg:ml-64 min-h-screen overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto bg-gray-50">
+        <main className="flex-1 overflow-y-auto bg-background">
           <div className="p-3 sm:p-4 lg:p-6">
             {renderContent()}
           </div>

@@ -36,14 +36,14 @@ export const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b px-4 py-3">
+    <header className="bg-background shadow-sm border-b border-border px-4 py-3">
       <div className="flex items-center justify-between">
         {/* Mobile menu and company name */}
         <div className="flex items-center space-x-4">
           <div className="lg:hidden">
             <MobileMenu isOpen={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen} />
           </div>
-          <div className="text-2xl font-bold text-[#43B26D]">
+          <div className="text-2xl font-bold text-primary">
             UniX360
           </div>
         </div>
@@ -69,8 +69,8 @@ export const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-[#43B26D] rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary-foreground" />
                 </div>
                 <span className="hidden md:block text-sm font-medium">
                   {userProfile?.nome || user?.email?.split('@')[0] || 'Usuário'}

@@ -12,8 +12,8 @@ export const AdminDashboard = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel Administrativo</h1>
-        <p className="text-gray-600 mt-2">Gerencie usuários, empresas e configurações do sistema</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Painel Administrativo</h1>
+        <p className="text-muted-foreground mt-2">Gerencie usuários, empresas e configurações do sistema</p>
       </div>
 
       <Tabs defaultValue="metrics" className="w-full">

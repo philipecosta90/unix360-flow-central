@@ -82,7 +82,7 @@ export const NotificationsPanel = ({ open, onOpenChange }: NotificationsPanelPro
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-3">
             {loading ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <p className="text-sm">Carregando notificações...</p>
               </div>
             ) : notifications.length > 0 ? (
@@ -98,19 +98,19 @@ export const NotificationsPanel = ({ open, onOpenChange }: NotificationsPanelPro
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h4 className={`text-sm font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-600'}`}>
+                          <h4 className={`text-sm font-medium ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
                             {notification.title}
                           </h4>
                           {!notification.read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
                           )}
                         </div>
-                        <p className={`text-sm mt-1 ${!notification.read ? 'text-gray-700' : 'text-gray-500'}`}>
+                        <p className={`text-sm mt-1 ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
                           {notification.message}
                         </p>
                         <div className="flex items-center gap-1 mt-2">
-                          <Clock className="h-3 w-3 text-gray-400" />
-                          <span className="text-xs text-gray-400">
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
                             {formatTimestamp(notification.created_at)}
                           </span>
                         </div>
@@ -120,7 +120,7 @@ export const NotificationsPanel = ({ open, onOpenChange }: NotificationsPanelPro
                 </Card>
               ))
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <Bell className="h-12 w-12 mx-auto mb-4 opacity-30" />
                 <p className="text-sm">Nenhuma notificação por aqui ainda.</p>
               </div>
