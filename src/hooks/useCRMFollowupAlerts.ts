@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 interface CRMProspect {
   id: string;
@@ -10,6 +11,7 @@ interface CRMProspect {
   telefone: string;
   stage: string;
   proximo_followup: string;
+  created_at: string;
 }
 
 interface CRMActivity {
@@ -28,12 +30,14 @@ interface FollowupAlert {
   is_overdue_followup: boolean;
   is_inactive: boolean;
   is_critical: boolean; // Both conditions true
+  days_since_creation: number;
+  days_since_last_activity: number;
 }
 
 export const useCRMFollowupAlerts = () => {
   const { userProfile } = useAuth();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['crm-followup-alerts', userProfile?.empresa_id],
     queryFn: async (): Promise<FollowupAlert[]> => {
       if (!userProfile?.empresa_id) return [];
@@ -41,10 +45,10 @@ export const useCRMFollowupAlerts = () => {
       const today = new Date().toISOString().split('T')[0];
       const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Query 1: Get all prospects for the company
+      // Query 1: Get all prospects for the company including created_at
       const { data: prospects, error: prospectsError } = await supabase
         .from('crm_prospects')
-        .select('id, nome, email, telefone, stage, proximo_followup')
+        .select('id, nome, email, telefone, stage, proximo_followup, created_at')
         .eq('empresa_id', userProfile.empresa_id);
 
       if (prospectsError) throw prospectsError;
@@ -96,7 +100,20 @@ export const useCRMFollowupAlerts = () => {
       prospects?.forEach(prospect => {
         const isOverdueFollowup = prospect.proximo_followup && prospect.proximo_followup < today;
         const hasRecentActivity = recentActivityMap.has(prospect.id);
-        const isInactive = !hasRecentActivity;
+        const lastActivityDate = lastActivitiesMap.get(prospect.id);
+        
+        // Calculate days since creation
+        const createdDate = new Date(prospect.created_at);
+        const currentDate = new Date();
+        const daysSinceCreation = Math.floor((currentDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Calculate days since last activity (or creation if no activities)
+        const referenceDate = lastActivityDate ? new Date(lastActivityDate) : createdDate;
+        const daysSinceLastActivity = Math.floor((currentDate.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Consider inactive only if it's been more than 14 days since creation AND no recent activity
+        // OR has activities but none in the last 14 days and was created more than 14 days ago
+        const isInactive = daysSinceCreation > 14 && !hasRecentActivity;
         
         // Only include prospects that meet at least one criteria
         if (isOverdueFollowup || isInactive) {
@@ -107,10 +124,12 @@ export const useCRMFollowupAlerts = () => {
             email: prospect.email || '',
             telefone: prospect.telefone || '',
             proximo_followup: prospect.proximo_followup,
-            last_activity_date: lastActivitiesMap.get(prospect.id) || null,
+            last_activity_date: lastActivityDate || null,
             is_overdue_followup: !!isOverdueFollowup,
             is_inactive: isInactive,
-            is_critical: !!isOverdueFollowup && isInactive
+            is_critical: !!isOverdueFollowup && isInactive,
+            days_since_creation: daysSinceCreation,
+            days_since_last_activity: daysSinceLastActivity
           });
         }
       });
@@ -129,4 +148,47 @@ export const useCRMFollowupAlerts = () => {
     },
     enabled: !!userProfile?.empresa_id,
   });
+
+  // Set up real-time subscriptions for prospects and activities
+  useEffect(() => {
+    if (!userProfile?.empresa_id) return;
+
+    const prospectsChannel = supabase
+      .channel('crm-prospects-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'crm_prospects',
+          filter: `empresa_id=eq.${userProfile.empresa_id}`
+        },
+        () => {
+          query.refetch();
+        }
+      )
+      .subscribe();
+
+    const activitiesChannel = supabase
+      .channel('crm-activities-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'crm_atividades'
+        },
+        () => {
+          query.refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(prospectsChannel);
+      supabase.removeChannel(activitiesChannel);
+    };
+  }, [userProfile?.empresa_id, query]);
+
+  return query;
 };

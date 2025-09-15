@@ -226,18 +226,21 @@ export const CRMFollowupAlerts = () => {
                         )}
                       </div>
 
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        {alert.is_overdue_followup && (
-                          <Badge variant="destructive" className="text-xs">
-                            Follow-up em atraso
-                          </Badge>
-                        )}
-                        {alert.is_inactive && (
-                          <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
-                            Sem atividade há 14+ dias
-                          </Badge>
-                        )}
-                      </div>
+                       <div className="flex flex-wrap gap-2 text-xs">
+                         {alert.is_overdue_followup && (
+                           <Badge variant="destructive" className="text-xs">
+                             Follow-up em atraso
+                           </Badge>
+                         )}
+                         {alert.is_inactive && (
+                           <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
+                             {alert.last_activity_date ? 
+                               `Sem atividade há ${alert.days_since_last_activity} dias` :
+                               `Criado há ${alert.days_since_creation} dias sem atividades`
+                             }
+                           </Badge>
+                         )}
+                       </div>
                     </div>
                     
                     <div className="flex flex-col gap-2 flex-shrink-0">
