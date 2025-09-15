@@ -44,7 +44,7 @@ export const TransactionTable = ({
   return <div className="border rounded-lg">
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="border-b border-foreground/15">
             <TableHead>Data</TableHead>
             <TableHead>Descrição</TableHead>
             <TableHead>Tipo</TableHead>
@@ -60,7 +60,7 @@ export const TransactionTable = ({
               <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                 Nenhuma transação encontrada
               </TableCell>
-            </TableRow> : transactions.map(transaction => <TableRow key={transaction.id}>
+            </TableRow> : transactions.map(transaction => <TableRow key={transaction.id} className="border-b border-foreground/10 last:border-0">
                 <TableCell>{formatDate(transaction.data)}</TableCell>
                 <TableCell className="font-medium">{transaction.descricao}</TableCell>
                 <TableCell>
