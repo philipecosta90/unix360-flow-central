@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { validateAndSanitize, signupSchema, sanitizeInput, sanitizeNameInput } from "@/utils/inputValidation";
+import { validateAndSanitize, signupSchema, sanitizeInput, sanitizeNameInput, sanitizeNameInputOnChange } from "@/utils/inputValidation";
 
 interface SignupFormTabProps {
   isLoading: boolean;
@@ -47,17 +47,24 @@ export const SignupFormTab = ({
     setIsLoading(true);
 
     try {
+      // Apply final sanitization before submitting
+      const sanitizedForm = {
+        ...signupForm,
+        nome: sanitizeNameInput(signupForm.nome),
+        nomeEmpresa: sanitizeNameInput(signupForm.nomeEmpresa)
+      };
+      
       console.log('🚀 [SIGNUP] Iniciando processo de cadastro...', {
-        nome: signupForm.nome,
-        email: signupForm.email,
-        nomeEmpresa: signupForm.nomeEmpresa
+        nome: sanitizedForm.nome,
+        email: sanitizedForm.email,
+        nomeEmpresa: sanitizedForm.nomeEmpresa
       });
 
       // Verificar se já existe uma empresa com este e-mail
       const { data: existingCompany, error: companyError } = await supabase
         .from('empresas')
         .select('id, nome, email')
-        .eq('email', signupForm.email)
+        .eq('email', sanitizedForm.email)
         .single();
 
       if (!companyError && existingCompany) {
@@ -72,13 +79,13 @@ export const SignupFormTab = ({
 
       // Create user with signup
       const { data, error } = await supabase.auth.signUp({
-        email: signupForm.email,
-        password: signupForm.password,
+        email: sanitizedForm.email,
+        password: sanitizedForm.password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
-            nome: signupForm.nome,
-            nome_empresa: signupForm.nomeEmpresa
+            nome: sanitizedForm.nome,
+            nome_empresa: sanitizedForm.nomeEmpresa
           }
         }
       });
@@ -148,7 +155,7 @@ export const SignupFormTab = ({
     if (field === 'password' || field === 'confirmPassword') {
       sanitizedValue = value; // Don't sanitize passwords
     } else if (field === 'nome' || field === 'nomeEmpresa') {
-      sanitizedValue = sanitizeNameInput(value); // Use specific sanitization for names
+      sanitizedValue = sanitizeNameInputOnChange(value); // Use onChange-specific sanitization for names
     } else {
       sanitizedValue = sanitizeInput(value); // Use general sanitization for other fields
     }
@@ -157,6 +164,15 @@ export const SignupFormTab = ({
     
     // Clear validation errors when user starts typing
     setValidationErrors([]);
+  };
+
+  const handleInputBlur = (field: keyof typeof signupForm) => {
+    if (field === 'nome' || field === 'nomeEmpresa') {
+      setSignupForm(prev => ({ 
+        ...prev, 
+        [field]: sanitizeNameInput(prev[field]) // Apply full sanitization (with trim) on blur
+      }));
+    }
   };
 
   return (
@@ -169,6 +185,7 @@ export const SignupFormTab = ({
           placeholder="Maria da Silva"
           value={signupForm.nome}
           onChange={(e) => handleInputChange('nome', e.target.value)}
+          onBlur={() => handleInputBlur('nome')}
           disabled={isLoading}
           maxLength={100}
           required
@@ -197,6 +214,7 @@ export const SignupFormTab = ({
           placeholder="Empresa Exemplo Ltda"
           value={signupForm.nomeEmpresa}
           onChange={(e) => handleInputChange('nomeEmpresa', e.target.value)}
+          onBlur={() => handleInputBlur('nomeEmpresa')}
           disabled={isLoading}
           maxLength={100}
           required

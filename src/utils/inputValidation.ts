@@ -64,6 +64,16 @@ export const sanitizeNameInput = (input: string): string => {
     .trim();
 };
 
+// Função para sanitizar nomes durante digitação (preserva espaços no final)
+export const sanitizeNameInputOnChange = (input: string): string => {
+  if (typeof input !== 'string') return '';
+  
+  // Remove apenas caracteres realmente perigosos, preservando espaços no final
+  return input
+    .replace(/[<>\"\'&]/g, '') // Remove apenas caracteres HTML perigosos
+    .replace(/\s{2,}/g, ' '); // Normaliza múltiplos espaços para um único espaço, mas não remove espaços do final
+};
+
 // Função para sanitizar HTML
 export const sanitizeHtml = (input: string): string => {
   if (typeof input !== 'string') return '';

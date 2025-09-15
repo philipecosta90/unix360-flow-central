@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
 import { getPermissionIcon, getPermissionDescription } from "@/utils/permissionUtils";
-import { sanitizeNameInput } from "@/utils/inputValidation";
+import { sanitizeNameInput, sanitizeNameInputOnChange } from "@/utils/inputValidation";
 
 interface InviteForm {
   email: string;
@@ -27,6 +27,13 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
   const isFormValid = inviteForm.email.trim() !== '' && 
                      inviteForm.nome.trim() !== '' && 
                      inviteForm.nivel_permissao;
+
+  const handleNameBlur = () => {
+    setInviteForm(prev => ({ 
+      ...prev, 
+      nome: sanitizeNameInput(prev.nome) // Apply full sanitization (with trim) on blur
+    }));
+  };
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -50,7 +57,8 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
           type="text"
           placeholder="João da Silva Santos"
           value={inviteForm.nome}
-          onChange={(e) => setInviteForm(prev => ({ ...prev, nome: sanitizeNameInput(e.target.value) }))}
+          onChange={(e) => setInviteForm(prev => ({ ...prev, nome: sanitizeNameInputOnChange(e.target.value) }))}
+          onBlur={handleNameBlur}
           disabled={isLoading}
           required
         />
