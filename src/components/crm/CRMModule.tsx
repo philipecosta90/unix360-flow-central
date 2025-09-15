@@ -30,19 +30,19 @@ export const CRMModule = () => {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="flex rounded-lg border bg-gray-50 p-1 w-full sm:w-auto">
             <Button
-              variant={currentView === "kanban" ? "default" : "ghost"}
+              variant={currentView === "kanban" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setCurrentView("kanban")}
-              className={`flex-1 sm:flex-none text-xs sm:text-sm ${currentView === "kanban" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}`}
+              className="flex-1 sm:flex-none text-xs sm:text-sm"
             >
               <Kanban className="w-4 h-4 mr-1 sm:mr-2" />
               Pipeline
             </Button>
             <Button
-              variant={currentView === "dashboard" ? "default" : "ghost"}
+              variant={currentView === "dashboard" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setCurrentView("dashboard")}
-              className={`flex-1 sm:flex-none text-xs sm:text-sm ${currentView === "dashboard" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}`}
+              className="flex-1 sm:flex-none text-xs sm:text-sm bg-secondary/80 text-secondary-foreground hover:bg-secondary"
             >
               <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
               Dashboard
