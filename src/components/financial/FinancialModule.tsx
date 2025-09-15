@@ -66,7 +66,7 @@ export const FinancialModule = () => {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary-foreground">Financeiro</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Financeiro</h1>
           <p className="text-gray-600 mt-2">Controle suas receitas e despesas</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
