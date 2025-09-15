@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
 import { getPermissionIcon, getPermissionDescription } from "@/utils/permissionUtils";
+import { sanitizeNameInput } from "@/utils/inputValidation";
 
 interface InviteForm {
   email: string;
@@ -49,7 +50,7 @@ export const InviteUserForm = ({ inviteForm, setInviteForm, isLoading, onSubmit 
           type="text"
           placeholder="João da Silva Santos"
           value={inviteForm.nome}
-          onChange={(e) => setInviteForm(prev => ({ ...prev, nome: e.target.value }))}
+          onChange={(e) => setInviteForm(prev => ({ ...prev, nome: sanitizeNameInput(e.target.value) }))}
           disabled={isLoading}
           required
         />
