@@ -24,12 +24,12 @@ export const CRMModule = () => {
           <p className="text-gray-600 mt-2">Gerencie seus prospects e oportunidades</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="flex rounded-lg border bg-gray-50 p-1 w-full sm:w-auto">
-            <Button variant={currentView === "kanban" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("kanban")} className={`flex-1 sm:flex-none text-xs sm:text-sm ${currentView === "kanban" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}`}>
+          <div className="flex rounded-lg border bg-gray-50 dark:bg-gray-800 p-1 w-full sm:w-auto">
+            <Button variant={currentView === "kanban" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("kanban")} className={`flex-1 sm:flex-none text-xs sm:text-sm ${currentView === "kanban" ? "bg-[#43B26D] hover:bg-[#37A05B] text-white" : "text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white"}`}>
               <Kanban className="w-4 h-4 mr-1 sm:mr-2" />
               Pipeline
             </Button>
-            <Button variant={currentView === "dashboard" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("dashboard")} className={`flex-1 sm:flex-none text-xs sm:text-sm ${currentView === "dashboard" ? "bg-[#43B26D] hover:bg-[#37A05B]" : ""}`}>
+            <Button variant={currentView === "dashboard" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("dashboard")} className={`flex-1 sm:flex-none text-xs sm:text-sm ${currentView === "dashboard" ? "bg-[#43B26D] hover:bg-[#37A05B] text-white" : "text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white"}`}>
               <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
               Dashboard
             </Button>
