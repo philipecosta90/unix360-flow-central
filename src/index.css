@@ -5,6 +5,18 @@
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
 
+/* CRM Stage Colors */
+@layer base {
+  .crm-stage-gray { @apply bg-gray-500; }
+  .crm-stage-blue { @apply bg-blue-500; }
+  .crm-stage-amber { @apply bg-amber-500; }
+  .crm-stage-orange { @apply bg-orange-500; }
+  .crm-stage-purple { @apply bg-purple-500; }
+  .crm-stage-emerald { @apply bg-emerald-500; }
+  .crm-stage-red { @apply bg-red-500; }
+  .crm-stage-pink { @apply bg-pink-500; }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

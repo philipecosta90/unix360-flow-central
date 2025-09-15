@@ -23,16 +23,16 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
 
   const getHeaderColor = (color: string) => {
     const colorMap: { [key: string]: string } = {
-      '#3B82F6': 'bg-blue-500',
-      '#F59E0B': 'bg-amber-500', 
-      '#F97316': 'bg-orange-500',
-      '#8B5CF6': 'bg-purple-500',
-      '#10B981': 'bg-emerald-500',
-      '#EF4444': 'bg-red-500',
-      '#6B7280': 'bg-gray-500',
-      '#EC4899': 'bg-pink-500',
+      '#3B82F6': 'crm-stage-blue',
+      '#F59E0B': 'crm-stage-amber', 
+      '#F97316': 'crm-stage-orange',
+      '#8B5CF6': 'crm-stage-purple',
+      '#10B981': 'crm-stage-emerald',
+      '#EF4444': 'crm-stage-red',
+      '#6B7280': 'crm-stage-gray',
+      '#EC4899': 'crm-stage-pink',
     };
-    return colorMap[color] || 'bg-gray-500';
+    return colorMap[color] || 'crm-stage-gray';
   };
 
   const formatValue = (value: number) => {
