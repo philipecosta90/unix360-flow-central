@@ -796,6 +796,45 @@ export type Database = {
           },
         ]
       }
+      vendas_fechadas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_fechamento: string
+          empresa_id: string
+          id: string
+          observacoes: string | null
+          prospect_id: string
+          responsavel_id: string | null
+          updated_at: string
+          valor_fechado: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_fechamento?: string
+          empresa_id: string
+          id?: string
+          observacoes?: string | null
+          prospect_id: string
+          responsavel_id?: string | null
+          updated_at?: string
+          valor_fechado?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_fechamento?: string
+          empresa_id?: string
+          id?: string
+          observacoes?: string | null
+          prospect_id?: string
+          responsavel_id?: string | null
+          updated_at?: string
+          valor_fechado?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
