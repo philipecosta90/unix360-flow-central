@@ -55,7 +55,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
   const getStatusBadge = (vencimento: string, concluida: boolean) => {
     if (concluida) {
       return (
-        <Badge className="bg-green-100 text-green-800">
+        <Badge className="bg-task-success-muted text-task-success-muted-foreground">
           <CheckCircle className="h-3 w-3 mr-1" />
           Concluída
         </Badge>
@@ -64,7 +64,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
 
     if (!vencimento) {
       return (
-        <Badge className="bg-blue-100 text-blue-800">
+        <Badge className="bg-muted text-muted-foreground">
           Pendente
         </Badge>
       );
@@ -77,7 +77,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
 
     if (isOverdue) {
       return (
-        <Badge className="bg-red-100 text-red-800">
+        <Badge className="bg-task-overdue-muted text-task-overdue-muted-foreground">
           <AlertTriangle className="h-3 w-3 mr-1" />
           Vencida
         </Badge>
@@ -86,7 +86,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
 
     if (isDueToday) {
       return (
-        <Badge className="bg-yellow-100 text-yellow-800">
+        <Badge className="bg-task-warning-muted text-task-warning-muted-foreground">
           <Calendar className="h-3 w-3 mr-1" />
           Vence Hoje
         </Badge>
@@ -94,7 +94,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
     }
 
     return (
-      <Badge className="bg-blue-100 text-blue-800">
+      <Badge className="bg-muted text-muted-foreground">
         Pendente
       </Badge>
     );
@@ -110,8 +110,8 @@ export const TasksList = ({ tasks }: TasksListProps) => {
     const isOverdue = vencimentoSeguro < today;
     const isDueToday = vencimentoSeguro === today;
 
-    if (isOverdue) return "bg-red-50 border-l-4 border-red-500";
-    if (isDueToday) return "bg-yellow-50 border-l-4 border-yellow-500";
+    if (isOverdue) return "bg-task-overdue-muted/20 border-l-4 border-task-overdue";
+    if (isDueToday) return "bg-task-warning-muted/20 border-l-4 border-task-warning";
     
     return "";
   };

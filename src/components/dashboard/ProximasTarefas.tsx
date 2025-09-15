@@ -76,7 +76,7 @@ export const ProximasTarefas = () => {
   };
 
   const getPrioridade = (vencimento: string) => {
-    if (!vencimento) return { label: "Normal", color: "bg-green-100 text-green-600" };
+    if (!vencimento) return { label: "Normal", color: "bg-muted text-muted-foreground" };
     
     try {
       const data = new Date(vencimento);
@@ -84,11 +84,11 @@ export const ProximasTarefas = () => {
       const diffTime = data.getTime() - hoje.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays <= 1) return { label: "Urgente", color: "bg-red-100 text-red-600" };
-      if (diffDays <= 3) return { label: "Alta", color: "bg-orange-100 text-orange-600" };
-      return { label: "Normal", color: "bg-green-100 text-green-600" };
+      if (diffDays <= 1) return { label: "Urgente", color: "bg-task-overdue text-task-overdue-foreground" };
+      if (diffDays <= 3) return { label: "Alta", color: "bg-task-warning text-task-warning-foreground" };
+      return { label: "Normal", color: "bg-task-success-muted text-task-success-muted-foreground" };
     } catch {
-      return { label: "Normal", color: "bg-green-100 text-green-600" };
+      return { label: "Normal", color: "bg-muted text-muted-foreground" };
     }
   };
 

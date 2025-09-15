@@ -69,6 +69,20 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				task: {
+					success: 'hsl(var(--task-success))',
+					'success-foreground': 'hsl(var(--task-success-foreground))',
+					'success-muted': 'hsl(var(--task-success-muted))',
+					'success-muted-foreground': 'hsl(var(--task-success-muted-foreground))',
+					warning: 'hsl(var(--task-warning))',
+					'warning-foreground': 'hsl(var(--task-warning-foreground))',
+					'warning-muted': 'hsl(var(--task-warning-muted))',
+					'warning-muted-foreground': 'hsl(var(--task-warning-muted-foreground))',
+					overdue: 'hsl(var(--task-overdue))',
+					'overdue-foreground': 'hsl(var(--task-overdue-foreground))',
+					'overdue-muted': 'hsl(var(--task-overdue-muted))',
+					'overdue-muted-foreground': 'hsl(var(--task-overdue-muted-foreground))'
 				}
 			},
 			borderRadius: {
