@@ -72,18 +72,6 @@
     --task-overdue-foreground: 0 0% 98%;
     --task-overdue-muted: 0 84% 95%;
     --task-overdue-muted-foreground: 0 84% 25%;
-
-    /* Financial Colors */
-    --financial-revenue: 142 76% 36%;
-    --financial-revenue-foreground: 0 0% 98%;
-    --financial-expense: 0 72% 51%;
-    --financial-expense-foreground: 0 0% 98%;
-    --financial-pending: 45 93% 47%;
-    --financial-pending-foreground: 60 9% 18%;
-    --financial-balance-positive: 142 76% 36%;
-    --financial-balance-negative: 0 72% 51%;
-    --financial-filter-bg: 210 40% 96%;
-    --financial-chart-bg: 0 0% 100%;
   }
 
   .dark {
@@ -138,18 +126,6 @@
     --task-overdue-foreground: 0 0% 98%;
     --task-overdue-muted: 0 62% 15%;
     --task-overdue-muted-foreground: 0 62% 75%;
-
-    /* Financial Colors - Dark Mode */
-    --financial-revenue: 142 76% 45%;
-    --financial-revenue-foreground: 0 0% 98%;
-    --financial-expense: 0 72% 60%;
-    --financial-expense-foreground: 0 0% 98%;
-    --financial-pending: 45 93% 55%;
-    --financial-pending-foreground: 0 0% 98%;
-    --financial-balance-positive: 142 76% 45%;
-    --financial-balance-negative: 0 72% 60%;
-    --financial-filter-bg: 217.2 32.6% 17.5%;
-    --financial-chart-bg: 217.2 32.6% 17.5%;
   }
 }
 

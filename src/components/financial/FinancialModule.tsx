@@ -56,18 +56,18 @@ export const FinancialModule = () => {
   if (isLoading) {
     return <div className="space-y-6">
         <div className="flex items-center justify-center py-8">
-          <p className="text-gray-500">Carregando dados financeiros...</p>
+          <p className="text-muted-foreground">Carregando dados financeiros...</p>
         </div>
       </div>;
   }
   return <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Financeiro</h1>
-          <p className="text-gray-600 mt-2">Controle suas receitas e despesas</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Financeiro</h1>
+          <p className="text-muted-foreground mt-2">Controle suas receitas e despesas</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-          {overdueCount > 0 && <Button variant="outline" onClick={() => setIsOverdueDialogOpen(true)} className="text-red-600 border-red-200 hover:bg-red-50 flex items-center justify-center gap-2 w-full sm:w-auto">
+          {overdueCount > 0 && <Button variant="outline" onClick={() => setIsOverdueDialogOpen(true)} className="text-destructive border-destructive hover:bg-destructive/10 flex items-center justify-center gap-2 w-full sm:w-auto">
               <AlertTriangle className="h-4 w-4" />
               <Badge variant="destructive" className="ml-1">
                 {overdueCount}
@@ -78,7 +78,7 @@ export const FinancialModule = () => {
             <Download className="h-4 w-4" />
             Exportar
           </Button>
-          <Button className="bg-[#43B26D] hover:bg-[#37A05B] w-full sm:w-auto" onClick={() => setIsAddDialogOpen(true)}>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Transação
           </Button>
@@ -92,14 +92,14 @@ export const FinancialModule = () => {
       <FinancialKPIs kpis={kpis} />
 
       {/* Lista de Transações */}
-      <div className="bg-white rounded-lg border overflow-hidden">
-        <div className="p-4 sm:p-6 border-b bg-slate-600">
-          <h2 className="text-lg sm:text-xl font-semibold">Transações</h2>
-          <p className="text-sm mt-1 text-slate-950">
+      <div className="bg-card rounded-lg border overflow-hidden">
+        <div className="p-4 sm:p-6 border-b bg-muted">
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Transações</h2>
+          <p className="text-sm mt-1 text-muted-foreground">
             {transactions.length} transação(ões) encontrada(s)
           </p>
         </div>
-        <div className="p-0 sm:p-6 bg-slate-400">
+        <div className="p-0 sm:p-6 bg-card">
           <TransactionTable transactions={transactions} onDelete={handleDelete} onEdit={handleEdit} />
         </div>
       </div>

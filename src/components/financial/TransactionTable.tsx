@@ -32,12 +32,12 @@ export const TransactionTable = ({
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
   const getTypeColor = (type: string) => {
-    return type === "entrada" ? "text-financial-revenue" : "text-financial-expense";
+    return type === "entrada" ? "text-emerald-600" : "text-red-500";
   };
   const getStatusBadge = (aReceber: boolean) => {
-    return aReceber ? <Badge variant="outline" className="bg-financial-pending/10 text-financial-pending border-financial-pending">
+    return aReceber ? <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700">
         A Receber
-      </Badge> : <Badge variant="outline" className="bg-financial-revenue/10 text-financial-revenue border-financial-revenue">
+      </Badge> : <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700">
         Pago
       </Badge>;
   };
