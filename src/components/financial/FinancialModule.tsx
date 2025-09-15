@@ -87,11 +87,11 @@ export const FinancialModule = () => {
       <div className="bg-white rounded-lg border overflow-hidden">
         <div className="p-4 sm:p-6 border-b bg-slate-600">
           <h2 className="text-lg sm:text-xl font-semibold">Transações</h2>
-          <p className="text-gray-600 text-sm mt-1">
+          <p className="text-sm mt-1 text-slate-950">
             {transactions.length} transação(ões) encontrada(s)
           </p>
         </div>
-        <div className="p-0 sm:p-6">
+        <div className="p-0 sm:p-6 bg-slate-400">
           <TransactionTable transactions={transactions} onDelete={handleDelete} />
         </div>
       </div>
