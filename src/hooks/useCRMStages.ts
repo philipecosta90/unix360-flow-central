@@ -44,6 +44,7 @@ export const useCRMStages = () => {
           { nome: 'CONTATO INICIAL', ordem: 4, cor: '#F97316' },
           { nome: 'PROPOSTA ENVIADA', ordem: 5, cor: '#8B5CF6' },
           { nome: 'NEGOCIAÇÃO', ordem: 6, cor: '#EC4899' },
+          { nome: 'FECHADO', ordem: 7, cor: '#10B981' },
         ];
 
         const stagesToInsert = defaultStages.map(stage => ({
