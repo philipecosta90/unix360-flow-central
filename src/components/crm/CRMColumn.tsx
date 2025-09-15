@@ -1,6 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { CRMCard } from "./CRMCard";
 import { CRMProspect } from "@/types/crm";
+import { getStageHeaderClass } from "@/utils/crmStageColors";
 
 interface CRMStage {
   id: string;
@@ -21,20 +22,6 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
     id: stage.id,
   });
 
-  const getHeaderColor = (color: string) => {
-    const colorMap: { [key: string]: string } = {
-      '#3B82F6': 'crm-stage-blue',
-      '#F59E0B': 'crm-stage-amber', 
-      '#F97316': 'crm-stage-orange',
-      '#8B5CF6': 'crm-stage-purple',
-      '#10B981': 'crm-stage-emerald',
-      '#EF4444': 'crm-stage-red',
-      '#6B7280': 'crm-stage-gray',
-      '#EC4899': 'crm-stage-pink',
-    };
-    return colorMap[color] || 'crm-stage-gray';
-  };
-
   const formatValue = (value: number) => {
     if (value === 0) return 'R$ 0,00';
     return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -44,7 +31,7 @@ export const CRMColumn = ({ stage, prospects, totalValue, onProspectClick }: CRM
     <div className="min-w-[250px] max-w-[250px] flex-shrink-0">
       <div className={`${isOver ? 'ring-2 ring-blue-400' : ''} flex flex-col h-[calc(100vh-200px)] bg-white border border-gray-200 rounded-lg overflow-hidden`}>
         {/* Header com cor */}
-        <div className={`${getHeaderColor(stage.cor)} px-4 py-3 text-white`}>
+        <div className={`${getStageHeaderClass(stage)} px-4 py-3 text-white`}>
           <div className="flex items-center justify-between">
             <span className="font-semibold text-sm uppercase tracking-wide">
               {stage.nome}
