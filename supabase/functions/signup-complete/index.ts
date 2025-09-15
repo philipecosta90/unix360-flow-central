@@ -98,6 +98,19 @@ serve(async (req: Request): Promise<Response> => {
       newEmpresaId = empresaData.id;
       console.log('✅ [SIGNUP-COMPLETE] Empresa criada:', newEmpresaId);
 
+      // Criar etapas padrão do CRM para a nova empresa
+      console.log('🎯 [SIGNUP-COMPLETE] Criando etapas padrão do CRM...');
+      const { error: stagesError } = await supabaseAdmin.rpc('create_default_crm_stages_for_company', {
+        p_empresa_id: newEmpresaId
+      });
+
+      if (stagesError) {
+        console.error('❌ [SIGNUP-COMPLETE] Erro ao criar etapas padrão do CRM:', stagesError.message);
+        // Não lançar erro aqui para não interromper o processo de criação do usuário
+      } else {
+        console.log('✅ [SIGNUP-COMPLETE] Etapas padrão do CRM criadas com sucesso');
+      }
+
       // 2. Criar perfil
       console.log('👤 [SIGNUP-COMPLETE] Criando perfil...');
       const { error: profileError } = await supabaseAdmin

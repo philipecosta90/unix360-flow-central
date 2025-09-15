@@ -849,6 +849,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_default_crm_stages_for_company: {
+        Args: { p_empresa_id: string }
+        Returns: undefined
+      }
       get_active_user_empresa_id: {
         Args: Record<PropertyKey, never>
         Returns: string
