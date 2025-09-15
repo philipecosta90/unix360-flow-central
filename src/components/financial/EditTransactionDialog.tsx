@@ -173,7 +173,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction }: EditT
             </Button>
             <Button 
               type="submit" 
-              className="bg-[#43B26D] hover:bg-[#37A05B]"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={updateTransaction.isPending}
             >
               {updateTransaction.isPending ? "Salvando..." : "Salvar Alterações"}

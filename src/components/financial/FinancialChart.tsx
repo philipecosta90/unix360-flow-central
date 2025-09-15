@@ -62,7 +62,7 @@ export const FinancialChart = ({ data }: FinancialChartProps) => {
             </ResponsiveContainer>
           </ChartContainer>
         ) : (
-          <div className="flex items-center justify-center h-80 text-gray-500">
+          <div className="flex items-center justify-center h-80 text-muted-foreground">
             Nenhum dado disponível para exibir o gráfico
           </div>
         )}

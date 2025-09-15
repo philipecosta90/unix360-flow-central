@@ -32,12 +32,12 @@ export const TransactionTable = ({
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
   const getTypeColor = (type: string) => {
-    return type === "entrada" ? "text-green-600" : "text-red-600";
+    return type === "entrada" ? "text-financial-revenue" : "text-financial-expense";
   };
   const getStatusBadge = (aReceber: boolean) => {
-    return aReceber ? <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+    return aReceber ? <Badge variant="outline" className="bg-financial-pending/10 text-financial-pending border-financial-pending">
         A Receber
-      </Badge> : <Badge variant="outline" className="bg-green-100 text-green-800">
+      </Badge> : <Badge variant="outline" className="bg-financial-revenue/10 text-financial-revenue border-financial-revenue">
         Pago
       </Badge>;
   };
@@ -45,19 +45,19 @@ export const TransactionTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-slate-950">Data</TableHead>
-            <TableHead className="bg-slate-950">Descrição</TableHead>
-            <TableHead className="bg-slate-950">Tipo</TableHead>
-            <TableHead className="bg-slate-950">Categoria</TableHead>
-            <TableHead className="bg-slate-950">Valor</TableHead>
-            <TableHead className="bg-slate-950">Status</TableHead>
-            <TableHead className="bg-slate-950">Recorrente</TableHead>
-            <TableHead className="w-[80px] bg-slate-950">Ações</TableHead>
+            <TableHead>Data</TableHead>
+            <TableHead>Descrição</TableHead>
+            <TableHead>Tipo</TableHead>
+            <TableHead>Categoria</TableHead>
+            <TableHead>Valor</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Recorrente</TableHead>
+            <TableHead className="w-[80px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {transactions.length === 0 ? <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                 Nenhuma transação encontrada
               </TableCell>
             </TableRow> : transactions.map(transaction => <TableRow key={transaction.id}>
@@ -76,14 +76,14 @@ export const TransactionTable = ({
                   {getStatusBadge(transaction.a_receber)}
                 </TableCell>
                 <TableCell>
-                  {transaction.recorrente && <RefreshCw className="h-4 w-4 text-blue-600" aria-label="Transação recorrente" />}
+                  {transaction.recorrente && <RefreshCw className="h-4 w-4 text-primary" aria-label="Transação recorrente" />}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(transaction)} className="text-blue-600 hover:text-blue-800">
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(transaction)} className="text-primary hover:text-primary/80">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => onDelete(transaction.id)} className="text-red-600 hover:text-red-800">
+                    <Button variant="ghost" size="sm" onClick={() => onDelete(transaction.id)} className="text-destructive hover:text-destructive/80">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

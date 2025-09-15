@@ -83,6 +83,18 @@ export default {
 					'overdue-foreground': 'hsl(var(--task-overdue-foreground))',
 					'overdue-muted': 'hsl(var(--task-overdue-muted))',
 					'overdue-muted-foreground': 'hsl(var(--task-overdue-muted-foreground))'
+				},
+				financial: {
+					revenue: 'hsl(var(--financial-revenue))',
+					'revenue-foreground': 'hsl(var(--financial-revenue-foreground))',
+					expense: 'hsl(var(--financial-expense))',
+					'expense-foreground': 'hsl(var(--financial-expense-foreground))',
+					pending: 'hsl(var(--financial-pending))',
+					'pending-foreground': 'hsl(var(--financial-pending-foreground))',
+					'balance-positive': 'hsl(var(--financial-balance-positive))',
+					'balance-negative': 'hsl(var(--financial-balance-negative))',
+					'filter-bg': 'hsl(var(--financial-filter-bg))',
+					'chart-bg': 'hsl(var(--financial-chart-bg))'
 				}
 			},
 			borderRadius: {

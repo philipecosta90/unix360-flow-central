@@ -15,7 +15,7 @@ export const FinancialFilters = ({
   onEndDateChange,
   onClearFilters
 }: FinancialFiltersProps) => {
-  return <div className="p-4 rounded-lg border bg-slate-600">
+  return <div className="p-4 rounded-lg border bg-financial-filter-bg">
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-2">
           <Label htmlFor="startDate">Data Inicial</Label>

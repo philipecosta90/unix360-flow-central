@@ -155,7 +155,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
             </Button>
             <Button 
               type="submit" 
-              className="bg-[#43B26D] hover:bg-[#37A05B]"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={createTransaction.isPending}
             >
               {createTransaction.isPending ? "Salvando..." : "Salvar"}
