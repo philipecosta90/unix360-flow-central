@@ -15,9 +15,10 @@ const hexToClass: { [key: string]: string } = {
 // Mapping from stage names to CSS classes (official defaults)
 const nameToClass: { [key: string]: string } = {
   'LEAD': 'crm-stage-blue',
-  'QUALIFICADO': 'crm-stage-amber',
-  'PROPOSTA': 'crm-stage-orange', 
-  'NEGOCIAÇÃO': 'crm-stage-purple',
+  'QUALIFICAÇÃO': 'crm-stage-amber',
+  'CONTATO INICIAL': 'crm-stage-orange',
+  'PROPOSTA ENVIADA': 'crm-stage-purple',
+  'NEGOCIAÇÃO': 'crm-stage-pink',
   'FECHADO': 'crm-stage-emerald',
   'PERDIDO': 'crm-stage-red',
 };
