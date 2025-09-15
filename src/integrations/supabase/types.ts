@@ -536,6 +536,7 @@ export type Database = {
           endereco: string | null
           id: string
           nome: string
+          plano: string | null
           telefone: string | null
           updated_at: string
         }
@@ -548,6 +549,7 @@ export type Database = {
           endereco?: string | null
           id?: string
           nome: string
+          plano?: string | null
           telefone?: string | null
           updated_at?: string
         }
@@ -560,6 +562,7 @@ export type Database = {
           endereco?: string | null
           id?: string
           nome?: string
+          plano?: string | null
           telefone?: string | null
           updated_at?: string
         }

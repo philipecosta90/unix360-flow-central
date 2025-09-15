@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AddCompanyDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ export const AddCompanyDialog = ({ open, onClose }: AddCompanyDialogProps) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +41,9 @@ export const AddCompanyDialog = ({ open, onClose }: AddCompanyDialogProps) => {
         title: "Empresa criada com sucesso!",
         description: `A empresa ${formData.nome} foi adicionada ao sistema.`,
       });
+
+      // Invalidar cache das empresas para forçar atualização
+      queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
 
       // Reset form and close dialog
       setFormData({

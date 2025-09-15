@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Building2, Mail, Calendar, Users, Eye, Edit, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CompanyListProps {
   searchTerm: string;
@@ -14,6 +16,9 @@ interface CompanyListProps {
 }
 
 export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const { data: allCompanies, isLoading, refetch } = useQuery({
     queryKey: ['admin-companies'],
     queryFn: async () => {
@@ -29,11 +34,51 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
     }
   });
 
+  // Real-time subscription para atualizações automáticas
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-companies-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'empresas'
+        },
+        (payload) => {
+          console.log('🔄 Empresa atualizada em tempo real:', payload);
+          
+          // Invalidar e refetch a query para atualizar a lista
+          queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
+          
+          // Mostrar toast informativo
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "Nova empresa cadastrada",
+              description: `${payload.new?.nome || 'Uma nova empresa'} foi adicionada ao sistema.`,
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            toast({
+              title: "Empresa atualizada",
+              description: `${payload.new?.nome || 'Uma empresa'} foi modificada.`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, toast]);
+
   // Filtrar dados no frontend
   const companies = allCompanies?.filter(company => {
     const matchesSearch = !searchTerm || 
-      company.nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPlan = selectedPlan === "todos" || !selectedPlan;
+      company.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      company.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPlan = selectedPlan === "todos" || !selectedPlan || 
+      company.plano === selectedPlan;
     return matchesSearch && matchesPlan;
   });
 

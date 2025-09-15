@@ -195,6 +195,7 @@ serve(async (req: Request): Promise<Response> => {
         .insert({
           nome: nome_empresa,
           email: email,
+          plano: 'gratuito', // Plano padrão para empresas criadas pelo admin
           ativa: true
         })
         .select()

@@ -85,6 +85,7 @@ serve(async (req: Request): Promise<Response> => {
         .insert({
           nome: nomeEmpresa,
           email: user.email,
+          plano: 'gratuito', // Plano padrão para novos cadastros
           ativa: true
         })
         .select()
@@ -114,26 +115,6 @@ serve(async (req: Request): Promise<Response> => {
       }
 
       console.log('✅ [SIGNUP-COMPLETE] Perfil criado com sucesso');
-
-      // 3. Criar assinatura trial
-      console.log('📋 [SIGNUP-COMPLETE] Criando assinatura trial...');
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 7); // 7 dias de trial
-
-      const { error: subscriptionError } = await supabaseAdmin
-        .from('subscriptions')
-        .insert({
-          empresa_id: newEmpresaId,
-          status: 'trial',
-          trial_start_date: new Date().toISOString(),
-          trial_end_date: trialEndDate.toISOString()
-        });
-
-      if (subscriptionError) {
-        throw new Error(`Erro ao criar assinatura: ${subscriptionError.message}`);
-      }
-
-      console.log('✅ [SIGNUP-COMPLETE] Assinatura trial criada');
 
       return new Response(
         JSON.stringify({
