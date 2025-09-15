@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 import { AddTransactionDialog } from "./AddTransactionDialog";
+import { EditTransactionDialog } from "./EditTransactionDialog";
 import { FinancialKPIs } from "./FinancialKPIs";
 import { FinancialFilters } from "./FinancialFilters";
 import { FinancialChart } from "./FinancialChart";
@@ -13,8 +14,10 @@ import { toast } from "sonner";
 import { Download, AlertTriangle, Plus } from "lucide-react";
 export const FinancialModule = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isOverdueDialogOpen, setIsOverdueDialogOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const filters = {
@@ -40,6 +43,11 @@ export const FinancialModule = () => {
         toast.error("Erro ao excluir transação");
       }
     }
+  };
+
+  const handleEdit = (transaction: any) => {
+    setEditingTransaction(transaction);
+    setIsEditDialogOpen(true);
   };
   const handleClearFilters = () => {
     setStartDate("");
@@ -92,7 +100,7 @@ export const FinancialModule = () => {
           </p>
         </div>
         <div className="p-0 sm:p-6 bg-slate-400">
-          <TransactionTable transactions={transactions} onDelete={handleDelete} />
+          <TransactionTable transactions={transactions} onDelete={handleDelete} onEdit={handleEdit} />
         </div>
       </div>
 
@@ -100,6 +108,12 @@ export const FinancialModule = () => {
       <FinancialChart data={categoryData} />
 
       <AddTransactionDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+
+      <EditTransactionDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen} 
+        transaction={editingTransaction}
+      />
 
       <ExportDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen} transactions={transactions} kpis={kpis} startDate={startDate} endDate={endDate} />
 

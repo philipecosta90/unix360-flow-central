@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, RefreshCw } from "lucide-react";
+import { Trash2, RefreshCw, Pencil } from "lucide-react";
 interface Transaction {
   id: string;
   tipo: 'entrada' | 'saida';
@@ -15,10 +15,12 @@ interface Transaction {
 interface TransactionTableProps {
   transactions: Transaction[];
   onDelete: (id: string) => void;
+  onEdit: (transaction: Transaction) => void;
 }
 export const TransactionTable = ({
   transactions,
-  onDelete
+  onDelete,
+  onEdit
 }: TransactionTableProps) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -77,9 +79,14 @@ export const TransactionTable = ({
                   {transaction.recorrente && <RefreshCw className="h-4 w-4 text-blue-600" aria-label="Transação recorrente" />}
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm" onClick={() => onDelete(transaction.id)} className="text-red-600 hover:text-red-800">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(transaction)} className="text-blue-600 hover:text-blue-800">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => onDelete(transaction.id)} className="text-red-600 hover:text-red-800">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>)}
         </TableBody>
