@@ -242,7 +242,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
           Voltar
         </Button>
         <div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Detalhes do Cliente</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Detalhes do Cliente</h1>
         </div>
       </div>
 
@@ -257,8 +257,8 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">{client.nome}</h2>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2 text-gray-600">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">{client.nome}</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2 text-muted-foreground">
                   {client.email && (
                     <div className="flex items-center gap-1 min-w-0">
                       <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -290,15 +290,15 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
             </div>
             <div className="text-left sm:text-right space-y-2 w-full sm:w-auto flex-shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0">
               <div>
-                <p className="text-xs sm:text-sm text-gray-600">Cliente desde</p>
-                <p className="font-medium text-sm sm:text-base">
+                <p className="text-xs sm:text-sm text-muted-foreground">Cliente desde</p>
+                <p className="font-medium text-sm sm:text-base text-foreground">
                   {new Date(client.created_at).toLocaleDateString('pt-BR')}
                 </p>
               </div>
               {client.updated_at !== client.created_at && (
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-600">Última atualização</p>
-                  <p className="font-medium text-sm sm:text-base">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Última atualização</p>
+                  <p className="font-medium text-sm sm:text-base text-foreground">
                     {new Date(client.updated_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
@@ -332,50 +332,50 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
         <TabsContent value="informacoes">
           <Card>
             <CardHeader className="pb-3 sm:pb-6">
-              <CardTitle className="text-base sm:text-lg">Informações do Cliente</CardTitle>
+              <CardTitle className="text-base sm:text-lg text-foreground">Informações do Cliente</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Dados Pessoais</h4>
+                  <h4 className="font-semibold text-foreground mb-3 text-sm sm:text-base">Dados Pessoais</h4>
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                      <span className="text-gray-600 text-sm font-medium">Nome:</span>
-                      <span className="font-medium text-sm break-words">{client.nome}</span>
+                      <span className="text-muted-foreground text-sm font-medium">Nome:</span>
+                      <span className="font-medium text-sm break-words text-foreground">{client.nome}</span>
                     </div>
                     {client.email && (
                       <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                        <span className="text-gray-600 text-sm font-medium">E-mail:</span>
-                        <span className="font-medium text-sm break-all">{client.email}</span>
+                        <span className="text-muted-foreground text-sm font-medium">E-mail:</span>
+                        <span className="font-medium text-sm break-all text-foreground">{client.email}</span>
                       </div>
                     )}
                     {client.telefone && (
                       <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                        <span className="text-gray-600 text-sm font-medium">Telefone:</span>
-                        <span className="font-medium text-sm">{client.telefone}</span>
+                        <span className="text-muted-foreground text-sm font-medium">Telefone:</span>
+                        <span className="font-medium text-sm text-foreground">{client.telefone}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Informações Comerciais</h4>
+                  <h4 className="font-semibold text-foreground mb-3 text-sm sm:text-base">Informações Comerciais</h4>
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                      <span className="text-gray-600 text-sm font-medium">Status:</span>
+                      <span className="text-muted-foreground text-sm font-medium">Status:</span>
                       <Badge className={`${getStatusColor(client.status)} text-xs w-fit`}>
                         {getStatusLabel(client.status)}
                       </Badge>
                     </div>
                     {client.plano_contratado && (
                       <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                        <span className="text-gray-600 text-sm font-medium">Plano:</span>
-                        <span className="font-medium text-sm">{client.plano_contratado}</span>
+                        <span className="text-muted-foreground text-sm font-medium">Plano:</span>
+                        <span className="font-medium text-sm text-foreground">{client.plano_contratado}</span>
                       </div>
                     )}
                     {client.tags && client.tags.length > 0 && (
                       <div>
-                        <span className="text-gray-600 text-sm font-medium block mb-2">Tags:</span>
+                        <span className="text-muted-foreground text-sm font-medium block mb-2">Tags:</span>
                         <div className="flex flex-wrap gap-1">
                           {client.tags.map((tag, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
@@ -391,9 +391,9 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
               {client.observacoes && (
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Observações</h4>
-                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
-                    <p className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{client.observacoes}</p>
+                  <h4 className="font-semibold text-foreground mb-3 text-sm sm:text-base">Observações</h4>
+                  <div className="bg-muted p-3 sm:p-4 rounded-lg">
+                    <p className="text-foreground whitespace-pre-wrap text-sm leading-relaxed">{client.observacoes}</p>
                   </div>
                 </div>
               )}
@@ -404,7 +404,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
         <TabsContent value="interacoes">
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-6">
-              <CardTitle className="text-base sm:text-lg">Histórico de Interações</CardTitle>
+              <CardTitle className="text-base sm:text-lg text-foreground">Histórico de Interações</CardTitle>
               <Button 
                 onClick={() => setShowInteractionDialog(true)}
                 className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-3 py-2 w-fit"
@@ -433,26 +433,26 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                            
                            <div className="flex-1 min-w-0">
                              <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 xs:gap-2">
-                               <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{interacao.titulo}</h4>
-                               <span className="text-xs sm:text-sm text-gray-500 flex-shrink-0">
-                                 {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
-                               </span>
-                             </div>
-                             
-                             {interacao.descricao && (
-                               <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed break-words">{interacao.descricao}</p>
-                             )}
-                             
-                             <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4 mt-2">
-                               <span className="text-xs text-gray-500 capitalize">
-                                 {interacao.tipo === 'call' ? 'Ligação' :
-                                  interacao.tipo === 'email' ? 'E-mail' :
-                                  interacao.tipo === 'meeting' ? 'Reunião' :
-                                  interacao.tipo === 'feedback' ? 'Feedback' : 'Outro'}
-                               </span>
-                               <span className="text-xs text-gray-400">
-                                 {new Date(interacao.created_at).toLocaleString('pt-BR')}
-                               </span>
+                                <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{interacao.titulo}</h4>
+                                <span className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">
+                                  {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
+                                </span>
+                              </div>
+                              
+                              {interacao.descricao && (
+                                <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed break-words">{interacao.descricao}</p>
+                              )}
+                              
+                              <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4 mt-2">
+                                <span className="text-xs text-muted-foreground capitalize">
+                                  {interacao.tipo === 'call' ? 'Ligação' :
+                                   interacao.tipo === 'email' ? 'E-mail' :
+                                   interacao.tipo === 'meeting' ? 'Reunião' :
+                                   interacao.tipo === 'feedback' ? 'Feedback' : 'Outro'}
+                                </span>
+                                <span className="text-xs text-muted-foreground/70">
+                                  {new Date(interacao.created_at).toLocaleString('pt-BR')}
+                                </span>
                              </div>
                            </div>
                          </div>
@@ -460,9 +460,9 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                     })}
                   </div>
                  ) : (
-                   <div className="text-center py-6 sm:py-8">
-                     <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                     <p className="text-gray-500 mb-3 sm:mb-4 text-sm sm:text-base">Nenhuma interação registrada ainda</p>
+                    <div className="text-center py-6 sm:py-8">
+                      <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                      <p className="text-muted-foreground mb-3 sm:mb-4 text-sm sm:text-base">Nenhuma interação registrada ainda</p>
                      <Button 
                        onClick={() => setShowInteractionDialog(true)}
                        className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-4 py-2"
@@ -481,7 +481,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
         <TabsContent value="documentos">
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-6">
-              <CardTitle className="text-base sm:text-lg">Documentos</CardTitle>
+              <CardTitle className="text-base sm:text-lg text-foreground">Documentos</CardTitle>
               <Button 
                 onClick={() => setShowDocumentDialog(true)}
                 className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-3 py-2 w-fit"
@@ -500,16 +500,16 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                   {documents.map((doc) => {
                     const FileIcon = getFileIcon(doc.nome);
                      return (
-                       <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg hover:bg-gray-50">
-                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                           <FileIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 flex-shrink-0" />
-                           <div className="flex-1 min-w-0">
-                             <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{doc.nome}</h4>
-                             <p className="text-xs sm:text-sm text-gray-500 break-words">
-                               {doc.tipo_arquivo} • {formatFileSize(doc.tamanho)} • {new Date(doc.created_at).toLocaleDateString('pt-BR')}
-                             </p>
-                           </div>
-                         </div>
+                        <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg hover:bg-muted/50">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <FileIcon className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{doc.nome}</h4>
+                              <p className="text-xs sm:text-sm text-muted-foreground break-words">
+                                {doc.tipo_arquivo} • {formatFileSize(doc.tamanho)} • {new Date(doc.created_at).toLocaleDateString('pt-BR')}
+                              </p>
+                            </div>
+                          </div>
                          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                            <Button
                              variant="outline"
@@ -537,9 +537,9 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                   })}
                 </div>
                ) : (
-                 <div className="text-center py-6 sm:py-8">
-                   <File className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                   <p className="text-gray-500 mb-3 sm:mb-4 text-sm sm:text-base">Nenhum documento encontrado</p>
+                  <div className="text-center py-6 sm:py-8">
+                    <File className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                    <p className="text-muted-foreground mb-3 sm:mb-4 text-sm sm:text-base">Nenhum documento encontrado</p>
                    <Button 
                      onClick={() => setShowDocumentDialog(true)}
                      className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-4 py-2"
@@ -557,7 +557,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
         <TabsContent value="financeiro">
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-6">
-              <CardTitle className="text-base sm:text-lg">Histórico Financeiro</CardTitle>
+              <CardTitle className="text-base sm:text-lg text-foreground">Histórico Financeiro</CardTitle>
               <Button 
                 onClick={() => setShowFinancialDialog(true)}
                 className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-3 py-2 w-fit"
@@ -575,25 +575,25 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                 ) : transactions.length > 0 ? (
                   <div className="space-y-4">
                      {transactions.map((transaction) => (
-                       <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg">
-                         <div className="flex-1 min-w-0">
-                           <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{transaction.descricao}</h4>
-                           <p className="text-xs sm:text-sm text-gray-600 break-words">
-                             {transaction.categoria} • {new Date(transaction.data).toLocaleDateString('pt-BR')}
-                           </p>
-                         </div>
-                         <div className="text-left sm:text-right flex-shrink-0">
-                           <p className={`font-medium text-sm sm:text-base ${transaction.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
-                             {transaction.tipo === 'entrada' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                           </p>
-                           <p className="text-xs text-gray-500 capitalize">{transaction.tipo === 'entrada' ? 'Receita' : 'Despesa'}</p>
-                         </div>
-                       </div>
+                        <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{transaction.descricao}</h4>
+                            <p className="text-xs sm:text-sm text-muted-foreground break-words">
+                              {transaction.categoria} • {new Date(transaction.data).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+                          <div className="text-left sm:text-right flex-shrink-0">
+                            <p className={`font-medium text-sm sm:text-base ${transaction.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
+                              {transaction.tipo === 'entrada' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </p>
+                            <p className="text-xs text-muted-foreground capitalize">{transaction.tipo === 'entrada' ? 'Receita' : 'Despesa'}</p>
+                          </div>
+                        </div>
                      ))}
                   </div>
                  ) : (
-                   <div className="text-center py-6 sm:py-8">
-                     <p className="text-gray-500 mb-3 sm:mb-4 text-sm sm:text-base">Nenhuma movimentação financeira registrada</p>
+                    <div className="text-center py-6 sm:py-8">
+                      <p className="text-muted-foreground mb-3 sm:mb-4 text-sm sm:text-base">Nenhuma movimentação financeira registrada</p>
                      <Button 
                        onClick={() => setShowFinancialDialog(true)}
                        className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-4 py-2"
