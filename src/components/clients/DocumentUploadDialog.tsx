@@ -54,7 +54,26 @@ export const DocumentUploadDialog = ({ open, onOpenChange, clientId, onDocumentA
     try {
       setLoading(true);
       
-      // Inserir documento na tabela cliente_documentos usando query direta
+      // Upload do arquivo para o Supabase Storage
+      const fileExtension = selectedFile.name.split('.').pop();
+      const fileName_sanitized = fileName.replace(/[^a-zA-Z0-9-_\.]/g, '');  
+      const filePath = `${userProfile.empresa_id}/${clientId}/${Date.now()}-${fileName_sanitized}.${fileExtension}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('client-documents')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) {
+        console.error('Erro ao fazer upload:', uploadError);
+        throw uploadError;
+      }
+
+      // Obter URL pública do arquivo
+      const { data } = supabase.storage
+        .from('client-documents')
+        .getPublicUrl(filePath);
+      
+      // Inserir documento na tabela cliente_documentos
       const { error } = await (supabase as any)
         .from('cliente_documentos')
         .insert([{
@@ -63,6 +82,7 @@ export const DocumentUploadDialog = ({ open, onOpenChange, clientId, onDocumentA
           nome: fileName,
           tipo_arquivo: selectedFile.type,
           tamanho: selectedFile.size,
+          url_arquivo: data.publicUrl,
           created_by: userProfile.id
         }]);
 

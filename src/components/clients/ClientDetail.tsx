@@ -10,6 +10,7 @@ import { DocumentUploadDialog } from "./DocumentUploadDialog";
 import { FinancialTransactionDialog } from "./FinancialTransactionDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface Cliente {
   id: string;
@@ -43,11 +44,13 @@ interface ClientDocument {
   nome: string;
   tipo_arquivo: string;
   tamanho: number;
+  url_arquivo?: string;
   created_at: string;
 }
 
 export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
   const { userProfile } = useAuth();
+  const { toast } = useToast();
   const [showInteractionDialog, setShowInteractionDialog] = useState(false);
   const [showDocumentDialog, setShowDocumentDialog] = useState(false);
   const [showFinancialDialog, setShowFinancialDialog] = useState(false);
@@ -188,50 +191,76 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
   };
 
   const handlePreviewDocument = (doc: ClientDocument) => {
-    // Para PDFs e imagens, podemos abrir em nova aba para visualização
+    if (!doc.url_arquivo) {
+      toast({
+        title: "Erro",
+        description: "URL do documento não encontrada.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const extension = doc.nome.split('.').pop()?.toLowerCase();
     
-    if (['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(extension || '')) {
-      // Simula abertura em nova aba para preview
-      const previewContent = `
-        <html>
-          <head><title>Preview - ${doc.nome}</title></head>
-          <body style="margin:0;padding:20px;font-family:Arial,sans-serif;">
-            <h2>Preview do Documento</h2>
-            <p><strong>Nome:</strong> ${doc.nome}</p>
-            <p><strong>Tipo:</strong> ${doc.tipo_arquivo}</p>
-            <p><strong>Tamanho:</strong> ${formatFileSize(doc.tamanho)}</p>
-            <p><strong>Data:</strong> ${new Date(doc.created_at).toLocaleDateString('pt-BR')}</p>
-            <hr>
-            <p>Preview do documento seria exibido aqui.</p>
-            ${extension === 'pdf' ? '<p>Para arquivos PDF, seria usado um viewer de PDF.</p>' : ''}
-            ${['jpg', 'jpeg', 'png', 'gif'].includes(extension || '') ? '<p>Para imagens, seria exibida a imagem diretamente.</p>' : ''}
-          </body>
-        </html>
-      `;
-      const newWindow = window.open('', '_blank');
-      if (newWindow) {
-        newWindow.document.write(previewContent);
-        newWindow.document.close();
-      }
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(extension || '')) {
+      // Para imagens, abrir em nova aba com a imagem
+      window.open(doc.url_arquivo, '_blank');
+    } else if (extension === 'pdf') {
+      // Para PDFs, abrir em nova aba
+      window.open(doc.url_arquivo, '_blank');
     } else {
-      alert(`Tipo de arquivo não suportado para preview: ${doc.tipo_arquivo}`);
+      // Para outros tipos, fazer download direto
+      handleDownloadDocument(doc);
     }
   };
 
-  const handleDownloadDocument = (doc: ClientDocument) => {
-    // Simula download criando um blob com dados do documento
-    const content = `Documento: ${doc.nome}\nTipo: ${doc.tipo_arquivo}\nTamanho: ${formatFileSize(doc.tamanho)}\nData: ${new Date(doc.created_at).toLocaleDateString('pt-BR')}\n\nConteúdo do documento seria baixado aqui.`;
-    
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = doc.nome;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+  const handleDownloadDocument = async (doc: ClientDocument) => {
+    if (!doc.url_arquivo) {
+      toast({
+        title: "Erro",
+        description: "URL do documento não encontrada.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Obter o arquivo do Storage do Supabase
+      const filePath = doc.url_arquivo.split('/client-documents/')[1];
+      if (!filePath) {
+        throw new Error('Caminho do arquivo inválido');
+      }
+
+      const { data, error } = await supabase.storage
+        .from('client-documents')
+        .download(filePath);
+
+      if (error) {
+        throw error;
+      }
+
+      // Criar blob e fazer download
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.nome;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download iniciado",
+        description: `Download de ${doc.nome} foi iniciado.`,
+      });
+    } catch (error) {
+      console.error('Erro no download:', error);
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível fazer o download do documento.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
