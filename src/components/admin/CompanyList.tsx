@@ -7,17 +7,35 @@ import { Button } from "@/components/ui/button";
 import { Building2, Mail, Calendar, Users, Eye, Edit, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { CompanyDetailDialog } from "./CompanyDetailDialog";
+import { EditCompanyDialog } from "./EditCompanyDialog";
 
 interface CompanyListProps {
   searchTerm: string;
   selectedPlan: string;
 }
 
+interface Company {
+  id: string;
+  nome: string;
+  email?: string;
+  cnpj?: string;
+  telefone?: string;
+  endereco?: string;
+  created_at: string;
+  ativa: boolean;
+  total_usuarios: number;
+  usuarios_ativos: number;
+}
+
 export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const { data: allCompanies, isLoading, refetch } = useQuery({
     queryKey: ['admin-companies'],
@@ -92,10 +110,36 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
 
       if (error) throw error;
       
+      toast({
+        title: "Status atualizado",
+        description: `Empresa ${!currentStatus ? 'ativada' : 'desativada'} com sucesso.`,
+      });
+      
       refetch();
     } catch (error) {
       console.error('Erro ao alterar status:', error);
+      toast({
+        title: "Erro ao atualizar status",
+        description: "Não foi possível alterar o status da empresa.",
+        variant: "destructive",
+      });
     }
+  };
+
+  const handleViewDetails = (company: Company) => {
+    setSelectedCompany(company);
+    setShowDetailDialog(true);
+  };
+
+  const handleEditCompany = (company: Company) => {
+    setSelectedCompany(company);
+    setShowEditDialog(true);
+  };
+
+  const handleEditSuccess = () => {
+    refetch();
+    setShowEditDialog(false);
+    setSelectedCompany(null);
   };
 
 
@@ -157,11 +201,23 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleViewDetails(company)}
+                >
                   <Eye className="h-4 w-4 mr-1" />
                   Ver detalhes
                 </Button>
-                
+
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleEditCompany(company)}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Editar
+                </Button>
                 
                 <Button 
                   variant={company.ativa ? "destructive" : "default"}
@@ -186,6 +242,23 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
           </CardContent>
         </Card>
       )}
+
+      <CompanyDetailDialog
+        company={selectedCompany}
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+        onEdit={(company) => {
+          setShowDetailDialog(false);
+          handleEditCompany(company);
+        }}
+      />
+
+      <EditCompanyDialog
+        company={selectedCompany}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   );
 };
