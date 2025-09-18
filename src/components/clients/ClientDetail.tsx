@@ -118,7 +118,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
         .from('financeiro_lancamentos')
         .select('*')
         .eq('empresa_id', userProfile.empresa_id)
-        .ilike('descricao', `%${client.id}%`)
+        .ilike('descricao', `%Cliente: ${client.nome}%`)
         .order('data', { ascending: false });
 
       if (error) throw error;

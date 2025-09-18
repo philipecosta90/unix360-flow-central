@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [clientName, setClientName] = useState<string>("");
   const [formData, setFormData] = useState({
     tipo: "",
     categoria: "",
@@ -31,6 +32,31 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
     aReceber: false,
     recorrente: false
   });
+
+  // Buscar nome do cliente quando o dialog abrir
+  useEffect(() => {
+    const fetchClientName = async () => {
+      if (!open || !clientId || !userProfile?.empresa_id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('clientes')
+          .select('nome')
+          .eq('id', clientId)
+          .eq('empresa_id', userProfile.empresa_id)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setClientName(data.nome);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar nome do cliente:', error);
+      }
+    };
+
+    fetchClientName();
+  }, [open, clientId, userProfile?.empresa_id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +81,7 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
            empresa_id: userProfile.empresa_id,
            tipo: tipoCorreto,
            categoria: formData.categoria,
-           descricao: `${formData.descricao} - Cliente: ${clientId}`,
+           descricao: `${formData.descricao} - Cliente: ${clientName || clientId}`,
            valor: parseFloat(formData.valor),
            data: formData.data,
            a_receber: formData.aReceber,
