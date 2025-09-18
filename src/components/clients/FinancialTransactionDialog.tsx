@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +27,9 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
     categoria: "",
     descricao: "",
     valor: "",
-    data: new Date().toISOString().split('T')[0]
+    data: new Date().toISOString().split('T')[0],
+    aReceber: false,
+    recorrente: false
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,17 +49,19 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
       // Usar os valores corretos para o tipo conforme o check constraint do banco
       const tipoCorreto = formData.tipo === "receita" ? "entrada" : "saida";
       
-      const { error } = await supabase
-        .from('financeiro_lancamentos')
-        .insert([{
-          empresa_id: userProfile.empresa_id,
-          tipo: tipoCorreto,
-          categoria: formData.categoria,
-          descricao: `${formData.descricao} - Cliente: ${clientId}`,
-          valor: parseFloat(formData.valor),
-          data: formData.data,
-          created_by: userProfile.id
-        }]);
+       const { error } = await supabase
+         .from('financeiro_lancamentos')
+         .insert([{
+           empresa_id: userProfile.empresa_id,
+           tipo: tipoCorreto,
+           categoria: formData.categoria,
+           descricao: `${formData.descricao} - Cliente: ${clientId}`,
+           valor: parseFloat(formData.valor),
+           data: formData.data,
+           a_receber: formData.aReceber,
+           recorrente: formData.recorrente,
+           created_by: userProfile.id
+         }]);
 
       if (error) {
         console.error('Erro ao registrar movimentação:', error);
@@ -73,7 +78,9 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
         categoria: "",
         descricao: "",
         valor: "",
-        data: new Date().toISOString().split('T')[0]
+        data: new Date().toISOString().split('T')[0],
+        aReceber: false,
+        recorrente: false
       });
       onOpenChange(false);
       onTransactionAdded();
@@ -156,6 +163,30 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
               value={formData.data}
               onChange={(e) => setFormData({ ...formData, data: e.target.value })}
             />
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="a-receber" className="text-sm font-medium">
+                A receber
+              </Label>
+              <Switch
+                id="a-receber"
+                checked={formData.aReceber}
+                onCheckedChange={(checked) => setFormData({ ...formData, aReceber: checked })}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <Label htmlFor="recorrente" className="text-sm font-medium">
+                Recorrente mensal
+              </Label>
+              <Switch
+                id="recorrente"
+                checked={formData.recorrente}
+                onCheckedChange={(checked) => setFormData({ ...formData, recorrente: checked })}
+              />
+            </div>
           </div>
           
           <div className="flex gap-2 pt-4">
