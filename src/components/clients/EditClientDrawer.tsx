@@ -17,6 +17,8 @@ interface Cliente {
   plano_contratado?: string;
   observacoes?: string;
   tags?: string[];
+  data_inicio_plano?: string;
+  data_fim_plano?: string;
 }
 
 interface EditClientDrawerProps {
@@ -35,7 +37,9 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
     status: "lead" as 'ativo' | 'inativo' | 'lead' | 'prospecto',
     plano_contratado: "",
     tags: "",
-    observacoes: ""
+    observacoes: "",
+    data_inicio_plano: "",
+    data_fim_plano: ""
   });
 
   const [loading, setLoading] = useState(false);
@@ -49,7 +53,9 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
         status: client.status,
         plano_contratado: client.plano_contratado || "",
         tags: client.tags ? client.tags.join(', ') : "",
-        observacoes: client.observacoes || ""
+        observacoes: client.observacoes || "",
+        data_inicio_plano: client.data_inicio_plano || "",
+        data_fim_plano: client.data_fim_plano || ""
       });
     }
   }, [client]);
@@ -76,7 +82,9 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
         status: formData.status,
         plano_contratado: formData.plano_contratado.trim() || null,
         observacoes: formData.observacoes.trim() || null,
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
+        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
+        data_inicio_plano: formData.data_inicio_plano || null,
+        data_fim_plano: formData.data_fim_plano || null
       };
 
       await onSave(clientData);
@@ -159,6 +167,28 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                   value={formData.plano_contratado}
                   onChange={(e) => setFormData({...formData, plano_contratado: e.target.value})}
                   placeholder="Básico, Premium, VIP..."
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="data_inicio_plano">Data de Início do Plano</Label>
+                <Input
+                  id="data_inicio_plano"
+                  type="date"
+                  value={formData.data_inicio_plano}
+                  onChange={(e) => setFormData({...formData, data_inicio_plano: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="data_fim_plano">Data de Término do Plano</Label>
+                <Input
+                  id="data_fim_plano"
+                  type="date"
+                  value={formData.data_fim_plano}
+                  onChange={(e) => setFormData({...formData, data_fim_plano: e.target.value})}
                 />
               </div>
             </div>
