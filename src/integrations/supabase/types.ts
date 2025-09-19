@@ -196,6 +196,45 @@ export type Database = {
         }
         Relationships: []
       }
+      contratos_documentos: {
+        Row: {
+          contrato_id: string
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          tamanho: number | null
+          tipo_arquivo: string | null
+          updated_at: string
+          url_arquivo: string | null
+        }
+        Insert: {
+          contrato_id: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          tamanho?: number | null
+          tipo_arquivo?: string | null
+          updated_at?: string
+          url_arquivo?: string | null
+        }
+        Update: {
+          contrato_id?: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          tamanho?: number | null
+          tipo_arquivo?: string | null
+          updated_at?: string
+          url_arquivo?: string | null
+        }
+        Relationships: []
+      }
       crm_atividades: {
         Row: {
           created_at: string

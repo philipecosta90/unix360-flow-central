@@ -2,6 +2,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { ContractDocumentsList } from "./ContractDocumentsList";
 
 interface Contract {
   id: string;
@@ -48,7 +50,7 @@ export const ContractDetailDialog = ({ contract, open, onOpenChange }: ContractD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Detalhes do Contrato</DialogTitle>
         </DialogHeader>
@@ -135,6 +137,11 @@ export const ContractDetailDialog = ({ contract, open, onOpenChange }: ContractD
               </p>
             </div>
           </div>
+
+          <Separator />
+
+          {/* Contract Documents */}
+          <ContractDocumentsList contractId={contract.id} />
         </div>
       </DialogContent>
     </Dialog>
