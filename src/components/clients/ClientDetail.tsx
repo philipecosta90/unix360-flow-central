@@ -4,13 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye, Edit, Trash2 } from "lucide-react";
 import { InteractionDialog } from "./InteractionDialog";
 import { DocumentUploadDialog } from "./DocumentUploadDialog";
 import { FinancialTransactionDialog } from "./FinancialTransactionDialog";
+import { EditTransactionDialog } from "@/components/financial/EditTransactionDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 
 interface Cliente {
   id: string;
@@ -51,9 +53,12 @@ interface ClientDocument {
 export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
+  const { deleteTransaction } = useFinancialTransactions();
   const [showInteractionDialog, setShowInteractionDialog] = useState(false);
   const [showDocumentDialog, setShowDocumentDialog] = useState(false);
   const [showFinancialDialog, setShowFinancialDialog] = useState(false);
+  const [showEditTransactionDialog, setShowEditTransactionDialog] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -258,6 +263,33 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
       toast({
         title: "Erro no download",
         description: "Não foi possível fazer o download do documento.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditTransaction = (transaction: any) => {
+    setSelectedTransaction(transaction);
+    setShowEditTransactionDialog(true);
+  };
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta movimentação?")) {
+      return;
+    }
+
+    try {
+      await deleteTransaction.mutateAsync(transactionId);
+      toast({
+        title: "Movimentação excluída",
+        description: "A movimentação foi excluída com sucesso.",
+      });
+      fetchTransactions(); // Refresh the transactions list
+    } catch (error) {
+      console.error('Erro ao excluir movimentação:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a movimentação.",
         variant: "destructive",
       });
     }
@@ -611,11 +643,31 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                               {transaction.categoria} • {new Date(transaction.data).toLocaleDateString('pt-BR')}
                             </p>
                           </div>
-                          <div className="text-left sm:text-right flex-shrink-0">
-                            <p className={`font-medium text-sm sm:text-base ${transaction.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
-                              {transaction.tipo === 'entrada' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                            <p className="text-xs text-muted-foreground capitalize">{transaction.tipo === 'entrada' ? 'Receita' : 'Despesa'}</p>
+                          <div className="flex items-center gap-2 sm:gap-4">
+                            <div className="text-left sm:text-right flex-shrink-0">
+                              <p className={`font-medium text-sm sm:text-base ${transaction.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
+                                {transaction.tipo === 'entrada' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </p>
+                              <p className="text-xs text-muted-foreground capitalize">{transaction.tipo === 'entrada' ? 'Receita' : 'Despesa'}</p>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditTransaction(transaction)}
+                                className="h-8 w-8 p-0 hover:bg-blue-100"
+                              >
+                                <Edit className="h-4 w-4 text-blue-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteTransaction(transaction.id)}
+                                className="h-8 w-8 p-0 hover:bg-red-100"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                      ))}
@@ -659,6 +711,13 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
         onOpenChange={setShowFinancialDialog}
         clientId={client.id}
         onTransactionAdded={fetchTransactions}
+      />
+
+      <EditTransactionDialog
+        open={showEditTransactionDialog}
+        onOpenChange={setShowEditTransactionDialog}
+        transaction={selectedTransaction}
+        onTransactionUpdated={fetchTransactions}
       />
     </div>
   );

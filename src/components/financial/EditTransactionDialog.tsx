@@ -23,9 +23,10 @@ interface EditTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transaction: Transaction | null;
+  onTransactionUpdated?: () => void;
 }
 
-export const EditTransactionDialog = ({ open, onOpenChange, transaction }: EditTransactionDialogProps) => {
+export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTransactionUpdated }: EditTransactionDialogProps) => {
   const [formData, setFormData] = useState({
     tipo: 'entrada' as 'entrada' | 'saida',
     descricao: '',
@@ -70,6 +71,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction }: EditT
       
       toast.success("Transação atualizada com sucesso!");
       onOpenChange(false);
+      onTransactionUpdated?.(); // Refresh client transactions if callback provided
     } catch (error) {
       console.error('Erro ao atualizar transação:', error);
       toast.error("Erro ao atualizar transação");
