@@ -5,7 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCRMStages } from "@/hooks/useCRMStages";
+import { prospectFormSchema, sanitizeInput, sanitizeHtml } from "@/utils/inputValidation";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +58,11 @@ export const AddProspectDialog = ({ open, onOpenChange }: AddProspectDialogProps
   const { data: stages = [], isLoading: stagesLoading } = useCRMStages();
 
   const form = useForm<ProspectFormData>({
+    resolver: zodResolver(prospectFormSchema.extend({
+      stage: z.string(),
+      responsavel_id: z.string(),
+      proximo_followup: z.string(),
+    })),
     defaultValues: {
       nome: "",
       email: "",

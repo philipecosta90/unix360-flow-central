@@ -28,7 +28,7 @@ export const ValidationSchemas = {
   
   prospect: z.object({
     nome: z.string().min(2, 'Nome é obrigatório'),
-    email: z.string().email('Email inválido').optional().or(z.literal('')),
+    email: z.union([z.string().email('Email inválido'), z.literal("")]).optional(),
     telefone: z.string().optional(),
     empresa_cliente: z.string().optional(),
     valor_estimado: z.number().positive('Valor deve ser positivo').optional(),

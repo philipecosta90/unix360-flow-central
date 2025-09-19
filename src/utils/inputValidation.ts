@@ -5,7 +5,7 @@ import DOMPurify from "dompurify";
 // Esquema de validação para prospect
 export const prospectFormSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
-  email: z.string().email("Email inválido").optional(),
+  email: z.union([z.string().email("Email inválido"), z.literal("")]).optional(),
   telefone: z.string().optional(),
   empresa_cliente: z.string().optional(),
   cargo: z.string().optional(),
