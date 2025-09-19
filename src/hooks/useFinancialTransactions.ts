@@ -182,18 +182,20 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
   });
 
   // Calculate KPIs baseado no período filtrado
+  // Receitas: apenas entradas que NÃO estão marcadas como "a_receber"
   const totalRevenue = transactions
-    .filter(t => t.tipo === 'entrada')
+    .filter(t => t.tipo === 'entrada' && !t.a_receber)
     .reduce((sum, t) => sum + Number(t.valor), 0);
 
+  // Despesas: todas as saídas (não precisam estar "a_receber")
   const totalExpenses = transactions
     .filter(t => t.tipo === 'saida')
     .reduce((sum, t) => sum + Number(t.valor), 0);
 
-  // A Receber: valores futuros com a_receber = true
+  // A Receber: todas as transações com a_receber = true (independente da data)
   const today = new Date().toISOString().split('T')[0];
   const pendingRevenue = allTransactions
-    .filter(t => t.tipo === 'entrada' && t.a_receber && t.data > today)
+    .filter(t => t.tipo === 'entrada' && t.a_receber)
     .reduce((sum, t) => sum + Number(t.valor), 0);
 
   const balance = totalRevenue - totalExpenses;
