@@ -17,6 +17,7 @@ interface Transaction {
   data: string;
   a_receber: boolean;
   recorrente: boolean;
+  cliente_id?: string;
 }
 
 interface EditTransactionDialogProps {
@@ -67,6 +68,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
         id: transaction.id,
         ...formData,
         valor: parseFloat(formData.valor),
+        cliente_id: transaction.cliente_id, // Preserve client relationship
       });
       
       toast.success("Transação atualizada com sucesso!");

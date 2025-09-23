@@ -123,7 +123,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
         .from('financeiro_lancamentos')
         .select('*')
         .eq('empresa_id', userProfile.empresa_id)
-        .ilike('descricao', `%Cliente: ${client.nome}%`)
+        .eq('cliente_id', client.id)
         .order('data', { ascending: false });
 
       if (error) throw error;

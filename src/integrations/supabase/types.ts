@@ -644,6 +644,7 @@ export type Database = {
         Row: {
           a_receber: boolean | null
           categoria: string
+          cliente_id: string | null
           created_at: string | null
           created_by: string | null
           data: string
@@ -658,6 +659,7 @@ export type Database = {
         Insert: {
           a_receber?: boolean | null
           categoria: string
+          cliente_id?: string | null
           created_at?: string | null
           created_by?: string | null
           data: string
@@ -672,6 +674,7 @@ export type Database = {
         Update: {
           a_receber?: boolean | null
           categoria?: string
+          cliente_id?: string | null
           created_at?: string | null
           created_by?: string | null
           data?: string
@@ -684,6 +687,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "financeiro_lancamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "financeiro_lancamentos_created_by_fkey"
             columns: ["created_by"]

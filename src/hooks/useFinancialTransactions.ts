@@ -15,6 +15,7 @@ interface FinancialTransaction {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  cliente_id: string | null;
 }
 
 interface CreateTransactionData {
@@ -25,6 +26,7 @@ interface CreateTransactionData {
   data: string;
   a_receber?: boolean;
   recorrente?: boolean;
+  cliente_id?: string;
 }
 
 interface FinancialFilters {

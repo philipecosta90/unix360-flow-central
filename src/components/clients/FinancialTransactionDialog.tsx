@@ -81,12 +81,13 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
            empresa_id: userProfile.empresa_id,
            tipo: tipoCorreto,
            categoria: formData.categoria,
-           descricao: `${formData.descricao} - Cliente: ${clientName || clientId}`,
+           descricao: formData.descricao,
            valor: parseFloat(formData.valor),
            data: formData.data,
            a_receber: formData.aReceber,
            recorrente: formData.recorrente,
-           created_by: userProfile.id
+           created_by: userProfile.id,
+           cliente_id: clientId
          }]);
 
       if (error) {
