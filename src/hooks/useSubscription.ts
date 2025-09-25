@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { createUniqueChannel } from '@/integrations/supabase/realtime';
 import { toast } from '@/hooks/use-toast';
 
 export interface SubscriptionStatus {
@@ -20,6 +21,7 @@ export const useSubscription = () => {
   const { userProfile } = useAuth();
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const subscribedRef = useRef(false);
 
   const calculateDaysRemaining = (trialEndDate: Date | null): number => {
     if (!trialEndDate) return 0;
@@ -91,16 +93,12 @@ export const useSubscription = () => {
 
   // Monitorar mudanças em tempo real
   useEffect(() => {
-    if (!userProfile?.user_id || !userProfile?.id) return;
+    if (!userProfile?.user_id || !userProfile?.id || subscribedRef.current) return;
 
-    const channelName = `subscription-changes-${userProfile.user_id}-${userProfile.id}`;
-    supabase.getChannels().forEach((ch) => {
-      // Ensure no stale channel with the same topic remains before creating a new one
-      if ((ch as any).topic === channelName) supabase.removeChannel(ch);
-    });
-
-    const channel = supabase
-      .channel(channelName)
+    const channelPrefix = `subscription-changes-${userProfile.user_id}-${userProfile.id}`;
+    console.debug(`[Subscription] Setting up realtime subscription for user: ${userProfile.user_id}`);
+    
+    const channel = createUniqueChannel(channelPrefix)
       .on(
         'postgres_changes',
         {
@@ -110,6 +108,7 @@ export const useSubscription = () => {
           filter: `user_id=eq.${userProfile.user_id}`,
         },
         () => {
+          console.debug('[Subscription] Perfis table changed, refreshing status');
           fetchSubscriptionStatus();
         }
       )
@@ -122,12 +121,17 @@ export const useSubscription = () => {
           filter: `perfil_id=eq.${userProfile.id}`,
         },
         () => {
+          console.debug('[Subscription] Assinaturas table changed, refreshing status');
           fetchSubscriptionStatus();
         }
       )
       .subscribe();
 
+    subscribedRef.current = true;
+
     return () => {
+      console.debug('[Subscription] Cleaning up realtime subscription');
+      subscribedRef.current = false;
       supabase.removeChannel(channel);
     };
   }, [userProfile?.user_id, userProfile?.id]);

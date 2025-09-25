@@ -1,8 +1,9 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { createUniqueChannel } from '@/integrations/supabase/realtime';
+import { useEffect, useRef } from 'react';
 
 interface CRMProspect {
   id: string;
@@ -36,6 +37,8 @@ interface FollowupAlert {
 
 export const useCRMFollowupAlerts = () => {
   const { userProfile } = useAuth();
+  const subscribedRef = useRef(false);
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ['crm-followup-alerts', userProfile?.empresa_id],
@@ -149,56 +152,53 @@ export const useCRMFollowupAlerts = () => {
     enabled: !!userProfile?.empresa_id,
   });
 
-  // Set up real-time subscriptions for prospects and activities
+  // Real-time subscription para atualizações automáticas
   useEffect(() => {
-    if (!userProfile?.empresa_id) return;
+    if (!userProfile?.empresa_id || subscribedRef.current) return;
 
-    const prospectsChannelName = `crm-prospects-changes-${userProfile.empresa_id}`;
-    supabase.getChannels().forEach((ch) => {
-      if ((ch as any).topic === prospectsChannelName) supabase.removeChannel(ch);
-    });
+    console.debug(`[CRM Alerts] Setting up realtime subscriptions for empresa: ${userProfile.empresa_id}`);
 
-    const prospectsChannel = supabase
-      .channel(prospectsChannelName)
+    const prospectsChannel = createUniqueChannel(`crm-prospects-changes-${userProfile.empresa_id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'crm_prospects',
-          filter: `empresa_id=eq.${userProfile.empresa_id}`
+          filter: `empresa_id=eq.${userProfile.empresa_id}`,
         },
         () => {
-          query.refetch();
+          console.debug('[CRM Alerts] Prospects table changed, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['crm-followup-alerts', userProfile.empresa_id] });
         }
       )
       .subscribe();
 
-    const activitiesChannelName = `crm-activities-changes-${userProfile.empresa_id}`;
-    supabase.getChannels().forEach((ch) => {
-      if ((ch as any).topic === activitiesChannelName) supabase.removeChannel(ch);
-    });
-
-    const activitiesChannel = supabase
-      .channel(activitiesChannelName)
+    const activitiesChannel = createUniqueChannel(`crm-activities-changes-${userProfile.empresa_id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'crm_atividades'
+          table: 'crm_atividades',
+          filter: `empresa_id=eq.${userProfile.empresa_id}`,
         },
         () => {
-          query.refetch();
+          console.debug('[CRM Alerts] Activities table changed, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['crm-followup-alerts', userProfile.empresa_id] });
         }
       )
       .subscribe();
 
+    subscribedRef.current = true;
+
     return () => {
+      console.debug('[CRM Alerts] Cleaning up realtime subscriptions');
+      subscribedRef.current = false;
       supabase.removeChannel(prospectsChannel);
       supabase.removeChannel(activitiesChannel);
     };
-  }, [userProfile?.empresa_id]);
+  }, [userProfile?.empresa_id, queryClient]);
 
   return query;
 };

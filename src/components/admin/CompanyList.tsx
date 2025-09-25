@@ -1,13 +1,14 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { createUniqueChannel } from '@/integrations/supabase/realtime';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2, Mail, Calendar, Users, Eye, Edit, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { CompanyDetailDialog } from "./CompanyDetailDialog";
 import { EditCompanyDialog } from "./EditCompanyDialog";
@@ -36,6 +37,7 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const subscribedRef = useRef(false);
 
   const { data: allCompanies, isLoading, refetch } = useQuery({
     queryKey: ['admin-companies'],
@@ -54,13 +56,11 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
 
   // Real-time subscription para atualizações automáticas
   useEffect(() => {
-    const channelName = 'admin-companies-changes';
-    supabase.getChannels().forEach((ch) => {
-      if ((ch as any).topic === channelName) supabase.removeChannel(ch);
-    });
+    if (subscribedRef.current) return;
 
-    const channel = supabase
-      .channel(channelName)
+    console.debug('[Admin Companies] Setting up realtime subscription');
+    
+    const channel = createUniqueChannel('admin-companies-changes')
       .on(
         'postgres_changes',
         {
@@ -69,28 +69,30 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
           table: 'empresas'
         },
         (payload) => {
-          console.log('🔄 Empresa atualizada em tempo real:', payload);
-          
-          // Invalidar e refetch a query para atualizar a lista
+          console.debug('[Admin Companies] Companies table changed, invalidating queries');
           queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
           
-          // Mostrar toast informativo
+          // Notificar sobre mudanças
           if (payload.eventType === 'INSERT') {
             toast({
               title: "Nova empresa cadastrada",
-              description: `${payload.new?.nome || 'Uma nova empresa'} foi adicionada ao sistema.`,
+              description: `Empresa ${payload.new?.nome || 'desconhecida'} foi adicionada ao sistema.`,
             });
           } else if (payload.eventType === 'UPDATE') {
             toast({
               title: "Empresa atualizada",
-              description: `${payload.new?.nome || 'Uma empresa'} foi modificada.`,
+              description: `Dados da empresa ${payload.new?.nome || 'desconhecida'} foram modificados.`,
             });
           }
         }
       )
       .subscribe();
 
+    subscribedRef.current = true;
+
     return () => {
+      console.debug('[Admin Companies] Cleaning up realtime subscription');
+      subscribedRef.current = false;
       supabase.removeChannel(channel);
     };
   }, [queryClient, toast]);
