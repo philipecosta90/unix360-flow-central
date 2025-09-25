@@ -50,6 +50,15 @@ export const Header = () => {
 
         {/* User menu and notifications */}
         <div className="flex items-center space-x-4">
+          {/* Botão ASSINE JÁ sempre visível */}
+          <Button 
+            onClick={() => window.open('https://pay.cakto.com.br/chho9do_565429', '_blank')}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hidden sm:flex"
+            size="sm"
+          >
+            ASSINE JÁ
+          </Button>
+          
           <FeedbackDialog />
           
           <Button 

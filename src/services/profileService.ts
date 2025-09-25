@@ -73,11 +73,11 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         return null;
       }
       
-      return newData;
+      return newData as UserProfile;
     }
 
     console.log('✅ Perfil ativo carregado com sucesso:', data);
-    return data;
+    return data as UserProfile;
   } catch (error) {
     console.error('💥 Erro inesperado ao buscar perfil:', error);
     return null;
@@ -129,15 +129,24 @@ export const createDefaultProfile = async (userId: string): Promise<boolean> => 
     }
 
     if (defaultCompany) {
-      // Create profile for user
-      console.log('👤 Criando perfil do usuário...');
-      const profileData = {
-        user_id: userId,
-        empresa_id: defaultCompany.id,
-        nome: user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário',
-        nivel_permissao: 'admin' as const,
-        ativo: true // Criar perfil como ativo por padrão
-      };
+    // Definir dados do trial
+    const trialStartDate = new Date();
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialStartDate.getDate() + 7); // 7 dias de trial
+
+    // Create profile for user
+    console.log('👤 Criando perfil do usuário...');
+    const profileData = {
+      user_id: userId,
+      empresa_id: defaultCompany.id,
+      nome: user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário',
+      nivel_permissao: 'admin' as const,
+      ativo: true, // Criar perfil como ativo por padrão
+      trial_start_date: trialStartDate.toISOString(),
+      trial_end_date: trialEndDate.toISOString(),
+      subscription_status: 'trial',
+      subscription_plan: 'free'
+    };
       
       console.log('👤 Dados do perfil a ser criado:', profileData);
       

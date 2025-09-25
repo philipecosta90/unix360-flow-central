@@ -1,11 +1,27 @@
 
 import { UserProfile } from "@/types/auth";
 
+export const hasActiveSubscription = (userProfile: UserProfile | null): boolean => {
+  if (!userProfile || !userProfile.ativo) return false;
+  
+  const now = new Date();
+  const trialEndDate = userProfile.trial_end_date ? new Date(userProfile.trial_end_date) : null;
+  
+  return (
+    userProfile.subscription_status === 'active' ||
+    (userProfile.subscription_status === 'trial' && trialEndDate && trialEndDate > now)
+  );
+};
+
+export const canMakeChanges = (userProfile: UserProfile | null): boolean => {
+  return hasActiveSubscription(userProfile);
+};
+
 export const hasPermission = (
   userProfile: UserProfile | null,
   requiredPermission: 'admin' | 'editor' | 'operacional' | 'visualizacao'
 ): boolean => {
-  if (!userProfile || !userProfile.ativo) return false;
+  if (!userProfile || !userProfile.ativo || !hasActiveSubscription(userProfile)) return false;
   
   const permissionHierarchy = {
     'admin': 4,
@@ -25,11 +41,11 @@ export const isAdmin = (userProfile: UserProfile | null): boolean => {
 };
 
 export const canEditData = (userProfile: UserProfile | null): boolean => {
-  return hasPermission(userProfile, 'editor');
+  return hasPermission(userProfile, 'editor') && canMakeChanges(userProfile);
 };
 
 export const canCreateRecords = (userProfile: UserProfile | null): boolean => {
-  return hasPermission(userProfile, 'operacional');
+  return hasPermission(userProfile, 'operacional') && canMakeChanges(userProfile);
 };
 
 export const validateCompanyAccess = (

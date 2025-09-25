@@ -13,6 +13,10 @@ export interface UserProfile {
   ativo: boolean;
   created_at: string;
   updated_at: string;
+  trial_start_date?: string;
+  trial_end_date?: string;
+  subscription_status?: 'trial' | 'active' | 'expired' | 'canceled';
+  subscription_plan?: string;
   empresas?: {
     id: string;
     nome: string;

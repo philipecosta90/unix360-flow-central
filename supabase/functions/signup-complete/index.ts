@@ -111,8 +111,12 @@ serve(async (req: Request): Promise<Response> => {
         console.log('✅ [SIGNUP-COMPLETE] Etapas padrão do CRM criadas com sucesso');
       }
 
-      // 2. Criar perfil
-      console.log('👤 [SIGNUP-COMPLETE] Criando perfil...');
+      // 2. Criar perfil com trial de 7 dias
+      console.log('👤 [SIGNUP-COMPLETE] Criando perfil com trial de 7 dias...');
+      const trialStartDate = new Date();
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialStartDate.getDate() + 7); // 7 dias de trial
+      
       const { error: profileError } = await supabaseAdmin
         .from('perfis')
         .insert({
@@ -120,14 +124,18 @@ serve(async (req: Request): Promise<Response> => {
           empresa_id: newEmpresaId,
           nome: nome,
           nivel_permissao: 'operacional', // Usuários começam com nível operacional
-          ativo: true
+          ativo: true,
+          trial_start_date: trialStartDate.toISOString(),
+          trial_end_date: trialEndDate.toISOString(),
+          subscription_status: 'trial',
+          subscription_plan: 'free'
         });
 
       if (profileError) {
         throw new Error(`Erro ao criar perfil: ${profileError.message}`);
       }
 
-      console.log('✅ [SIGNUP-COMPLETE] Perfil criado com sucesso');
+      console.log('✅ [SIGNUP-COMPLETE] Perfil criado com sucesso com trial de 7 dias');
 
       return new Response(
         JSON.stringify({

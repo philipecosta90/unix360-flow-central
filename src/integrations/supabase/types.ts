@@ -864,7 +864,11 @@ export type Database = {
           nivel_permissao: Database["public"]["Enums"]["nivel_permissao"]
           nome: string
           sobrenome: string | null
+          subscription_plan: string | null
+          subscription_status: string | null
           telefone: string | null
+          trial_end_date: string | null
+          trial_start_date: string | null
           updated_at: string
           user_id: string
         }
@@ -877,7 +881,11 @@ export type Database = {
           nivel_permissao?: Database["public"]["Enums"]["nivel_permissao"]
           nome: string
           sobrenome?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           telefone?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id: string
         }
@@ -890,7 +898,11 @@ export type Database = {
           nivel_permissao?: Database["public"]["Enums"]["nivel_permissao"]
           nome?: string
           sobrenome?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           telefone?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -984,6 +996,10 @@ export type Database = {
       get_user_empresa_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      has_active_subscription: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       is_active_user: {
         Args: Record<PropertyKey, never>
