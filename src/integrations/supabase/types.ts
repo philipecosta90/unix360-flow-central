@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      assinaturas_cakto: {
+        Row: {
+          created_at: string
+          data_de_ativacao: string | null
+          data_de_expiracao: string | null
+          email: string
+          id: string
+          id_assinatura: string
+          nome: string
+          perfil_id: string | null
+          status: string
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_de_ativacao?: string | null
+          data_de_expiracao?: string | null
+          email: string
+          id?: string
+          id_assinatura: string
+          nome: string
+          perfil_id?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_de_ativacao?: string | null
+          data_de_expiracao?: string | null
+          email?: string
+          id?: string
+          id_assinatura?: string
+          nome?: string
+          perfil_id?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_cakto_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
