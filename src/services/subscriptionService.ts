@@ -17,41 +17,25 @@ export const syncSubscriptionData = async (subscriptionData: CaktoSubscriptionDa
   try {
     console.log('Sincronizando dados de assinatura', JSON.stringify(subscriptionData));
 
-    // Primeiro, buscar o user_id pelo email usando a função SQL
-    const { data: userId, error: userError } = await supabase
-      .rpc('get_user_by_email', { user_email: subscriptionData.email });
-
-    if (userError) {
-      console.error('Erro ao buscar usuário por email:', userError);
-      throw new Error(`Erro ao buscar usuário: ${userError.message}`);
-    }
-
-    if (!userId) {
-      console.warn('Usuário não encontrado para email:', subscriptionData.email);
-      return false;
-    }
-
-    console.log('Usuário encontrado:', { userId, email: subscriptionData.email });
-
-    // Agora buscar o perfil ativo do usuário
+    // Buscar o perfil ativo diretamente pelo email
     const { data: profile, error: profileError } = await supabase
       .from('perfis')
-      .select('id, user_id, empresa_id')
-      .eq('user_id', userId)
+      .select('id, user_id, empresa_id, email')
+      .eq('email', subscriptionData.email)
       .eq('ativo', true)
       .maybeSingle();
 
     if (profileError) {
-      console.error('Erro ao buscar perfil para sincronização:', profileError);
+      console.error('Erro ao buscar perfil por email:', profileError);
       throw new Error(`Erro ao buscar perfil: ${profileError.message}`);
     }
 
     if (!profile) {
-      console.warn('Perfil ativo não encontrado para usuário:', { userId, email: subscriptionData.email });
+      console.warn('Perfil ativo não encontrado para email:', subscriptionData.email);
       return false;
     }
 
-    console.log('Perfil encontrado:', { profileId: profile.id, userId: profile.user_id, empresaId: profile.empresa_id });
+    console.log('Perfil encontrado:', { profileId: profile.id, userId: profile.user_id, email: profile.email, empresaId: profile.empresa_id });
 
     // Inserir ou atualizar dados na tabela assinaturas_cakto
     const { error: upsertError } = await supabase

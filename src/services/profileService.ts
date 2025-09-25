@@ -140,6 +140,7 @@ export const createDefaultProfile = async (userId: string): Promise<boolean> => 
       user_id: userId,
       empresa_id: defaultCompany.id,
       nome: user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário',
+      email: user.email || 'usuario@email.com',
       nivel_permissao: 'admin' as const,
       ativo: true, // Criar perfil como ativo por padrão
       trial_start_date: trialStartDate.toISOString(),

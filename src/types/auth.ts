@@ -8,6 +8,7 @@ export interface UserProfile {
   sobrenome?: string;
   cargo?: string;
   telefone?: string;
+  email: string;
   empresa_id: string;
   nivel_permissao: 'admin' | 'editor' | 'visualizacao' | 'operacional';
   ativo: boolean;

@@ -859,6 +859,7 @@ export type Database = {
           ativo: boolean
           cargo: string | null
           created_at: string
+          email: string
           empresa_id: string
           id: string
           nivel_permissao: Database["public"]["Enums"]["nivel_permissao"]
@@ -876,6 +877,7 @@ export type Database = {
           ativo?: boolean
           cargo?: string | null
           created_at?: string
+          email: string
           empresa_id: string
           id?: string
           nivel_permissao?: Database["public"]["Enums"]["nivel_permissao"]
@@ -893,6 +895,7 @@ export type Database = {
           ativo?: boolean
           cargo?: string | null
           created_at?: string
+          email?: string
           empresa_id?: string
           id?: string
           nivel_permissao?: Database["public"]["Enums"]["nivel_permissao"]

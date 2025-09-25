@@ -176,6 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
           user_id: inviteResponse.user.id,
           empresa_id: userProfile.empresa_id,
           nome: nome,
+          email: email,
           nivel_permissao: nivel_permissao
         });
 

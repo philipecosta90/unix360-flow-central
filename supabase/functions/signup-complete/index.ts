@@ -123,6 +123,7 @@ serve(async (req: Request): Promise<Response> => {
           user_id: user.id,
           empresa_id: newEmpresaId,
           nome: nome,
+          email: user.email || 'usuario@email.com',
           nivel_permissao: 'operacional', // Usuários começam com nível operacional
           ativo: true,
           trial_start_date: trialStartDate.toISOString(),
