@@ -18,6 +18,8 @@ export interface UserProfile {
   trial_end_date?: string;
   subscription_status?: 'trial' | 'active' | 'expired' | 'canceled';
   subscription_plan?: string;
+  data_de_assinatura_ativa?: string;
+  data_de_expiracao_da_assinatura_ativa?: string;
   empresas?: {
     id: string;
     nome: string;

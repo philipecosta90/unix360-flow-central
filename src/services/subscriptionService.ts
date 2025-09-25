@@ -62,14 +62,22 @@ export const syncSubscriptionData = async (subscriptionData: CaktoSubscriptionDa
     const subscriptionStatus = getSubscriptionStatus(subscriptionData.status);
     const isActive = subscriptionStatus === 'active';
 
+    const updateData: any = {
+      subscription_status: subscriptionStatus,
+      subscription_plan: 'premium', // Ou extrair do subscriptionData se disponível
+    };
+
+    // Se a assinatura está ativa, definir as datas de assinatura ativa e limpar trial
+    if (isActive) {
+      updateData.data_de_assinatura_ativa = subscriptionData.data_de_ativacao;
+      updateData.data_de_expiracao_da_assinatura_ativa = subscriptionData.data_de_expiracao;
+      updateData.trial_start_date = null; // Limpar trial se houver assinatura ativa
+      updateData.trial_end_date = null;
+    }
+
     const { error: updateProfileError } = await supabase
       .from('perfis')
-      .update({
-        subscription_status: subscriptionStatus,
-        subscription_plan: 'premium', // Ou extrair do subscriptionData se disponível
-        trial_start_date: null, // Limpar trial se houver assinatura ativa
-        trial_end_date: null,
-      })
+      .update(updateData)
       .eq('id', profile.id);
 
     if (updateProfileError) {

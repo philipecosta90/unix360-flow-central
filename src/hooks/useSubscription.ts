@@ -8,7 +8,10 @@ export interface SubscriptionStatus {
   plan: string;
   trialStartDate: Date | null;
   trialEndDate: Date | null;
+  activeSubscriptionStartDate: Date | null;
+  activeSubscriptionEndDate: Date | null;
   daysRemaining: number;
+  activeSubscriptionDaysRemaining: number;
   hasActiveSubscription: boolean;
   canMakeChanges: boolean;
 }
@@ -32,11 +35,11 @@ export const useSubscription = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('perfis')
-        .select('subscription_status, subscription_plan, trial_start_date, trial_end_date')
-        .eq('user_id', userProfile.user_id)
-        .single();
+    const { data, error } = await supabase
+      .from('perfis')
+      .select('subscription_status, subscription_plan, trial_start_date, trial_end_date, data_de_assinatura_ativa, data_de_expiracao_da_assinatura_ativa')
+      .eq('user_id', userProfile.user_id)
+      .single();
 
       if (error) {
         console.error('Erro ao buscar status da assinatura:', error);
@@ -48,26 +51,33 @@ export const useSubscription = () => {
         return;
       }
 
-      const trialEndDate = data.trial_end_date ? new Date(data.trial_end_date) : null;
-      const trialStartDate = data.trial_start_date ? new Date(data.trial_start_date) : null;
-      const daysRemaining = calculateDaysRemaining(trialEndDate);
-      const now = new Date();
-      
-      const hasActiveSubscription = 
-        data.subscription_status === 'active' || 
-        (data.subscription_status === 'trial' && trialEndDate && trialEndDate > now);
+    const trialEndDate = data.trial_end_date ? new Date(data.trial_end_date) : null;
+    const trialStartDate = data.trial_start_date ? new Date(data.trial_start_date) : null;
+    const activeSubscriptionStartDate = data.data_de_assinatura_ativa ? new Date(data.data_de_assinatura_ativa) : null;
+    const activeSubscriptionEndDate = data.data_de_expiracao_da_assinatura_ativa ? new Date(data.data_de_expiracao_da_assinatura_ativa) : null;
+    
+    const daysRemaining = calculateDaysRemaining(trialEndDate);
+    const activeSubscriptionDaysRemaining = calculateDaysRemaining(activeSubscriptionEndDate);
+    const now = new Date();
+    
+    const hasActiveSubscription = 
+      (data.subscription_status === 'active' && activeSubscriptionEndDate && activeSubscriptionEndDate > now) || 
+      (data.subscription_status === 'trial' && trialEndDate && trialEndDate > now);
 
-      const canMakeChanges = hasActiveSubscription;
+    const canMakeChanges = hasActiveSubscription;
 
-      setSubscriptionStatus({
-        status: data.subscription_status as 'trial' | 'active' | 'expired' | 'canceled',
-        plan: data.subscription_plan || 'free',
-        trialStartDate,
-        trialEndDate,
-        daysRemaining,
-        hasActiveSubscription,
-        canMakeChanges,
-      });
+    setSubscriptionStatus({
+      status: data.subscription_status as 'trial' | 'active' | 'expired' | 'canceled',
+      plan: data.subscription_plan || 'free',
+      trialStartDate,
+      trialEndDate,
+      activeSubscriptionStartDate,
+      activeSubscriptionEndDate,
+      daysRemaining,
+      activeSubscriptionDaysRemaining,
+      hasActiveSubscription,
+      canMakeChanges,
+    });
     } catch (error) {
       console.error('Erro inesperado ao verificar assinatura:', error);
     } finally {
