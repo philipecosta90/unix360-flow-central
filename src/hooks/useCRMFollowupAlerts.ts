@@ -154,7 +154,7 @@ export const useCRMFollowupAlerts = () => {
     if (!userProfile?.empresa_id) return;
 
     const prospectsChannel = supabase
-      .channel('crm-prospects-changes')
+      .channel(`crm-prospects-changes-${userProfile.empresa_id}`)
       .on(
         'postgres_changes',
         {
@@ -170,7 +170,7 @@ export const useCRMFollowupAlerts = () => {
       .subscribe();
 
     const activitiesChannel = supabase
-      .channel('crm-activities-changes')
+      .channel(`crm-activities-changes-${userProfile.empresa_id}`)
       .on(
         'postgres_changes',
         {
@@ -188,7 +188,7 @@ export const useCRMFollowupAlerts = () => {
       supabase.removeChannel(prospectsChannel);
       supabase.removeChannel(activitiesChannel);
     };
-  }, [userProfile?.empresa_id, query]);
+  }, [userProfile?.empresa_id]);
 
   return query;
 };

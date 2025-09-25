@@ -91,10 +91,10 @@ export const useSubscription = () => {
 
   // Monitorar mudanças em tempo real
   useEffect(() => {
-    if (!userProfile) return;
+    if (!userProfile?.user_id || !userProfile?.id) return;
 
     const channel = supabase
-      .channel('subscription-changes')
+      .channel(`subscription-changes-${userProfile.user_id}`)
       .on(
         'postgres_changes',
         {
@@ -124,7 +124,7 @@ export const useSubscription = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userProfile]);
+  }, [userProfile?.user_id, userProfile?.id]);
 
   const refreshSubscriptionStatus = () => {
     fetchSubscriptionStatus();
