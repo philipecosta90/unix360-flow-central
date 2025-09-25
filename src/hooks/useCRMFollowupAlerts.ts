@@ -153,8 +153,13 @@ export const useCRMFollowupAlerts = () => {
   useEffect(() => {
     if (!userProfile?.empresa_id) return;
 
+    const prospectsChannelName = `crm-prospects-changes-${userProfile.empresa_id}`;
+    supabase.getChannels().forEach((ch) => {
+      if ((ch as any).topic === prospectsChannelName) supabase.removeChannel(ch);
+    });
+
     const prospectsChannel = supabase
-      .channel(`crm-prospects-changes-${userProfile.empresa_id}-${Date.now()}`)
+      .channel(prospectsChannelName)
       .on(
         'postgres_changes',
         {
@@ -169,8 +174,13 @@ export const useCRMFollowupAlerts = () => {
       )
       .subscribe();
 
+    const activitiesChannelName = `crm-activities-changes-${userProfile.empresa_id}`;
+    supabase.getChannels().forEach((ch) => {
+      if ((ch as any).topic === activitiesChannelName) supabase.removeChannel(ch);
+    });
+
     const activitiesChannel = supabase
-      .channel(`crm-activities-changes-${userProfile.empresa_id}-${Date.now()}`)
+      .channel(activitiesChannelName)
       .on(
         'postgres_changes',
         {

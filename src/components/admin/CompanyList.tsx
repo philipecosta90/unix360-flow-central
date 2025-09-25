@@ -54,8 +54,13 @@ export const CompanyList = ({ searchTerm, selectedPlan }: CompanyListProps) => {
 
   // Real-time subscription para atualizações automáticas
   useEffect(() => {
+    const channelName = 'admin-companies-changes';
+    supabase.getChannels().forEach((ch) => {
+      if ((ch as any).topic === channelName) supabase.removeChannel(ch);
+    });
+
     const channel = supabase
-      .channel(`admin-companies-changes-${Date.now()}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {

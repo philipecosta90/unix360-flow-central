@@ -93,8 +93,14 @@ export const useSubscription = () => {
   useEffect(() => {
     if (!userProfile?.user_id || !userProfile?.id) return;
 
+    const channelName = `subscription-changes-${userProfile.user_id}-${userProfile.id}`;
+    supabase.getChannels().forEach((ch) => {
+      // Ensure no stale channel with the same topic remains before creating a new one
+      if ((ch as any).topic === channelName) supabase.removeChannel(ch);
+    });
+
     const channel = supabase
-      .channel(`subscription-changes-${userProfile.user_id}-${Date.now()}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
