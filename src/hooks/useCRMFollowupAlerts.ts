@@ -154,7 +154,7 @@ export const useCRMFollowupAlerts = () => {
     if (!userProfile?.empresa_id) return;
 
     const prospectsChannel = supabase
-      .channel(`crm-prospects-changes-${userProfile.empresa_id}`)
+      .channel(`crm-prospects-changes-${userProfile.empresa_id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -170,7 +170,7 @@ export const useCRMFollowupAlerts = () => {
       .subscribe();
 
     const activitiesChannel = supabase
-      .channel(`crm-activities-changes-${userProfile.empresa_id}`)
+      .channel(`crm-activities-changes-${userProfile.empresa_id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {

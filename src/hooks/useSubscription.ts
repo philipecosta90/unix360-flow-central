@@ -94,7 +94,7 @@ export const useSubscription = () => {
     if (!userProfile?.user_id || !userProfile?.id) return;
 
     const channel = supabase
-      .channel(`subscription-changes-${userProfile.user_id}`)
+      .channel(`subscription-changes-${userProfile.user_id}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
