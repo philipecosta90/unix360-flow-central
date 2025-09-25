@@ -859,6 +859,8 @@ export type Database = {
           ativo: boolean
           cargo: string | null
           created_at: string
+          data_de_assinatura_ativa: string | null
+          data_de_expiracao_da_assinatura_ativa: string | null
           email: string
           empresa_id: string
           id: string
@@ -877,6 +879,8 @@ export type Database = {
           ativo?: boolean
           cargo?: string | null
           created_at?: string
+          data_de_assinatura_ativa?: string | null
+          data_de_expiracao_da_assinatura_ativa?: string | null
           email: string
           empresa_id: string
           id?: string
@@ -895,6 +899,8 @@ export type Database = {
           ativo?: boolean
           cargo?: string | null
           created_at?: string
+          data_de_assinatura_ativa?: string | null
+          data_de_expiracao_da_assinatura_ativa?: string | null
           email?: string
           empresa_id?: string
           id?: string
