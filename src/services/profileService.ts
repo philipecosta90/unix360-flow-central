@@ -27,7 +27,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         )
       `)
       .eq('user_id', userId)
-      .eq('ativo', true) // Só buscar perfis ativos
       .maybeSingle();
 
     console.log('🔍 Resposta da query:', { data, error });
@@ -63,7 +62,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
           )
         `)
         .eq('user_id', userId)
-        .eq('ativo', true) // Só buscar perfis ativos
         .maybeSingle();
       
       console.log('🔍 Segunda tentativa:', { data: newData, error: newError });

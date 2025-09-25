@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 
 /**
  * Hook para validar periodicamente o status do usuário
- * Força logout se o usuário se tornar inativo
+ * Nova versão que não força logout para usuários com assinatura vencida
  */
 export const useUserValidation = () => {
   const { user, signOut } = useAuth();
@@ -17,47 +17,33 @@ export const useUserValidation = () => {
     try {
       const result = await validateUserStatus();
       
-      if (!result.valid) {
-        console.warn('🚫 Usuário inválido detectado, forçando logout:', result.message);
+      // Só fazer logout se o usuário não tem perfil (não existe no sistema)
+      if (!result.valid && result.allowAccess === false) {
+        console.warn('🚫 Usuário sem perfil detectado, forçando logout:', result.message);
         
         // Mostrar mensagem de erro
         toast({
           title: "Acesso Negado",
-          description: result.message || "Conta inativa ou não encontrada.",
+          description: result.message || "Perfil não encontrado no sistema.",
           variant: "destructive",
           duration: 5000,
         });
 
-        // Forçar logout
+        // Forçar logout apenas para usuários sem perfil
         await signOut();
       }
+      // Para usuários com assinatura vencida, o SubscriptionExpiredDialog cuidará da UX
     } catch (error) {
       console.error('💥 Erro na validação periódica:', error);
     }
   }, [user, signOut, toast]);
 
-  // Validar a cada 30 segundos quando o usuário estiver ativo
+  // Validar apenas quando o usuário fizer login (não periodicamente)
   useEffect(() => {
-    if (!user) return;
-
-    const interval = setInterval(performValidation, 30000); // 30 segundos
-    
-    return () => clearInterval(interval);
-  }, [user, performValidation]);
-
-  // Validar quando a aba ganhar foco
-  useEffect(() => {
-    if (!user) return;
-
-    const handleFocus = () => {
+    if (user) {
+      // Validar uma vez ao fazer login
       performValidation();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
+    }
   }, [user, performValidation]);
 
   return {

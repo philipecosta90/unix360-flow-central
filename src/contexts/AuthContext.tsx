@@ -101,13 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             
             if (isMounted) {
-              // Verificar se o perfil existe
-              if (!profile) {
-                logger.warn('Perfil não encontrado, fazendo logout...');
-                await handleUserAccessDenied('Perfil não encontrado. Entre em contato com o administrador.');
-                return;
-              }
-              
+              // Permitir acesso mesmo sem perfil ativo - o sistema de renovação cuidará disso
               setUserProfile(profile);
               setLoading(false);
             }
@@ -147,16 +141,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const profile = await fetchUserProfile(session.user.id);
             
             if (isMounted) {
-              // Verificar se o perfil existe
-              if (!profile) {
-                logger.warn('Perfil não encontrado na verificação inicial, fazendo logout...');
-                await handleUserAccessDenied('Perfil não encontrado. Entre em contato com o administrador.');
-                return;
-              }
-                
-                setUserProfile(profile);
-                setLoading(false);
-              }
+              // Permitir acesso mesmo sem perfil ativo - o sistema de renovação cuidará disso
+              setUserProfile(profile);
+              setLoading(false);
+            }
             } catch (error) {
               logger.error('Error loading initial profile:', error);
               if (isMounted) {

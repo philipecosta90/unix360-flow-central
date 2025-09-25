@@ -9,6 +9,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { InactiveUserMessage } from "@/components/auth/InactiveUserMessage";
 import { AccessDeniedMessage } from "@/components/auth/AccessDeniedMessage";
+import { SubscriptionExpiredDialog } from "@/components/subscription/SubscriptionExpiredDialog";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => {
             
             <InactiveUserMessage />
             <AccessDeniedMessage />
+            <SubscriptionExpiredDialog />
             <BrowserRouter>
               <Routes>
                 {/* All routes - now directly accessible */}
