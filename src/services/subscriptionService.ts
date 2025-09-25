@@ -17,12 +17,11 @@ export const syncSubscriptionData = async (subscriptionData: CaktoSubscriptionDa
   try {
     console.log('Sincronizando dados de assinatura', JSON.stringify(subscriptionData));
 
-    // Buscar o perfil ativo diretamente pelo email
+    // Buscar o perfil pelo email (incluindo inativos para reativação)
     const { data: profile, error: profileError } = await supabase
       .from('perfis')
       .select('id, user_id, empresa_id, email')
       .eq('email', subscriptionData.email)
-      .eq('ativo', true)
       .maybeSingle();
 
     if (profileError) {
@@ -31,7 +30,7 @@ export const syncSubscriptionData = async (subscriptionData: CaktoSubscriptionDa
     }
 
     if (!profile) {
-      console.warn('Perfil ativo não encontrado para email:', subscriptionData.email);
+      console.warn('Perfil não encontrado para email:', subscriptionData.email);
       return false;
     }
 

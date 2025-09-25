@@ -40,27 +40,23 @@ serve(async (req) => {
       throw new Error('Dados obrigatórios não fornecidos (email, id_assinatura)');
     }
 
-    // Encontrar perfil pelo email (para simplificar, vamos procurar na tabela perfis)
-    // Em produção, você pode querer usar uma tabela de mapeamento email -> perfil
-    const { data: profiles, error: profileError } = await supabaseClient
+    // Buscar perfil pelo email (incluindo inativos para permitir reativação)
+    const { data: profile, error: profileError } = await supabaseClient
       .from('perfis')
-      .select('id, user_id, empresa_id, nome')
-      .eq('ativo', true);
+      .select('id, user_id, empresa_id, nome, email')
+      .eq('email', subscriptionData.email)
+      .maybeSingle();
 
     if (profileError) {
-      logStep('ERROR finding profile', { error: profileError.message });
+      logStep('ERROR finding profile by email', { error: profileError.message, email: subscriptionData.email });
       throw new Error(`Erro ao buscar perfil: ${profileError.message}`);
     }
 
-    // Para este exemplo, vamos pegar o primeiro perfil ativo
-    // Em produção, você precisa de uma forma melhor de mapear email -> perfil
-    const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-
     if (!profile) {
-      logStep('No active profile found');
+      logStep('No profile found for email', { email: subscriptionData.email });
       return new Response(JSON.stringify({ 
         success: false, 
-        message: 'Nenhum perfil ativo encontrado' 
+        message: `Nenhum perfil encontrado para o email: ${subscriptionData.email}` 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 404,
@@ -112,17 +108,42 @@ serve(async (req) => {
     };
 
     const subscriptionStatus = getSubscriptionStatus(subscriptionData.status);
+    const isActive = subscriptionStatus === 'active';
+    
+    // Preparar dados de atualização
+    const updateData: any = {
+      subscription_status: subscriptionStatus,
+      subscription_plan: 'premium',
+    };
+
+    // Se a assinatura está ativa, definir as datas de assinatura ativa e limpar trial
+    if (isActive) {
+      updateData.data_de_assinatura_ativa = subscriptionData.data_de_ativacao;
+      updateData.data_de_expiracao_da_assinatura_ativa = subscriptionData.data_de_expiracao;
+      updateData.trial_start_date = null; // Limpar trial se houver assinatura ativa
+      updateData.trial_end_date = null;
+      updateData.ativo = true; // Reativar perfil se assinatura ativa
+    } else if (subscriptionStatus === 'expired') {
+      // Para assinaturas expiradas, manter as datas mas marcar como inativo
+      updateData.ativo = false;
+      // Manter as datas de assinatura para referência histórica
+      if (subscriptionData.data_de_ativacao) {
+        updateData.data_de_assinatura_ativa = subscriptionData.data_de_ativacao;
+      }
+      if (subscriptionData.data_de_expiracao) {
+        updateData.data_de_expiracao_da_assinatura_ativa = subscriptionData.data_de_expiracao;
+      }
+    }
+
+    logStep('Updating profile with subscription data', { 
+      profileId: profile.id, 
+      updateData: updateData 
+    });
     
     // Atualizar status no perfil do usuário
     const { error: updateProfileError } = await supabaseClient
       .from('perfis')
-      .update({
-        subscription_status: subscriptionStatus,
-        subscription_plan: 'premium',
-        // Limpar trial se houver assinatura ativa
-        trial_start_date: subscriptionStatus === 'active' ? null : undefined,
-        trial_end_date: subscriptionStatus === 'active' ? null : undefined,
-      })
+      .update(updateData)
       .eq('id', profile.id);
 
     if (updateProfileError) {
