@@ -21,16 +21,8 @@ export const SubscriptionExpiredDialog = () => {
   const shouldShowDialog = () => {
     if (!userProfile || !subscriptionStatus) return false;
     
-    // Mostrar apenas se o usuário tem perfil mas assinatura vencida
-    const now = new Date();
-    const isExpired = 
-      subscriptionStatus.status === 'expired' || 
-      subscriptionStatus.status === 'canceled' ||
-      (subscriptionStatus.status === 'trial' && 
-       subscriptionStatus.trialEndDate && 
-       subscriptionStatus.trialEndDate < now);
-    
-    return userProfile.ativo === false || isExpired;
+    // Mostrar apenas quando a assinatura NÃO está ativa
+    return subscriptionStatus.status !== 'active';
   };
 
   // Verificar se já passou o tempo mínimo desde a última exibição (30 minutos)

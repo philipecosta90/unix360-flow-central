@@ -75,6 +75,11 @@ export const SubscriptionStatus = () => {
   const showTrialWarning = subscriptionStatus.status === 'trial' && subscriptionStatus.daysRemaining <= 3;
   const showExpiredWarning = subscriptionStatus.status === 'expired' || subscriptionStatus.status === 'canceled';
 
+  // Mostrar botão de assinatura apenas quando NÃO tem assinatura ativa
+  const shouldShowSubscribeButton = () => {
+    return subscriptionStatus.status !== 'active';
+  };
+
   return (
     <Card className={`${showExpiredWarning ? 'border-red-200 bg-red-50' : showTrialWarning ? 'border-orange-200 bg-orange-50' : ''}`}>
       <CardHeader className="pb-3">
@@ -129,14 +134,16 @@ export const SubscriptionStatus = () => {
           </div>
         )}
 
-        <Button 
-          onClick={handleSubscribe}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
-          size="lg"
-        >
-          <CreditCard className="h-4 w-4 mr-2" />
-          ASSINE JÁ
-        </Button>
+        {shouldShowSubscribeButton() && (
+          <Button 
+            onClick={handleSubscribe}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+            size="lg"
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            ASSINE JÁ
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
