@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePlanExpirationAlerts } from "@/hooks/usePlanExpirationAlerts";
-import { Loader2, Plus, Search, CalendarDays, AlertTriangle } from "lucide-react";
+import { Loader2, Plus, Search, CalendarDays, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 interface Cliente {
   id: string;
   nome: string;
@@ -43,6 +43,7 @@ export const ClientsModule = () => {
   const [editingClient, setEditingClient] = useState<Cliente | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [showAllExpiringPlans, setShowAllExpiringPlans] = useState(false);
   const fetchClients = async () => {
     if (!userProfile?.empresa_id) return;
     try {
@@ -214,15 +215,28 @@ export const ClientsModule = () => {
           <AlertDescription className="text-orange-800">
             <div className="font-medium mb-2">Planos próximos ao vencimento:</div>
             <div className="space-y-1">
-              {expiringPlans.slice(0, 3).map((plan) => (
+              {(showAllExpiringPlans ? expiringPlans : expiringPlans.slice(0, 3)).map((plan) => (
                 <div key={plan.clientId} className="text-sm">
                   • {plan.clientName} - {plan.daysUntilExpiration === 0 ? 'Vence hoje' : `${plan.daysUntilExpiration} dias`}
                 </div>
               ))}
               {expiringPlans.length > 3 && (
-                <div className="text-sm font-medium">
-                  E mais {expiringPlans.length - 3} clientes...
-                </div>
+                <button
+                  onClick={() => setShowAllExpiringPlans(!showAllExpiringPlans)}
+                  className="text-sm font-medium text-orange-700 hover:text-orange-900 flex items-center gap-1 mt-2 transition-colors"
+                >
+                  {showAllExpiringPlans ? (
+                    <>
+                      <ChevronUp className="h-3 w-3" />
+                      Ver menos
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3 w-3" />
+                      E mais {expiringPlans.length - 3} clientes...
+                    </>
+                  )}
+                </button>
               )}
             </div>
           </AlertDescription>
