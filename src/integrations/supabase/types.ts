@@ -799,7 +799,7 @@ export type Database = {
             foreignKeyName: "financeiro_tarefas_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
-            referencedRelation: "crm_prospects"
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
           {
