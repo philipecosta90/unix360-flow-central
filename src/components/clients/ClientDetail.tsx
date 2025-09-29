@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye, Edit, Trash2 } from "lucide-react";
 import { InteractionDialog } from "./InteractionDialog";
+import { EditInteractionDialog } from "./EditInteractionDialog";
 import { DocumentUploadDialog } from "./DocumentUploadDialog";
 import { FinancialTransactionDialog } from "./FinancialTransactionDialog";
 import { EditTransactionDialog } from "@/components/financial/EditTransactionDialog";
@@ -55,6 +56,8 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
   const { toast } = useToast();
   const { deleteTransaction } = useFinancialTransactions();
   const [showInteractionDialog, setShowInteractionDialog] = useState(false);
+  const [showEditInteractionDialog, setShowEditInteractionDialog] = useState(false);
+  const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
   const [showDocumentDialog, setShowDocumentDialog] = useState(false);
   const [showFinancialDialog, setShowFinancialDialog] = useState(false);
   const [showEditTransactionDialog, setShowEditTransactionDialog] = useState(false);
@@ -273,6 +276,39 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
     setShowEditTransactionDialog(true);
   };
 
+  const handleEditInteraction = (interaction: Interaction) => {
+    setSelectedInteraction(interaction);
+    setShowEditInteractionDialog(true);
+  };
+
+  const handleDeleteInteraction = async (interactionId: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta interação?")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('cs_interacoes')
+        .delete()
+        .eq('id', interactionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Interação excluída",
+        description: "A interação foi excluída com sucesso.",
+      });
+      fetchInteractions();
+    } catch (error) {
+      console.error('Erro ao excluir interação:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a interação.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteTransaction = async (transactionId: string) => {
     if (!confirm("Tem certeza que deseja excluir esta movimentação?")) {
       return;
@@ -486,38 +522,58 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                       const IconComponent = getInteractionIcon(interacao.tipo);
                       const colorClass = getInteractionColor(interacao.tipo);
                       
-                       return (
-                         <div key={interacao.id} className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg">
-                           <div className={`p-2 rounded-full ${colorClass} flex-shrink-0`}>
-                             <IconComponent className="h-3 w-3 sm:h-4 sm:w-4" />
-                           </div>
-                           
-                           <div className="flex-1 min-w-0">
-                             <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 xs:gap-2">
-                                <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{interacao.titulo}</h4>
-                                <span className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-                                  {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
-                                </span>
+                        return (
+                          <div key={interacao.id} className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg">
+                            <div className={`p-2 rounded-full ${colorClass} flex-shrink-0`}>
+                              <IconComponent className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 xs:gap-2">
+                                 <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{interacao.titulo}</h4>
+                                 <div className="flex items-center gap-2">
+                                   <span className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">
+                                     {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
+                                   </span>
+                                   <div className="flex gap-1">
+                                     <Button
+                                       variant="ghost"
+                                       size="sm"
+                                       onClick={() => handleEditInteraction(interacao)}
+                                       className="h-6 w-6 p-0 hover:bg-blue-100"
+                                     >
+                                       <Edit className="h-3 w-3 text-blue-600" />
+                                     </Button>
+                                     <Button
+                                       variant="ghost"
+                                       size="sm"
+                                       onClick={() => handleDeleteInteraction(interacao.id)}
+                                       className="h-6 w-6 p-0 hover:bg-red-100"
+                                     >
+                                       <Trash2 className="h-3 w-3 text-red-600" />
+                                     </Button>
+                                   </div>
+                                 </div>
+                               </div>
+                               
+                               {interacao.descricao && (
+                                 <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed break-words">{interacao.descricao}</p>
+                               )}
+                               
+                               <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4 mt-2">
+                                 <span className="text-xs text-muted-foreground capitalize">
+                                   {interacao.tipo === 'call' ? 'Ligação' :
+                                    interacao.tipo === 'email' ? 'E-mail' :
+                                    interacao.tipo === 'meeting' ? 'Reunião' :
+                                    interacao.tipo === 'feedback' ? 'Feedback' : 'Outro'}
+                                 </span>
+                                 <span className="text-xs text-muted-foreground/70">
+                                   {new Date(interacao.created_at).toLocaleString('pt-BR')}
+                                 </span>
                               </div>
-                              
-                              {interacao.descricao && (
-                                <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed break-words">{interacao.descricao}</p>
-                              )}
-                              
-                              <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4 mt-2">
-                                <span className="text-xs text-muted-foreground capitalize">
-                                  {interacao.tipo === 'call' ? 'Ligação' :
-                                   interacao.tipo === 'email' ? 'E-mail' :
-                                   interacao.tipo === 'meeting' ? 'Reunião' :
-                                   interacao.tipo === 'feedback' ? 'Feedback' : 'Outro'}
-                                </span>
-                                <span className="text-xs text-muted-foreground/70">
-                                  {new Date(interacao.created_at).toLocaleString('pt-BR')}
-                                </span>
-                             </div>
-                           </div>
-                         </div>
-                       );
+                            </div>
+                          </div>
+                        );
                     })}
                   </div>
                  ) : (
@@ -697,6 +753,13 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
         onOpenChange={setShowInteractionDialog}
         clientId={client.id}
         onInteractionAdded={fetchInteractions}
+      />
+
+      <EditInteractionDialog
+        open={showEditInteractionDialog}
+        onOpenChange={setShowEditInteractionDialog}
+        interaction={selectedInteraction}
+        onInteractionUpdated={fetchInteractions}
       />
 
       <DocumentUploadDialog
