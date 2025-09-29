@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
-import { useCRMProspects } from "@/hooks/useCRMProspects";
+import { useClients } from "@/hooks/useClients";
 import { toast } from "sonner";
 
 interface Task {
@@ -35,14 +35,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
   });
 
   const { createTask, updateTask } = useFinancialTasks();
-  const { data: prospects = [] } = useCRMProspects({
-    search: "",
-    tags: [],
-    responsavel: "",
-    stage: "",
-    startDate: undefined,
-    endDate: undefined,
-  });
+  const { data: clientes = [] } = useClients();
 
   useEffect(() => {
     if (task) {
@@ -140,9 +133,9 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Nenhum cliente</SelectItem>
-                {prospects.map((prospect) => (
-                  <SelectItem key={prospect.id} value={prospect.id}>
-                    {(prospect.nome ?? "Cliente sem nome").toString()}
+                {clientes.map((cliente) => (
+                  <SelectItem key={cliente.id} value={cliente.id}>
+                    {(cliente.nome ?? "Cliente sem nome").toString()}
                   </SelectItem>
                 ))}
               </SelectContent>
