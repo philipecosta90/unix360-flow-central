@@ -30,7 +30,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
   const [formData, setFormData] = useState({
     descricao: '',
     vencimento: new Date().toISOString().split('T')[0],
-    cliente_id: '',
+    cliente_id: null as string | null,
     concluida: false,
   });
 
@@ -40,20 +40,20 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
   useEffect(() => {
     if (task) {
       setFormData({
-        descricao: (task.descricao ?? "").toString(),
-        vencimento: (task.vencimento ?? new Date().toISOString().split('T')[0]).toString(),
-        cliente_id: (task.cliente_id ?? "").toString(),
-        concluida: task.concluida ?? false,
+        descricao: task.descricao || '',
+        vencimento: task.vencimento || new Date().toISOString().split('T')[0],
+        cliente_id: task.cliente_id || null,
+        concluida: task.concluida || false,
       });
     } else {
       setFormData({
         descricao: '',
         vencimento: new Date().toISOString().split('T')[0],
-        cliente_id: '',
+        cliente_id: null,
         concluida: false,
       });
     }
-  }, [task, open]);
+  }, [open, task]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +70,7 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
       const taskData = {
         descricao: descricaoSegura,
         vencimento: vencimentoSeguro,
-        cliente_id: formData.cliente_id === "none" ? null : (formData.cliente_id || null),
+        cliente_id: formData.cliente_id,
         concluida: formData.concluida ?? false,
       };
 
@@ -90,7 +90,10 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
   };
 
   const handleClientChange = (value: string) => {
-    setFormData({...formData, cliente_id: value});
+    setFormData(prev => ({
+      ...prev,
+      cliente_id: value === "none" ? null : value
+    }));
   };
 
   return (
@@ -124,8 +127,8 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
 
           <div className="space-y-2">
             <Label htmlFor="cliente">Cliente (Opcional)</Label>
-            <Select 
-              value={formData.cliente_id === "" ? "none" : (formData.cliente_id ?? "none").toString()} 
+            <Select
+              value={formData.cliente_id ?? "none"}
               onValueChange={handleClientChange}
             >
               <SelectTrigger>

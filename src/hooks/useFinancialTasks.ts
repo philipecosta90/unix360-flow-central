@@ -84,7 +84,7 @@ export const useFinancialTasks = () => {
       const insertData = {
         descricao: taskData.descricao,
         vencimento: taskData.vencimento,
-        cliente_id: taskData.cliente_id === "none" ? null : (taskData.cliente_id || null),
+        cliente_id: taskData.cliente_id,
         concluida: taskData.concluida ?? false,
         empresa_id: profile.empresa_id,
         created_by: profile.id
