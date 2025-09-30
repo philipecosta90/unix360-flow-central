@@ -129,7 +129,7 @@ export const LoginFormTab = ({
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {
