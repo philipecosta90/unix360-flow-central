@@ -77,6 +77,25 @@ export const ClientsModule = () => {
     const matchesSearch = client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || client.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "todos" || client.status === statusFilter;
     return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    // Definir prioridade de status (menor número = maior prioridade)
+    const statusPriority: Record<string, number> = {
+      'ativo': 1,
+      'lead': 2,
+      'prospecto': 3,
+      'inativo': 4
+    };
+    
+    const priorityA = statusPriority[a.status] || 99;
+    const priorityB = statusPriority[b.status] || 99;
+    
+    // Primeiro ordenar por prioridade de status
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // Se mesma prioridade, ordenar alfabeticamente por nome
+    return a.nome.localeCompare(b.nome, 'pt-BR');
   });
   const getStatusColor = (status: string) => {
     switch (status) {
