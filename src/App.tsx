@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { InactiveUserMessage } from "@/components/auth/InactiveUserMessage";
 import { AccessDeniedMessage } from "@/components/auth/AccessDeniedMessage";
 import { SubscriptionExpiredDialog } from "@/components/subscription/SubscriptionExpiredDialog";
+import { UpdateNotification } from "@/components/common/UpdateNotification";
 import { ResetPasswordPage } from "@/components/auth/ResetPasswordPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,7 @@ const App = () => {
             <InactiveUserMessage />
             <AccessDeniedMessage />
             <SubscriptionExpiredDialog />
+            <UpdateNotification />
             <BrowserRouter>
               <Routes>
                 {/* Password Reset Route - Public */}
