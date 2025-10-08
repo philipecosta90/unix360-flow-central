@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle, AlertTriangle, Calendar, Edit, Trash2 } from "lucide-react";
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
-import { useCRMProspects } from "@/hooks/useCRMProspects";
+import { useClients } from "@/hooks/useClients";
 import { TaskFormModal } from "./TaskFormModal";
 import { useState } from "react";
+import { toLocalISODate, formatDateDisplay } from "@/utils/dateUtils";
 
 interface Task {
   id: string;
@@ -23,32 +24,15 @@ interface TasksListProps {
 
 export const TasksList = ({ tasks }: TasksListProps) => {
   const { updateTask, deleteTask } = useFinancialTasks();
-  const { data: prospects = [] } = useCRMProspects({
-    search: "",
-    tags: [],
-    responsavel: "",
-    stage: "",
-    startDate: undefined,
-    endDate: undefined,
-  });
+  const { data: clientes = [] } = useClients();
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "-";
-    try {
-      const dateSegura = dateString.toString();
-      return new Date(dateSegura).toLocaleDateString('pt-BR');
-    } catch {
-      return "-";
-    }
-  };
-
   const getClientName = (clientId: string | null) => {
     if (!clientId) return "Não vinculado";
-    if (!prospects || prospects.length === 0) return "Cliente não encontrado";
-    const client = prospects.find(p => p && p.id === clientId);
+    if (!clientes || clientes.length === 0) return "Cliente não encontrado";
+    const client = clientes.find(c => c && c.id === clientId);
     return client?.nome || "Cliente não encontrado";
   };
 
@@ -71,7 +55,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
     }
 
     const vencimentoSeguro = vencimento.toString();
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalISODate(new Date());
     const isOverdue = vencimentoSeguro < today;
     const isDueToday = vencimentoSeguro === today;
 
@@ -106,7 +90,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
     if (!vencimento) return "";
     
     const vencimentoSeguro = vencimento.toString();
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalISODate(new Date());
     const isOverdue = vencimentoSeguro < today;
     const isDueToday = vencimentoSeguro === today;
 
@@ -169,7 +153,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
                     return (
                       <TableRow key={task.id} className={getRowClassName(task.vencimento || "", task.concluida)}>
                         <TableCell className="font-medium">
-                          {formatDate(task.vencimento)}
+                          {formatDateDisplay(task.vencimento)}
                         </TableCell>
                         <TableCell className={task.concluida ? "line-through text-gray-500" : ""}>
                           {task.descricao || "Sem descrição"}

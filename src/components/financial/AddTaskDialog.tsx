@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
 import { toast } from "sonner";
+import { toLocalISODate } from "@/utils/dateUtils";
 
 interface AddTaskDialogProps {
   open: boolean;
@@ -16,7 +17,7 @@ interface AddTaskDialogProps {
 export const AddTaskDialog = ({ open, onOpenChange }: AddTaskDialogProps) => {
   const [formData, setFormData] = useState({
     descricao: '',
-    vencimento: new Date().toISOString().split('T')[0],
+    vencimento: toLocalISODate(new Date()),
   });
 
   const { createTask } = useFinancialTasks();
@@ -36,7 +37,7 @@ export const AddTaskDialog = ({ open, onOpenChange }: AddTaskDialogProps) => {
       onOpenChange(false);
       setFormData({
         descricao: '',
-        vencimento: new Date().toISOString().split('T')[0],
+        vencimento: toLocalISODate(new Date()),
       });
     } catch (error) {
       console.error('Erro ao criar tarefa:', error);

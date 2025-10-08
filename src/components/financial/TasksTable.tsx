@@ -7,6 +7,7 @@ import { Trash2, Calendar, AlertTriangle, Edit } from "lucide-react";
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
 import { TaskFormModal } from "../tasks/TaskFormModal";
 import { useState } from "react";
+import { toLocalISODate, formatDateDisplay } from "@/utils/dateUtils";
 
 interface Task {
   id: string;
@@ -26,10 +27,6 @@ export const TasksTable = ({ tasks }: TasksTableProps) => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
-
   const getStatusBadge = (vencimento: string, concluida: boolean) => {
     if (concluida) {
       return (
@@ -39,7 +36,7 @@ export const TasksTable = ({ tasks }: TasksTableProps) => {
       );
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalISODate(new Date());
     const isOverdue = vencimento < today;
     const isDueToday = vencimento === today;
 
@@ -126,7 +123,7 @@ export const TasksTable = ({ tasks }: TasksTableProps) => {
                   <TableCell className={`font-medium ${task.concluida ? "line-through" : ""}`}>
                     {task.descricao}
                   </TableCell>
-                  <TableCell>{formatDate(task.vencimento)}</TableCell>
+                  <TableCell>{formatDateDisplay(task.vencimento)}</TableCell>
                   <TableCell>
                     {getStatusBadge(task.vencimento, task.concluida)}
                   </TableCell>

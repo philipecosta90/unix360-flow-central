@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useFinancialTasks } from "@/hooks/useFinancialTasks";
 import { useClients } from "@/hooks/useClients";
 import { toast } from "sonner";
+import { toLocalISODate } from "@/utils/dateUtils";
 
 interface Task {
   id: string;
@@ -29,7 +30,7 @@ interface TaskFormModalProps {
 export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) => {
   const [formData, setFormData] = useState({
     descricao: '',
-    vencimento: new Date().toISOString().split('T')[0],
+    vencimento: toLocalISODate(new Date()),
     cliente_id: null as string | null,
     concluida: false,
   });
@@ -41,14 +42,14 @@ export const TaskFormModal = ({ open, onOpenChange, task }: TaskFormModalProps) 
     if (task) {
       setFormData({
         descricao: task.descricao || '',
-        vencimento: task.vencimento || new Date().toISOString().split('T')[0],
+        vencimento: task.vencimento || toLocalISODate(new Date()),
         cliente_id: task.cliente_id || null,
         concluida: task.concluida || false,
       });
     } else {
       setFormData({
         descricao: '',
-        vencimento: new Date().toISOString().split('T')[0],
+        vencimento: toLocalISODate(new Date()),
         cliente_id: null,
         concluida: false,
       });

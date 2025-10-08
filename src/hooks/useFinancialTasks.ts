@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { toLocalISODate } from "@/utils/dateUtils";
 
 interface Task {
   id: string;
@@ -183,12 +184,12 @@ export const useFinancialTasks = () => {
     total: tasks.length,
     overdue: tasks.filter(task => {
       if (task.concluida) return false;
-      const today = new Date().toISOString().split('T')[0];
+      const today = toLocalISODate(new Date());
       return task.vencimento < today;
     }).length,
     dueToday: tasks.filter(task => {
       if (task.concluida) return false;
-      const today = new Date().toISOString().split('T')[0];
+      const today = toLocalISODate(new Date());
       return task.vencimento === today;
     }).length,
     completed: tasks.filter(task => task.concluida).length,

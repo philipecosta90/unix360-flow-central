@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { useState } from "react";
 import { CheckCircle, AlertTriangle } from "lucide-react";
-import { useCRMProspects } from "@/hooks/useCRMProspects";
+import { useClients } from "@/hooks/useClients";
+import { toLocalISODate } from "@/utils/dateUtils";
 
 interface Task {
   id: string;
@@ -21,23 +22,16 @@ interface TasksCalendarProps {
 
 export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const { data: prospects = [] } = useCRMProspects({
-    search: "",
-    tags: [],
-    responsavel: "",
-    stage: "",
-    startDate: undefined,
-    endDate: undefined,
-  });
+  const { data: clientes = [] } = useClients();
 
   const getClientName = (clientId: string | null) => {
     if (!clientId) return "Não vinculado";
-    const client = prospects.find(p => p.id === clientId);
-    return (client?.nome ?? "Cliente não encontrado").toString();
+    const client = clientes.find(c => c.id === clientId);
+    return client?.nome || "Cliente não encontrado";
   };
 
   const getTasksForDate = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = toLocalISODate(date);
     return tasks.filter(task => (task.vencimento ?? "").toString() === dateString);
   };
 
@@ -67,13 +61,13 @@ export const TasksCalendar = ({ tasks }: TasksCalendarProps) => {
 
   const isOverdue = (vencimento: string) => {
     const vencimentoSeguro = (vencimento ?? "").toString();
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalISODate(new Date());
     return vencimentoSeguro < today;
   };
 
   const isDueToday = (vencimento: string) => {
     const vencimentoSeguro = (vencimento ?? "").toString();
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalISODate(new Date());
     return vencimentoSeguro === today;
   };
 
