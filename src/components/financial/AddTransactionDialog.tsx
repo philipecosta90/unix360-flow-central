@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
+import { useClients } from "@/hooks/useClients";
 import { toast } from "sonner";
 
 interface AddTransactionDialogProps {
@@ -23,9 +24,11 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
     data: new Date().toISOString().split('T')[0],
     a_receber: false,
     recorrente: false,
+    cliente_id: '',
   });
 
   const { createTransaction } = useFinancialTransactions();
+  const { data: clientes = [] } = useClients();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +40,14 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
 
     try {
       await createTransaction.mutateAsync({
-        ...formData,
+        tipo: formData.tipo,
+        descricao: formData.descricao,
         valor: parseFloat(formData.valor),
+        categoria: formData.categoria,
+        data: formData.data,
+        a_receber: formData.a_receber,
+        recorrente: formData.recorrente,
+        cliente_id: formData.cliente_id || undefined,
       });
       
       toast.success("Transação criada com sucesso!");
@@ -51,6 +60,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
         data: new Date().toISOString().split('T')[0],
         a_receber: false,
         recorrente: false,
+        cliente_id: '',
       });
     } catch (error) {
       console.error('Erro ao criar transação:', error);
@@ -117,6 +127,23 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
                 <SelectItem value="Tecnologia">Tecnologia</SelectItem>
                 <SelectItem value="Administrativo">Administrativo</SelectItem>
                 <SelectItem value="Outros">Outros</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cliente">Cliente (Opcional)</Label>
+            <Select value={formData.cliente_id} onValueChange={(value) => setFormData({...formData, cliente_id: value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Nenhum</SelectItem>
+                {clientes.map((cliente) => (
+                  <SelectItem key={cliente.id} value={cliente.id}>
+                    {cliente.nome}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

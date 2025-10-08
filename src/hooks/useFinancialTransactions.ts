@@ -16,6 +16,9 @@ interface FinancialTransaction {
   updated_at: string;
   created_by: string | null;
   cliente_id: string | null;
+  clientes?: {
+    nome: string;
+  } | null;
 }
 
 interface CreateTransactionData {
@@ -62,7 +65,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       
       let query = supabase
         .from('financeiro_lancamentos')
-        .select('*')
+        .select('*, clientes(nome)')
         .eq('empresa_id', userProfile.empresa_id);
 
       if (effectiveFilters.startDate) {
@@ -89,7 +92,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       
       const { data, error } = await supabase
         .from('financeiro_lancamentos')
-        .select('*')
+        .select('*, clientes(nome)')
         .eq('empresa_id', userProfile.empresa_id);
 
       if (error) throw error;

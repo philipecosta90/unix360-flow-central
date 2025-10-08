@@ -75,13 +75,18 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
       // Usar os valores corretos para o tipo conforme o check constraint do banco
       const tipoCorreto = formData.tipo === "receita" ? "entrada" : "saida";
       
+      // Incluir o nome do cliente na descrição se disponível
+      const descricaoCompleta = clientName 
+        ? `${formData.descricao} - Cliente: ${clientName}`
+        : formData.descricao;
+      
        const { error } = await supabase
          .from('financeiro_lancamentos')
          .insert([{
            empresa_id: userProfile.empresa_id,
            tipo: tipoCorreto,
            categoria: formData.categoria,
-           descricao: formData.descricao,
+           descricao: descricaoCompleta,
            valor: parseFloat(formData.valor),
            data: formData.data,
            a_receber: formData.aReceber,

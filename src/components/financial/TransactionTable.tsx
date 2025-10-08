@@ -11,6 +11,9 @@ interface Transaction {
   data: string;
   a_receber: boolean;
   recorrente: boolean;
+  clientes?: {
+    nome: string;
+  } | null;
 }
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -47,6 +50,7 @@ export const TransactionTable = ({
           <TableRow className="border-b border-foreground/15">
             <TableHead>Data</TableHead>
             <TableHead>Descrição</TableHead>
+            <TableHead>Cliente</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Categoria</TableHead>
             <TableHead>Valor</TableHead>
@@ -57,12 +61,15 @@ export const TransactionTable = ({
         </TableHeader>
         <TableBody>
           {transactions.length === 0 ? <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                 Nenhuma transação encontrada
               </TableCell>
             </TableRow> : transactions.map(transaction => <TableRow key={transaction.id} className="border-b border-foreground/10 last:border-0">
                 <TableCell>{formatDate(transaction.data)}</TableCell>
                 <TableCell className="font-medium">{transaction.descricao}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {transaction.clientes?.nome || '-'}
+                </TableCell>
                 <TableCell>
                   <Badge variant="outline" className={getTypeColor(transaction.tipo)}>
                     {transaction.tipo === 'entrada' ? 'Receita' : 'Despesa'}
