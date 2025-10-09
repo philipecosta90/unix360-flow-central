@@ -24,7 +24,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
     data: new Date().toISOString().split('T')[0],
     a_receber: false,
     recorrente: false,
-    cliente_id: '',
+    cliente_id: 'none',
   });
 
   const { createTransaction } = useFinancialTransactions();
@@ -47,7 +47,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
         data: formData.data,
         a_receber: formData.a_receber,
         recorrente: formData.recorrente,
-        cliente_id: formData.cliente_id || undefined,
+        cliente_id: formData.cliente_id !== 'none' ? formData.cliente_id : undefined,
       });
       
       toast.success("Transação criada com sucesso!");
@@ -60,7 +60,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
         data: new Date().toISOString().split('T')[0],
         a_receber: false,
         recorrente: false,
-        cliente_id: '',
+        cliente_id: 'none',
       });
     } catch (error) {
       console.error('Erro ao criar transação:', error);
@@ -138,7 +138,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
                 <SelectValue placeholder="Selecione um cliente" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum</SelectItem>
+                <SelectItem value="none">Nenhum</SelectItem>
                 {clientes.map((cliente) => (
                   <SelectItem key={cliente.id} value={cliente.id}>
                     {cliente.nome}
