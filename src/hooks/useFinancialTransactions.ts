@@ -99,6 +99,8 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       return data as FinancialTransaction[];
     },
     enabled: !!userProfile?.empresa_id,
+    staleTime: 0, // Sempre buscar dados frescos
+    gcTime: 0,    // Não manter em cache
   });
 
   // Buscar tarefas vencidas para alertas
@@ -175,14 +177,23 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       return id;
     },
     onSuccess: (deletedId) => {
-      // Forçar revalidação imediata das queries
+      // Atualização otimista: remover do cache imediatamente
+      queryClient.setQueryData(
+        ['financial-transactions', userProfile?.empresa_id, effectiveFilters],
+        (old: FinancialTransaction[] | undefined) => 
+          old?.filter(t => t.id !== deletedId) ?? []
+      );
+      
+      queryClient.setQueryData(
+        ['all-financial-transactions', userProfile?.empresa_id],
+        (old: FinancialTransaction[] | undefined) => 
+          old?.filter(t => t.id !== deletedId) ?? []
+      );
+      
+      // Invalidar para garantir sincronização
       queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
-      
-      // Revalidar imediatamente para atualizar a UI
-      queryClient.refetchQueries({ queryKey: ['financial-transactions'] });
-      queryClient.refetchQueries({ queryKey: ['all-financial-transactions'] });
     },
   });
 
