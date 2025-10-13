@@ -28,7 +28,7 @@ export const FinancialModule = () => {
     transactions,
     isLoading,
     kpis,
-    categoryData,
+    monthlyRevenueData,
     overdueTransactions,
     overdueCount,
     deleteTransaction
@@ -104,8 +104,8 @@ export const FinancialModule = () => {
         </div>
       </div>
 
-      {/* Gráfico por Categoria */}
-      <FinancialChart data={categoryData} />
+      {/* Gráfico de Faturamento Mensal */}
+      <FinancialChart data={monthlyRevenueData} />
 
       <AddTransactionDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
 

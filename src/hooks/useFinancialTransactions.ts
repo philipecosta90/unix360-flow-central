@@ -226,6 +226,30 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     return acc;
   }, {} as Record<string, { categoria: string; tipo: string; valor: number }>);
 
+  // Agregar faturamento mês a mês (apenas receitas efetivadas)
+  const monthlyRevenueData = allTransactions
+    .filter(t => t.tipo === 'entrada' && !t.a_receber)
+    .reduce((acc, transaction) => {
+      const date = new Date(transaction.data);
+      const monthKey = date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }).toUpperCase().replace('.', '');
+      const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!acc[yearMonth]) {
+        acc[yearMonth] = {
+          mes: monthKey,
+          faturamento: 0,
+          sortKey: yearMonth,
+        };
+      }
+      acc[yearMonth].faturamento += Number(transaction.valor);
+      return acc;
+    }, {} as Record<string, { mes: string; faturamento: number; sortKey: string }>);
+
+  // Ordenar por data (mais antigo primeiro) e remover sortKey
+  const sortedMonthlyData = Object.values(monthlyRevenueData)
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+    .map(({ mes, faturamento }) => ({ mes, faturamento }));
+
   return {
     transactions,
     isLoading,
@@ -236,6 +260,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       pendingRevenue,
     },
     categoryData: Object.values(categoryData),
+    monthlyRevenueData: sortedMonthlyData,
     overdueTransactions,
     overdueCount: overdueTransactions.length,
     overdueTasks,
