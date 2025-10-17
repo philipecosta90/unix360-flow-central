@@ -925,6 +925,30 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vendas_fechadas: {
         Row: {
           created_at: string
@@ -1006,8 +1030,19 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_highest_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       has_active_subscription: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
         Returns: boolean
       }
       is_active_user: {
@@ -1040,6 +1075,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "editor" | "operacional" | "visualizacao"
       nivel_permissao: "admin" | "operacional" | "visualizacao"
       status_cliente: "ativo" | "inativo" | "lead" | "prospecto"
     }
@@ -1169,6 +1205,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "editor", "operacional", "visualizacao"],
       nivel_permissao: ["admin", "operacional", "visualizacao"],
       status_cliente: ["ativo", "inativo", "lead", "prospecto"],
     },

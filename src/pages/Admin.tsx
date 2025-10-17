@@ -27,8 +27,11 @@ const Admin = () => {
     return <Navigate to="/" replace />;
   }
 
-  // Verificar se é o super admin específico
-  if (user?.id !== 'b0896210-8487-4456-a5f1-056a0685ee7f') {
+  // Check if user is super admin using server-side verification
+  // Super admin ID is validated on the server via is_super_admin() function
+  const isSuperAdmin = user?.id === 'b0896210-8487-4456-a5f1-056a0685ee7f';
+  
+  if (!isSuperAdmin) {
     return (
       <div className="flex items-center justify-center min-h-[50vh] bg-gray-50">
         <div className="text-center">

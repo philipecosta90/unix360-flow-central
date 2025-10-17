@@ -30,14 +30,25 @@ export const hasPermission = (
     'visualizacao': 1
   };
   
-  const userLevel = permissionHierarchy[userProfile.nivel_permissao];
+  // Use roles array if available, otherwise fall back to nivel_permissao for backward compatibility
+  const userRoles = userProfile.roles || [userProfile.nivel_permissao];
+  const highestRole = userRoles.reduce((highest, role) => {
+    const roleLevel = permissionHierarchy[role];
+    const highestLevel = permissionHierarchy[highest];
+    return roleLevel > highestLevel ? role : highest;
+  }, 'visualizacao' as const);
+  
+  const userLevel = permissionHierarchy[highestRole];
   const requiredLevel = permissionHierarchy[requiredPermission];
   
   return userLevel >= requiredLevel;
 };
 
 export const isAdmin = (userProfile: UserProfile | null): boolean => {
-  return userProfile?.nivel_permissao === 'admin' && userProfile?.ativo === true;
+  if (!userProfile || !userProfile.ativo) return false;
+  // Check roles array if available, otherwise fall back to nivel_permissao
+  const userRoles = userProfile.roles || [userProfile.nivel_permissao];
+  return userRoles.includes('admin');
 };
 
 export const canEditData = (userProfile: UserProfile | null): boolean => {

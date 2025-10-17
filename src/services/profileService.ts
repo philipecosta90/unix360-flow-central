@@ -28,6 +28,17 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       `)
       .eq('user_id', userId)
       .maybeSingle();
+    
+    // Fetch user roles from user_roles table
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
+    
+    // Add roles to profile data
+    if (data && rolesData) {
+      (data as any).roles = rolesData.map((r: any) => r.role);
+    }
 
     console.log('🔍 Resposta da query:', { data, error });
 
@@ -63,6 +74,17 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
         `)
         .eq('user_id', userId)
         .maybeSingle();
+      
+      // Fetch roles for the new profile
+      const { data: newRolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      // Add roles to new profile data
+      if (newData && newRolesData) {
+        (newData as any).roles = newRolesData.map((r: any) => r.role);
+      }
       
       console.log('🔍 Segunda tentativa:', { data: newData, error: newError });
       

@@ -10,7 +10,8 @@ export interface UserProfile {
   telefone?: string;
   email: string;
   empresa_id: string;
-  nivel_permissao: 'admin' | 'editor' | 'visualizacao' | 'operacional';
+  nivel_permissao: 'admin' | 'editor' | 'visualizacao' | 'operacional'; // DEPRECATED: Use roles instead
+  roles?: Array<'admin' | 'editor' | 'visualizacao' | 'operacional'>; // New: Fetched from user_roles table
   ativo: boolean;
   created_at: string;
   updated_at: string;
