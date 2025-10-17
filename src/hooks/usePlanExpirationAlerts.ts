@@ -51,7 +51,11 @@ export const usePlanExpirationAlerts = () => {
         }
       });
 
-      setExpiringPlans(expirations);
+      // Ordenar por dias até expiração (menor para maior = mais urgente primeiro)
+      const sortedExpirations = expirations.sort((a, b) => 
+        a.daysUntilExpiration - b.daysUntilExpiration
+      );
+      setExpiringPlans(sortedExpirations);
 
       // Mostrar notificações para planos que vencem em até 7 dias
       expirations.forEach(expiration => {
