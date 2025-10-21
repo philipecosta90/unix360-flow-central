@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePlanExpirationAlerts } from "@/hooks/usePlanExpirationAlerts";
+import { formatDateDisplay } from "@/utils/dateUtils";
 import { Loader2, Plus, Search, CalendarDays, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 interface Cliente {
   id: string;
@@ -338,7 +339,7 @@ export const ClientsModule = () => {
                            <div className="flex items-center gap-2 text-sm">
                              <CalendarDays className="w-4 h-4 text-muted-foreground" />
                              <span className="text-muted-foreground">
-                               Plano vence: {new Date(client.data_fim_plano).toLocaleDateString('pt-BR')}
+                               Plano vence: {formatDateDisplay(client.data_fim_plano)}
                              </span>
                              {(() => {
                                const today = new Date();
