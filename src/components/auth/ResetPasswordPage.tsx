@@ -165,11 +165,18 @@ export const ResetPasswordPage = () => {
           </div>
           <CardTitle>Redefinir Senha</CardTitle>
           <CardDescription>
-            Digite sua nova senha abaixo
+            Digite sua nova senha abaixo. Este link expira em 60 minutos.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResetPassword} className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Importante:</strong> O link de recuperação expira em 60 minutos. Se expirar, solicite um novo link.
+              </AlertDescription>
+            </Alert>
+            
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
               <AlertDescription>

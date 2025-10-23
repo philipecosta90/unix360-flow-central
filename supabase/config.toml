@@ -11,9 +11,13 @@ max_rows = 1000
 [auth]
 enabled = true
 port = 54324
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
-jwt_expiry = 3600
+site_url = "https://app.unix360.com.br"
+additional_redirect_urls = [
+  "https://app.unix360.com.br/**",
+  "https://id-preview--80384adc-3096-43a9-9362-e214605557ea.lovable.app/**",
+  "http://localhost:3000"
+]
+jwt_expiry = 86400
 enable_signup = true
 email_double_confirm_changes = true
 enable_manual_linking = false

@@ -133,6 +133,16 @@ export const LoginFormTab = ({
       });
 
       if (error) {
+        // Tratar erros específicos
+        if (error.message.includes('rate_limit')) {
+          toast({
+            title: "Muitas tentativas",
+            description: "Aguarde alguns minutos antes de solicitar um novo link.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         toast({
           title: "Erro ao enviar email",
           description: "Não foi possível enviar o email de recuperação. Verifique o endereço informado.",
@@ -142,8 +152,8 @@ export const LoginFormTab = ({
       }
 
       toast({
-        title: "Email enviado!",
-        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+        title: "Email enviado com sucesso!",
+        description: "Verifique sua caixa de entrada. O link expira em 60 minutos.",
       });
       
       setShowForgotPassword(false);
