@@ -75,14 +75,13 @@ export const useDashboardData = () => {
       // 4. Saldo do Mês (calculado)
       const saldoMensal = receitaMensal - despesasMensal;
 
-      // 5. A Receber (lançamentos futuros com a_receber = true)
+      // 5. A Receber (lançamentos com a_receber = true)
       const { data: aReceberData } = await supabase
         .from('financeiro_lancamentos')
         .select('valor')
         .eq('empresa_id', empresaId)
         .eq('tipo', 'entrada')
-        .eq('a_receber', true)
-        .gt('data', hojeStr);
+        .eq('a_receber', true);
 
       const aReceber = aReceberData?.reduce((acc, r) => acc + Number(r.valor), 0) || 0;
 

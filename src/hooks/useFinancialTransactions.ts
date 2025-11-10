@@ -208,11 +208,12 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     .filter(t => t.tipo === 'saida')
     .reduce((sum, t) => sum + Number(t.valor), 0);
 
-  // A Receber: apenas transações futuras com a_receber = true
-  const today = new Date().toISOString().split('T')[0];
+  // A Receber: todas as transações com a_receber = true (independente da data)
   const pendingRevenue = allTransactions
-    .filter(t => t.tipo === 'entrada' && t.a_receber && t.data > today)
+    .filter(t => t.tipo === 'entrada' && t.a_receber)
     .reduce((sum, t) => sum + Number(t.valor), 0);
+  
+  const today = new Date().toISOString().split('T')[0];
 
   const balance = totalRevenue - totalExpenses;
 
