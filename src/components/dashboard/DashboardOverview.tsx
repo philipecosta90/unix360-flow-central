@@ -3,6 +3,8 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProximasTarefas } from "./ProximasTarefas";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle } from "lucide-react";
 
 export const DashboardOverview = () => {
   const { data: dashboardData, isLoading } = useDashboardData();
@@ -12,6 +14,44 @@ export const DashboardOverview = () => {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  const renderReceivablesBadges = (kpi: any) => {
+    if (kpi.title !== "A Receber") return null;
+    
+    const hasOverdue = kpi.hasOverdue;
+    const overdueAmount = kpi.overdueAmount || 0;
+    const currentAmount = kpi.currentAmount || 0;
+    const overdueCount = kpi.overdueCount || 0;
+    
+    if (!hasOverdue && currentAmount === 0) {
+      return (
+        <p className="text-xs text-muted-foreground mt-2">
+          Nenhum valor pendente
+        </p>
+      );
+    }
+    
+    return (
+      <div className="flex flex-wrap gap-2 mt-3">
+        {currentAmount > 0 && (
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+            <span className="text-xs">
+              Em dia: {formatCurrency(currentAmount)}
+            </span>
+          </Badge>
+        )}
+        
+        {hasOverdue && (
+          <Badge variant="destructive" className="flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            <span className="text-xs">
+              Vencidos: {formatCurrency(overdueAmount)} ({overdueCount})
+            </span>
+          </Badge>
+        )}
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -80,7 +120,11 @@ export const DashboardOverview = () => {
       change: "",
       positive: true,
       icon: "⏰",
-      color: "text-yellow-600"
+      color: "text-yellow-600",
+      hasOverdue: (dashboardData?.aReceberVencidos || 0) > 0,
+      overdueAmount: dashboardData?.aReceberVencidos || 0,
+      currentAmount: dashboardData?.aReceberEmDia || 0,
+      overdueCount: dashboardData?.quantidadeVencidos || 0
     },
     {
       title: "Tarefas Pendentes",
@@ -136,6 +180,7 @@ export const DashboardOverview = () => {
                   Referente ao mês atual
                 </p>
               )}
+              {renderReceivablesBadges(kpi)}
             </CardContent>
           </Card>
         ))}

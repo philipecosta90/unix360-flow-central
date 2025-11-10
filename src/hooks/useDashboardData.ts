@@ -9,6 +9,9 @@ interface DashboardData {
   despesasMensal: number;
   saldoMensal: number;
   aReceber: number;
+  aReceberVencidos: number;
+  aReceberEmDia: number;
+  quantidadeVencidos: number;
   tarefasPendentes: number;
   tarefasConcluidas: number;
   propostasEnviadas: number;
@@ -21,19 +24,22 @@ export const useDashboardData = () => {
   return useQuery({
     queryKey: ['dashboard-data', userProfile?.empresa_id],
     queryFn: async (): Promise<DashboardData> => {
-      if (!userProfile?.empresa_id) {
-        return {
-          clientesAtivos: 0,
-          receitaMensal: 0,
-          despesasMensal: 0,
-          saldoMensal: 0,
-          aReceber: 0,
-          tarefasPendentes: 0,
-          tarefasConcluidas: 0,
-          propostasEnviadas: 0,
-          atividadesRecentes: []
-        };
-      }
+    if (!userProfile?.empresa_id) {
+      return {
+        clientesAtivos: 0,
+        receitaMensal: 0,
+        despesasMensal: 0,
+        saldoMensal: 0,
+        aReceber: 0,
+        aReceberVencidos: 0,
+        aReceberEmDia: 0,
+        quantidadeVencidos: 0,
+        tarefasPendentes: 0,
+        tarefasConcluidas: 0,
+        propostasEnviadas: 0,
+        atividadesRecentes: []
+      };
+    }
 
       const empresaId = userProfile.empresa_id;
       
@@ -85,6 +91,29 @@ export const useDashboardData = () => {
 
       const aReceber = aReceberData?.reduce((acc, r) => acc + Number(r.valor), 0) || 0;
 
+      // 5A. A Receber VENCIDOS (data < hoje)
+      const { data: aReceberVencidosData } = await supabase
+        .from('financeiro_lancamentos')
+        .select('valor')
+        .eq('empresa_id', empresaId)
+        .eq('tipo', 'entrada')
+        .eq('a_receber', true)
+        .lt('data', hojeStr);
+
+      const aReceberVencidos = aReceberVencidosData?.reduce((acc, r) => acc + Number(r.valor), 0) || 0;
+      const quantidadeVencidos = aReceberVencidosData?.length || 0;
+
+      // 5B. A Receber EM DIA (data >= hoje)
+      const { data: aReceberEmDiaData } = await supabase
+        .from('financeiro_lancamentos')
+        .select('valor')
+        .eq('empresa_id', empresaId)
+        .eq('tipo', 'entrada')
+        .eq('a_receber', true)
+        .gte('data', hojeStr);
+
+      const aReceberEmDia = aReceberEmDiaData?.reduce((acc, r) => acc + Number(r.valor), 0) || 0;
+
       // 6. Tarefas Pendentes
       const { count: tarefasPendentes } = await supabase
         .from('financeiro_tarefas')
@@ -115,6 +144,9 @@ export const useDashboardData = () => {
         despesasMensal,
         saldoMensal,
         aReceber,
+        aReceberVencidos,
+        aReceberEmDia,
+        quantidadeVencidos,
         tarefasPendentes: tarefasPendentes || 0,
         tarefasConcluidas: tarefasConcluidas || 0,
         propostasEnviadas: propostasEnviadas || 0,
