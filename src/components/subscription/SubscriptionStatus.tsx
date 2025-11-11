@@ -12,9 +12,9 @@ export const SubscriptionStatus = () => {
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-3">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
           </div>
         </CardContent>
       </Card>
@@ -82,68 +82,52 @@ export const SubscriptionStatus = () => {
 
   return (
     <Card className={`${showExpiredWarning ? 'border-red-200 bg-red-50' : showTrialWarning ? 'border-orange-200 bg-orange-50' : ''}`}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          {getStatusIcon()}
-          Status da Assinatura
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <Badge className={`${getStatusColor()} text-white`}>
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          {/* Status Info - Lado Esquerdo */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              {getStatusIcon()}
+              <span className="text-sm font-medium">Status:</span>
+            </div>
+            <Badge className={`${getStatusColor()} text-white text-xs`}>
               {getStatusText()}
             </Badge>
-            <p className="text-sm text-muted-foreground mt-1">
+            <span className="text-xs text-muted-foreground">
               Plano: {subscriptionStatus.plan}
-            </p>
+            </span>
           </div>
-        </div>
 
-        {subscriptionStatus.status === 'trial' && (
-          <div className="space-y-2">
-            <p className="text-sm">
-              Você está no período de trial gratuito de 7 dias.
-            </p>
-            {subscriptionStatus.trialEndDate && (
-              <p className="text-xs text-muted-foreground">
-                Trial expira em: {subscriptionStatus.trialEndDate.toLocaleDateString('pt-BR')}
-              </p>
-            )}
+          {/* Warnings e Botão - Lado Direito */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Warning Compacto */}
             {showTrialWarning && (
-              <div className="bg-orange-100 border border-orange-300 rounded-md p-3">
-                <p className="text-sm text-orange-800 font-medium">
-                  ⚠️ Seu trial expira em {subscriptionStatus.daysRemaining} dias!
-                </p>
-                <p className="text-xs text-orange-700 mt-1">
-                  Assine agora para continuar usando todas as funcionalidades.
-                </p>
+              <div className="flex items-center gap-1 text-xs text-orange-700 bg-orange-100 px-2 py-1 rounded">
+                <AlertTriangle className="h-3 w-3" />
+                <span>Trial expira em {subscriptionStatus.daysRemaining} dias</span>
               </div>
             )}
-          </div>
-        )}
+            
+            {showExpiredWarning && (
+              <div className="flex items-center gap-1 text-xs text-red-700 bg-red-100 px-2 py-1 rounded">
+                <AlertTriangle className="h-3 w-3" />
+                <span>Assinatura expirada - apenas visualização</span>
+              </div>
+            )}
 
-        {showExpiredWarning && (
-          <div className="bg-red-100 border border-red-300 rounded-md p-3">
-            <p className="text-sm text-red-800 font-medium">
-              🚫 Sua assinatura expirou!
-            </p>
-            <p className="text-xs text-red-700 mt-1">
-              Você pode visualizar os dados, mas não pode fazer alterações. Assine para reativar todas as funcionalidades.
-            </p>
+            {/* Botão de Assinatura */}
+            {shouldShowSubscribeButton() && (
+              <Button 
+                onClick={handleSubscribe}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg"
+                size="sm"
+              >
+                <CreditCard className="h-3 w-3 mr-1" />
+                ASSINE JÁ
+              </Button>
+            )}
           </div>
-        )}
-
-        {shouldShowSubscribeButton() && (
-          <Button 
-            onClick={handleSubscribe}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
-            size="lg"
-          >
-            <CreditCard className="h-4 w-4 mr-2" />
-            ASSINE JÁ
-          </Button>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
