@@ -6,6 +6,7 @@ import { useFinancialTasks } from "@/hooks/useFinancialTasks";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { TasksTable } from "./TasksTable";
 import { TasksStats } from "./TasksStats";
+import { SubscriptionGuard } from "@/components/subscription/SubscriptionGuard";
 
 export const TasksModule = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -22,13 +23,15 @@ export const TasksModule = () => {
           <h1 className="text-2xl font-bold">Tarefas Financeiras</h1>
           <p className="text-gray-600">Gerencie suas tarefas e prazos financeiros</p>
         </div>
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-[#43B26D] hover:bg-[#37A05B]"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Tarefa
-        </Button>
+        <SubscriptionGuard action="criar novas tarefas">
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-[#43B26D] hover:bg-[#37A05B]"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Tarefa
+          </Button>
+        </SubscriptionGuard>
       </div>
 
       <TasksStats stats={stats} />
@@ -39,10 +42,12 @@ export const TasksModule = () => {
         </div>
       </div>
 
-      <AddTaskDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-      />
+      <SubscriptionGuard action="criar novas tarefas">
+        <AddTaskDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+        />
+      </SubscriptionGuard>
     </div>
   );
 };
