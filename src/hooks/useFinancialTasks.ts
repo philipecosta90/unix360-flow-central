@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { toLocalISODate } from "@/utils/dateUtils";
+import { useAuth } from "@/hooks/useAuth";
+import { canMakeChanges } from "@/utils/securityUtils";
 
 interface Task {
   id: string;
@@ -33,6 +35,7 @@ interface UpdateTaskData {
 
 export const useFinancialTasks = () => {
   const queryClient = useQueryClient();
+  const { userProfile } = useAuth();
 
   // Buscar tarefas
   const { data: tasks = [], isLoading } = useQuery({
@@ -58,6 +61,14 @@ export const useFinancialTasks = () => {
   // Criar tarefa
   const createTask = useMutation({
     mutationFn: async (taskData: CreateTaskData) => {
+      // Verificar se o usuário tem assinatura ativa
+      if (!canMakeChanges(userProfile)) {
+        toast.error('Assinatura necessária', {
+          description: 'Você precisa de uma assinatura ativa para criar tarefas.'
+        });
+        throw new Error('Assinatura necessária para criar tarefas');
+      }
+
       console.log('Criando nova tarefa:', taskData);
 
       // Buscar dados do usuário atual
@@ -121,6 +132,14 @@ export const useFinancialTasks = () => {
   // Atualizar tarefa
   const updateTask = useMutation({
     mutationFn: async ({ id, ...updates }: UpdateTaskData) => {
+      // Verificar se o usuário tem assinatura ativa
+      if (!canMakeChanges(userProfile)) {
+        toast.error('Assinatura necessária', {
+          description: 'Você precisa de uma assinatura ativa para atualizar tarefas.'
+        });
+        throw new Error('Assinatura necessária para atualizar tarefas');
+      }
+
       console.log('Atualizando tarefa:', id, updates);
       
       const { data, error } = await supabase
@@ -152,6 +171,14 @@ export const useFinancialTasks = () => {
   // Excluir tarefa
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
+      // Verificar se o usuário tem assinatura ativa
+      if (!canMakeChanges(userProfile)) {
+        toast.error('Assinatura necessária', {
+          description: 'Você precisa de uma assinatura ativa para excluir tarefas.'
+        });
+        throw new Error('Assinatura necessária para excluir tarefas');
+      }
+
       console.log('Excluindo tarefa:', id);
       
       const { error } = await supabase
