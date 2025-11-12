@@ -8,6 +8,7 @@ import { useClients } from "@/hooks/useClients";
 import { TaskFormModal } from "./TaskFormModal";
 import { useState } from "react";
 import { toLocalISODate, formatDateDisplay } from "@/utils/dateUtils";
+import { SubscriptionGuard } from "@/components/subscription/SubscriptionGuard";
 
 interface Task {
   id: string;
@@ -166,40 +167,46 @@ export const TasksList = ({ tasks }: TasksListProps) => {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditTask(task)}
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Editar
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleToggleComplete(task.id, !task.concluida)}
-                              className={task.concluida ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
-                            >
-                              {task.concluida ? "Reabrir" : "Concluir"}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={async () => {
-                                if (confirm("Tem certeza que deseja excluir esta tarefa?")) {
-                                  try {
-                                    await deleteTask.mutateAsync(task.id);
-                                  } catch (error) {
-                                    console.error('Erro ao excluir tarefa:', error);
+                            <SubscriptionGuard action="editar tarefas">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditTask(task)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Editar
+                              </Button>
+                            </SubscriptionGuard>
+                            <SubscriptionGuard action="atualizar tarefas">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleToggleComplete(task.id, !task.concluida)}
+                                className={task.concluida ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
+                              >
+                                {task.concluida ? "Reabrir" : "Concluir"}
+                              </Button>
+                            </SubscriptionGuard>
+                            <SubscriptionGuard action="excluir tarefas">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                  if (confirm("Tem certeza que deseja excluir esta tarefa?")) {
+                                    try {
+                                      await deleteTask.mutateAsync(task.id);
+                                    } catch (error) {
+                                      console.error('Erro ao excluir tarefa:', error);
+                                    }
                                   }
-                                }
-                              }}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Excluir
-                            </Button>
+                                }}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Excluir
+                              </Button>
+                            </SubscriptionGuard>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -212,11 +219,13 @@ export const TasksList = ({ tasks }: TasksListProps) => {
         </CardContent>
       </Card>
 
-      <TaskFormModal
-        open={showEditModal}
-        onOpenChange={handleCloseEditModal}
-        task={editingTask}
-      />
+      <SubscriptionGuard action="editar tarefas">
+        <TaskFormModal
+          open={showEditModal}
+          onOpenChange={handleCloseEditModal}
+          task={editingTask}
+        />
+      </SubscriptionGuard>
     </>
   );
 };
