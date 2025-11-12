@@ -31,7 +31,8 @@ export const FinancialModule = () => {
     monthlyRevenueData,
     overdueTransactions,
     overdueCount,
-    deleteTransaction
+    deleteTransaction,
+    updateTransaction
   } = useFinancialTransactions(filters);
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta transação?')) {
@@ -49,6 +50,34 @@ export const FinancialModule = () => {
     setEditingTransaction(transaction);
     setIsEditDialogOpen(true);
   };
+
+  const handleToggleReceived = async (id: string, currentStatus: boolean) => {
+    try {
+      const transaction = transactions.find(t => t.id === id);
+      if (!transaction) {
+        toast.error("Transação não encontrada");
+        return;
+      }
+
+      await updateTransaction.mutateAsync({
+        id: transaction.id,
+        tipo: transaction.tipo,
+        descricao: transaction.descricao,
+        valor: transaction.valor,
+        categoria: transaction.categoria,
+        data: transaction.data,
+        a_receber: false,
+        recorrente: transaction.recorrente,
+        cliente_id: transaction.cliente_id,
+      });
+
+      toast.success("Transação marcada como recebida! 💰");
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      toast.error("Erro ao atualizar status da transação");
+    }
+  };
+
   const handleClearFilters = () => {
     setStartDate("");
     setEndDate("");
@@ -100,7 +129,7 @@ export const FinancialModule = () => {
           </p>
         </div>
         <div className="p-0 sm:p-6 bg-card">
-          <TransactionTable transactions={transactions} onDelete={handleDelete} onEdit={handleEdit} />
+          <TransactionTable transactions={transactions} onDelete={handleDelete} onEdit={handleEdit} onToggleReceived={handleToggleReceived} />
         </div>
       </div>
 

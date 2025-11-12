@@ -55,6 +55,21 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
     }
   }, [transaction]);
 
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setFormData({
+        tipo: 'entrada',
+        descricao: '',
+        valor: '',
+        categoria: '',
+        data: new Date().toISOString().split('T')[0],
+        a_receber: false,
+        recorrente: false,
+      });
+    }
+  }, [open]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -82,7 +97,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent key={transaction?.id || 'new'} className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Editar Transação</DialogTitle>
         </DialogHeader>

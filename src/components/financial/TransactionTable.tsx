@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, RefreshCw, Pencil } from "lucide-react";
+import { Trash2, RefreshCw, Pencil, CheckCircle2 } from "lucide-react";
 interface Transaction {
   id: string;
   tipo: 'entrada' | 'saida';
@@ -19,11 +19,13 @@ interface TransactionTableProps {
   transactions: Transaction[];
   onDelete: (id: string) => void;
   onEdit: (transaction: Transaction) => void;
+  onToggleReceived: (id: string, currentStatus: boolean) => void;
 }
 export const TransactionTable = ({
   transactions,
   onDelete,
-  onEdit
+  onEdit,
+  onToggleReceived
 }: TransactionTableProps) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -87,6 +89,17 @@ export const TransactionTable = ({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
+                    {transaction.tipo === 'entrada' && transaction.a_receber && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onToggleReceived(transaction.id, transaction.a_receber)}
+                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950"
+                        title="Marcar como recebido"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => onEdit(transaction)} className="text-primary hover:text-primary/80">
                       <Pencil className="h-4 w-4" />
                     </Button>
