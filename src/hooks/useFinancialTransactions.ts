@@ -141,9 +141,18 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['financial-transactions'],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['all-financial-transactions'],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['dashboard-data'],
+        refetchType: 'active'
+      });
     },
   });
 
@@ -160,9 +169,18 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['all-financial-transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['financial-transactions'],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['all-financial-transactions'],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['dashboard-data'],
+        refetchType: 'active'
+      });
     },
   });
 

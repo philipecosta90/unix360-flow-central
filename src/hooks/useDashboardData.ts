@@ -155,6 +155,8 @@ export const useDashboardData = () => {
     },
     enabled: !!userProfile?.empresa_id,
     refetchInterval: 30000, // Atualiza a cada 30 segundos
+    staleTime: 0,          // Sempre buscar dados frescos após invalidação
+    gcTime: 0,             // Não manter em cache quando componente desmonta
   });
 };
 
