@@ -2,7 +2,7 @@
  * Converte uma data para string ISO no formato YYYY-MM-DD usando a data local,
  * evitando problemas de timezone que ocorrem com toISOString()
  */
-export const toLocalISODate = (date: Date): string => {
+export const toLocalISODate = (date: Date = new Date()): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -21,4 +21,12 @@ export const formatDateDisplay = (dateString: string): string => {
   } catch {
     return "-";
   }
+};
+
+/**
+ * Parseia uma string de data YYYY-MM-DD como data local (não UTC)
+ */
+export const parseLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-');
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 };

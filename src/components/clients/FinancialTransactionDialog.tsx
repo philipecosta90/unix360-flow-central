@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { toLocalISODate } from "@/utils/dateUtils";
 
 interface FinancialTransactionDialogProps {
   open: boolean;
@@ -28,7 +28,7 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
     categoria: "",
     descricao: "",
     valor: "",
-    data: new Date().toISOString().split('T')[0],
+    data: toLocalISODate(),
     aReceber: false,
     recorrente: false
   });
@@ -110,7 +110,7 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
         categoria: "",
         descricao: "",
         valor: "",
-        data: new Date().toISOString().split('T')[0],
+        data: toLocalISODate(),
         aReceber: false,
         recorrente: false
       });

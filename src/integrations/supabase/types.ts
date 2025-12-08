@@ -70,7 +70,7 @@ export type Database = {
           created_at: string | null
           empresa_id: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           record_id: string | null
           table_name: string
           user_agent: string | null
@@ -81,7 +81,7 @@ export type Database = {
           created_at?: string | null
           empresa_id?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id?: string | null
           table_name: string
           user_agent?: string | null
@@ -92,7 +92,7 @@ export type Database = {
           created_at?: string | null
           empresa_id?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id?: string | null
           table_name?: string
           user_agent?: string | null
@@ -997,12 +997,9 @@ export type Database = {
         Args: { p_empresa_id: string }
         Returns: undefined
       }
-      get_active_user_empresa_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_active_user_empresa_id: { Args: never; Returns: string }
       get_admin_empresa_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           ativa: boolean
           created_at: string
@@ -1015,29 +1012,20 @@ export type Database = {
         }[]
       }
       get_security_report: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           check_name: string
           message: string
           status: boolean
         }[]
       }
-      get_user_by_email: {
-        Args: { user_email: string }
-        Returns: string
-      }
-      get_user_empresa_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_user_by_email: { Args: { user_email: string }; Returns: string }
+      get_user_empresa_id: { Args: never; Returns: string }
       get_user_highest_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      has_active_subscription: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      has_active_subscription: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1045,34 +1033,16 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_active_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_company_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_super_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_active_user: { Args: never; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
+      is_company_admin: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       log_sensitive_access: {
         Args: { p_action: string; p_record_id?: string; p_table_name: string }
         Returns: undefined
       }
-      validate_permission_levels: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      validate_user_empresa_integrity: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      validate_permission_levels: { Args: never; Returns: boolean }
+      validate_user_empresa_integrity: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "editor" | "operacional" | "visualizacao"

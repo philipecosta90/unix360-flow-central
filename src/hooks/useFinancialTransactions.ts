@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toLocalISODate } from "@/utils/dateUtils";
 
 interface FinancialTransaction {
   id: string;
@@ -43,8 +44,8 @@ const getCurrentMonthRange = () => {
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   
   return {
-    startDate: firstDay.toISOString().split('T')[0],
-    endDate: lastDay.toISOString().split('T')[0]
+    startDate: toLocalISODate(firstDay),
+    endDate: toLocalISODate(lastDay)
   };
 };
 
@@ -109,7 +110,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     queryFn: async () => {
       if (!userProfile?.empresa_id) return [];
       
-      const today = new Date().toISOString().split('T')[0];
+      const today = toLocalISODate();
       const { data, error } = await supabase
         .from('financeiro_tarefas')
         .select('*')
@@ -231,7 +232,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
     .filter(t => t.tipo === 'entrada' && t.a_receber)
     .reduce((sum, t) => sum + Number(t.valor), 0);
   
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalISODate();
 
   const balance = totalRevenue - totalExpenses;
 
