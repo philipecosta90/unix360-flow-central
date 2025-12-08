@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 import { toast } from "sonner";
+import { toLocalISODate } from "@/utils/dateUtils";
 
 interface Transaction {
   id: string;
@@ -33,7 +34,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
     descricao: '',
     valor: '',
     categoria: '',
-    data: new Date().toISOString().split('T')[0],
+    data: toLocalISODate(),
     a_receber: false,
     recorrente: false,
   });
@@ -63,7 +64,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
         descricao: '',
         valor: '',
         categoria: '',
-        data: new Date().toISOString().split('T')[0],
+        data: toLocalISODate(),
         a_receber: false,
         recorrente: false,
       });

@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trash2, RefreshCw, Pencil, CheckCircle2 } from "lucide-react";
+import { formatDateDisplay } from "@/utils/dateUtils";
 interface Transaction {
   id: string;
   tipo: 'entrada' | 'saida';
@@ -32,9 +33,6 @@ export const TransactionTable = ({
       style: 'currency',
       currency: 'BRL'
     }).format(value);
-  };
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
   };
   const getTypeColor = (type: string) => {
     return type === "entrada" ? "text-emerald-600" : "text-red-500";
@@ -67,7 +65,7 @@ export const TransactionTable = ({
                 Nenhuma transação encontrada
               </TableCell>
             </TableRow> : transactions.map(transaction => <TableRow key={transaction.id} className="border-b border-foreground/10 last:border-0">
-                <TableCell>{formatDate(transaction.data)}</TableCell>
+                <TableCell>{formatDateDisplay(transaction.data)}</TableCell>
                 <TableCell className="font-medium">{transaction.descricao}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {transaction.clientes?.nome || '-'}

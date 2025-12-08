@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 import { useClients } from "@/hooks/useClients";
 import { toast } from "sonner";
+import { toLocalISODate } from "@/utils/dateUtils";
 
 interface AddTransactionDialogProps {
   open: boolean;
@@ -21,7 +21,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
     descricao: '',
     valor: '',
     categoria: '',
-    data: new Date().toISOString().split('T')[0],
+    data: toLocalISODate(),
     a_receber: false,
     recorrente: false,
     cliente_id: 'none',
@@ -57,7 +57,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
         descricao: '',
         valor: '',
         categoria: '',
-        data: new Date().toISOString().split('T')[0],
+        data: toLocalISODate(),
         a_receber: false,
         recorrente: false,
         cliente_id: 'none',
