@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { ContractDocumentsList } from "./ContractDocumentsList";
+import { formatDateDisplay } from "@/utils/dateUtils";
 
 interface Contract {
   id: string;
@@ -107,21 +108,21 @@ export const ContractDetailDialog = ({ contract, open, onOpenChange }: ContractD
                 <div>
                   <span className="text-gray-600">Início:</span>
                   <span className="ml-2">
-                    {new Date(contract.data_inicio).toLocaleDateString('pt-BR')}
+                    {formatDateDisplay(contract.data_inicio)}
                   </span>
                 </div>
                 {contract.data_fim && (
                   <div>
                     <span className="text-gray-600">Fim:</span>
                     <span className="ml-2">
-                      {new Date(contract.data_fim).toLocaleDateString('pt-BR')}
+                      {formatDateDisplay(contract.data_fim)}
                     </span>
                   </div>
                 )}
                 <div>
                   <span className="text-gray-600">Criado em:</span>
                   <span className="ml-2">
-                    {new Date(contract.created_at).toLocaleDateString('pt-BR')}
+                    {formatDateDisplay(contract.created_at.split('T')[0])}
                   </span>
                 </div>
               </div>
