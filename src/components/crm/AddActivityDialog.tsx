@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { toLocalISODate } from "@/utils/dateUtils";
 import {
   Dialog,
   DialogContent,
@@ -32,11 +33,22 @@ export const AddActivityDialog = ({ prospectId, open, onOpenChange }: AddActivit
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Gerar data/hora local atual no formato para datetime-local
+  const getLocalDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const [formData, setFormData] = useState({
     tipo: "default",
     titulo: "",
     descricao: "",
-    data_atividade: new Date().toISOString().slice(0, 16), // Current datetime in HTML format
+    data_atividade: getLocalDateTime(),
   });
 
   const createActivityMutation = useMutation({
@@ -82,7 +94,7 @@ export const AddActivityDialog = ({ prospectId, open, onOpenChange }: AddActivit
       tipo: "default",
       titulo: "",
       descricao: "",
-      data_atividade: new Date().toISOString().slice(0, 16),
+      data_atividade: getLocalDateTime(),
     });
   };
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Edit2, Trash2 } from "lucide-react";
 import { Contract } from "@/hooks/useContracts";
+import { formatDateDisplay } from "@/utils/dateUtils";
 
 interface ContractCardProps {
   contract: Contract;
@@ -52,13 +53,13 @@ export const ContractCard = ({ contract, onView, onEdit, onDelete }: ContractCar
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Início:</span>
-            <span>{new Date(contract.data_inicio).toLocaleDateString('pt-BR')}</span>
+            <span>{formatDateDisplay(contract.data_inicio)}</span>
           </div>
           
           {contract.data_fim && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Fim:</span>
-              <span>{new Date(contract.data_fim).toLocaleDateString('pt-BR')}</span>
+              <span>{formatDateDisplay(contract.data_fim)}</span>
             </div>
           )}
           

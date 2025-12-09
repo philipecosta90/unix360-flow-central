@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { createUniqueChannel } from '@/integrations/supabase/realtime';
 import { useEffect, useRef } from 'react';
+import { toLocalISODate } from '@/utils/dateUtils';
 
 interface CRMProspect {
   id: string;
@@ -45,7 +46,7 @@ export const useCRMFollowupAlerts = () => {
     queryFn: async (): Promise<FollowupAlert[]> => {
       if (!userProfile?.empresa_id) return [];
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = toLocalISODate(new Date());
       const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
       // Query 1: Get all prospects for the company including created_at

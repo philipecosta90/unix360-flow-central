@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toLocalISODate } from "@/utils/dateUtils";
 
 interface CRMProspect {
   id: string;
@@ -63,11 +64,11 @@ export const useCRMProspects = (filters: CRMFilters) => {
 
       // Apply date range filters
       if (filters.startDate) {
-        query = query.gte('proximo_followup', filters.startDate.toISOString().split('T')[0]);
+        query = query.gte('proximo_followup', toLocalISODate(filters.startDate));
       }
       
       if (filters.endDate) {
-        query = query.lte('proximo_followup', filters.endDate.toISOString().split('T')[0]);
+        query = query.lte('proximo_followup', toLocalISODate(filters.endDate));
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
