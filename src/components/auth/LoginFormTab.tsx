@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { validateAndSanitize, loginSchema, sanitizeInput } from "@/utils/inputValidation";
+import { Mail, RefreshCw } from "lucide-react";
 
 interface LoginFormTabProps {
   isLoading: boolean;
@@ -30,6 +31,8 @@ export const LoginFormTab = ({
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [showEmailNotConfirmed, setShowEmailNotConfirmed] = useState(false);
+  const [isResendingConfirmation, setIsResendingConfirmation] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const MAX_LOGIN_ATTEMPTS = 5;
@@ -65,6 +68,23 @@ export const LoginFormTab = ({
       });
 
       if (error) {
+        // Detectar erro específico de email não confirmado
+        const isEmailNotConfirmed = 
+          error.message.toLowerCase().includes('email not confirmed') ||
+          error.message.toLowerCase().includes('email_not_confirmed') ||
+          error.code === 'email_not_confirmed';
+
+        if (isEmailNotConfirmed) {
+          setShowEmailNotConfirmed(true);
+          toast({
+            title: "Email não confirmado",
+            description: "Verifique sua caixa de entrada ou clique para reenviar o email de confirmação.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Outros erros de login (credenciais inválidas)
         const newAttempts = loginAttempts + 1;
         setLoginAttempts(newAttempts);
         
@@ -75,7 +95,7 @@ export const LoginFormTab = ({
 
         toast({
           title: "Erro no login",
-          description: `Credenciais inválidas. Tentativas restantes: ${MAX_LOGIN_ATTEMPTS - newAttempts}`,
+          description: `Email ou senha incorretos. Tentativas restantes: ${MAX_LOGIN_ATTEMPTS - newAttempts}`,
           variant: "destructive",
         });
         return;
@@ -109,8 +129,65 @@ export const LoginFormTab = ({
     
     setLoginForm(prev => ({ ...prev, [field]: sanitizedValue }));
     
-    // Clear validation errors when user starts typing
+    // Clear validation errors and email not confirmed state when user starts typing
     setValidationErrors([]);
+    setShowEmailNotConfirmed(false);
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!loginForm.email.trim()) {
+      toast({
+        title: "Email obrigatório",
+        description: "Por favor, insira seu email primeiro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResendingConfirmation(true);
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: loginForm.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+
+      if (error) {
+        if (error.message.includes('rate_limit') || error.message.includes('For security purposes')) {
+          toast({
+            title: "Aguarde um momento",
+            description: "Por segurança, aguarde alguns segundos antes de solicitar um novo email.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        toast({
+          title: "Erro ao reenviar",
+          description: "Não foi possível reenviar o email. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Email reenviado!",
+        description: "Verifique sua caixa de entrada e spam. Clique no link para confirmar.",
+      });
+      setShowEmailNotConfirmed(false);
+    } catch (error) {
+      console.error('Resend confirmation error:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResendingConfirmation(false);
+    }
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -264,6 +341,43 @@ export const LoginFormTab = ({
           Tentativas restantes: {MAX_LOGIN_ATTEMPTS - loginAttempts}
         </p>
       )}
+
+      {showEmailNotConfirmed && (
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg space-y-3">
+          <div className="flex items-start gap-3">
+            <Mail className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                Email não confirmado
+              </p>
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                Verifique sua caixa de entrada e spam. Se não encontrar o email, clique abaixo para reenviar.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleResendConfirmation}
+            disabled={isResendingConfirmation}
+            className="w-full border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+          >
+            {isResendingConfirmation ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Reenviando...
+              </>
+            ) : (
+              <>
+                <Mail className="h-4 w-4 mr-2" />
+                Reenviar email de confirmação
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
       <Button 
         type="submit" 
         className="w-full bg-primary hover:bg-primary/90"
