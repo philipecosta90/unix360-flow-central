@@ -12,6 +12,7 @@ interface SubscriptionData {
   nome: string;
   sobrenome?: string;
   email: string;
+  empresa_id?: string;
   subscription_status: string;
   subscription_plan?: string;
   trial_start_date?: string;
