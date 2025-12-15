@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Bell, ChevronDown, User, LogOut, Settings, Moon, Sun } from "lucide-react";
+import { Bell, ChevronDown, User, LogOut, Settings, Moon, Sun, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,14 +18,46 @@ import { MobileMenu } from "./MobileMenu";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export const Header = () => {
   const { user, userProfile } = useAuth();
+  const { subscriptionStatus } = useSubscription();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const { unreadCount } = useNotifications();
+
+  const CAKTO_PAYMENT_URL = 'https://pay.cakto.com.br/chho9do_565429';
+
+  // Determina se deve mostrar botão e qual texto
+  const getSubscriptionButton = () => {
+    if (!subscriptionStatus) return null;
+    
+    const status = subscriptionStatus.status;
+    
+    // Durante trial: mostrar "ASSINE JÁ"
+    if (status === 'trial') {
+      return {
+        text: 'ASSINE JÁ',
+        className: 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+      };
+    }
+    
+    // Expirado ou cancelado: mostrar "RENOVE SEU PLANO"
+    if (status === 'expired' || status === 'canceled' || !subscriptionStatus.hasActiveSubscription) {
+      return {
+        text: 'RENOVE SEU PLANO',
+        className: 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
+      };
+    }
+    
+    // Assinatura ativa: não mostrar botão
+    return null;
+  };
+
+  const buttonConfig = getSubscriptionButton();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -50,14 +82,16 @@ export const Header = () => {
 
         {/* User menu and notifications */}
         <div className="flex items-center space-x-4">
-          {/* Botão ASSINE JÁ sempre visível */}
-          <Button 
-            onClick={() => window.open('https://pay.cakto.com.br/chho9do_565429', '_blank')}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hidden sm:flex"
-            size="sm"
-          >
-            ASSINE JÁ
-          </Button>
+          {/* Botão de assinatura - aparece apenas em trial ou expirado */}
+          {buttonConfig && (
+            <Button 
+              onClick={() => window.open(CAKTO_PAYMENT_URL, '_blank')}
+              className={`${buttonConfig.className} text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hidden sm:flex`}
+              size="sm"
+            >
+              {buttonConfig.text}
+            </Button>
+          )}
           
           <FeedbackDialog />
           
