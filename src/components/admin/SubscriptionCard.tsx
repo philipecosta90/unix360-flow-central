@@ -38,6 +38,35 @@ interface SubscriptionCardProps {
 export const SubscriptionCard = ({ subscription, onUpdate }: SubscriptionCardProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
 
+  // Calcular status efetivo baseado nas datas (corrige inconsistências do banco)
+  const getEffectiveStatus = (): string => {
+    const now = new Date();
+    const status = subscription.subscription_status;
+    
+    // Se status é 'expired' mas tem data de expiração futura, é 'active'
+    if (status === 'expired' && subscription.data_de_expiracao_da_assinatura_ativa) {
+      const endDate = new Date(subscription.data_de_expiracao_da_assinatura_ativa);
+      if (endDate > now) return 'active';
+    }
+    
+    // Se status é 'active' mas data expirou, é 'expired'
+    if (status === 'active' && subscription.data_de_expiracao_da_assinatura_ativa) {
+      const endDate = new Date(subscription.data_de_expiracao_da_assinatura_ativa);
+      if (endDate <= now) return 'expired';
+    }
+    
+    // Se status é 'trial' mas trial expirou, é 'expired'
+    if (status === 'trial' && subscription.trial_end_date) {
+      const trialEnd = new Date(subscription.trial_end_date);
+      if (trialEnd <= now) return 'expired';
+    }
+    
+    return status;
+  };
+
+  const effectiveStatus = getEffectiveStatus();
+  const hasStatusInconsistency = effectiveStatus !== subscription.subscription_status;
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'active': return 'default';
@@ -78,7 +107,7 @@ export const SubscriptionCard = ({ subscription, onUpdate }: SubscriptionCardPro
   };
 
   const getDaysRemaining = () => {
-    const endDate = subscription.subscription_status === 'trial' 
+    const endDate = effectiveStatus === 'trial' 
       ? subscription.trial_end_date
       : subscription.data_de_expiracao_da_assinatura_ativa;
     
@@ -103,14 +132,19 @@ export const SubscriptionCard = ({ subscription, onUpdate }: SubscriptionCardPro
               {subscription.nome} {subscription.sobrenome}
             </CardTitle>
             <div className="flex flex-wrap gap-2">
-              <Badge variant={getStatusBadgeVariant(subscription.subscription_status)}>
-                {getStatusLabel(subscription.subscription_status)}
+              <Badge variant={getStatusBadgeVariant(effectiveStatus)}>
+                {getStatusLabel(effectiveStatus)}
               </Badge>
               <Badge variant="outline">
                 {getPlanLabel(subscription.subscription_plan)}
               </Badge>
               {!subscription.ativo && (
                 <Badge variant="destructive">Usuário Inativo</Badge>
+              )}
+              {hasStatusInconsistency && (
+                <Badge variant="outline" className="text-warning border-warning">
+                  ⚠️ DB: {getStatusLabel(subscription.subscription_status)}
+                </Badge>
               )}
             </div>
           </div>
@@ -143,9 +177,9 @@ export const SubscriptionCard = ({ subscription, onUpdate }: SubscriptionCardPro
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span>
-                {subscription.subscription_status === 'trial' ? 'Trial até' : 'Expira em'}: {' '}
+                {effectiveStatus === 'trial' ? 'Trial até' : 'Expira em'}: {' '}
                 {formatDate(
-                  subscription.subscription_status === 'trial' 
+                  effectiveStatus === 'trial' 
                     ? subscription.trial_end_date
                     : subscription.data_de_expiracao_da_assinatura_ativa
                 )}

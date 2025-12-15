@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, CheckCircle } from "lucide-react";
 
 interface SubscriptionData {
   id: string;
@@ -170,6 +170,48 @@ export const SubscriptionEditDialog = ({
     }
   };
 
+  const handleActivateSubscription = async () => {
+    try {
+      setLoading(true);
+      
+      // Calcular data de expiração (1 ano a partir de hoje por padrão)
+      const today = new Date();
+      const nextYear = new Date(today);
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      const expirationDate = formData.data_de_expiracao_da_assinatura_ativa || nextYear.toISOString().split('T')[0];
+
+      const { error } = await supabase
+        .from('perfis')
+        .update({
+          subscription_status: 'active',
+          data_de_assinatura_ativa: today.toISOString().split('T')[0],
+          data_de_expiracao_da_assinatura_ativa: expirationDate,
+          ativo: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', subscription.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Assinatura ativada com sucesso",
+      });
+
+      onUpdate();
+      onClose();
+    } catch (error: any) {
+      console.error('Erro ao ativar assinatura:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao ativar assinatura",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getEndDateLabel = () => {
     if (formData.subscription_status === 'trial') {
       return 'Data de Fim do Trial';
@@ -191,6 +233,9 @@ export const SubscriptionEditDialog = ({
       setFormData(prev => ({ ...prev, data_de_expiracao_da_assinatura_ativa: value }));
     }
   };
+
+  // Mostrar botão ativar se status atual não é 'active'
+  const showActivateButton = subscription.subscription_status !== 'active';
 
   return (
     <>
@@ -293,6 +338,19 @@ export const SubscriptionEditDialog = ({
               onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
             />
           </div>
+
+          {showActivateButton && (
+            <div className="pt-4 border-t">
+              <Button 
+                onClick={handleActivateSubscription} 
+                disabled={loading}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                Ativar Assinatura (1 ano)
+              </Button>
+            </div>
+          )}
 
           <div className="flex gap-2 pt-4">
             <Button 
