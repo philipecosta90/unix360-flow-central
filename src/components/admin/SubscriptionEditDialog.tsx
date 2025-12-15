@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -7,13 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface SubscriptionData {
   id: string;
   nome: string;
   sobrenome?: string;
   email: string;
+  empresa_id?: string;
   subscription_status: string;
   subscription_plan?: string;
   trial_start_date?: string;
@@ -37,6 +39,7 @@ export const SubscriptionEditDialog = ({
   onUpdate 
 }: SubscriptionEditDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [formData, setFormData] = useState({
     subscription_status: subscription.subscription_status,
     subscription_plan: subscription.subscription_plan || 'free',
@@ -46,6 +49,20 @@ export const SubscriptionEditDialog = ({
     observacoes: ''
   });
   const { toast } = useToast();
+
+  // Resetar formData quando a subscription mudar ou dialog abrir
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        subscription_status: subscription.subscription_status,
+        subscription_plan: subscription.subscription_plan || 'free',
+        trial_end_date: subscription.trial_end_date || '',
+        data_de_expiracao_da_assinatura_ativa: subscription.data_de_expiracao_da_assinatura_ativa || '',
+        ativo: subscription.ativo,
+        observacoes: ''
+      });
+    }
+  }, [open, subscription]);
 
   const handleSubmit = async () => {
     try {
@@ -101,6 +118,58 @@ export const SubscriptionEditDialog = ({
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+
+      // Primeiro, excluir o perfil
+      const { error: perfilError } = await supabase
+        .from('perfis')
+        .delete()
+        .eq('id', subscription.id);
+
+      if (perfilError) {
+        throw perfilError;
+      }
+
+      // Se tiver empresa_id, excluir a empresa também (se não houver outros perfis)
+      if (subscription.empresa_id) {
+        // Verificar se há outros perfis na empresa
+        const { data: outrosPerfis } = await supabase
+          .from('perfis')
+          .select('id')
+          .eq('empresa_id', subscription.empresa_id)
+          .limit(1);
+
+        if (!outrosPerfis || outrosPerfis.length === 0) {
+          // Não há outros perfis, excluir a empresa
+          await supabase
+            .from('empresas')
+            .delete()
+            .eq('id', subscription.empresa_id);
+        }
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Empresa/assinatura excluída com sucesso",
+      });
+
+      onUpdate();
+      onClose();
+      setShowDeleteConfirm(false);
+    } catch (error: any) {
+      console.error('Erro ao excluir:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir empresa/assinatura",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getEndDateLabel = () => {
     if (formData.subscription_status === 'trial') {
       return 'Data de Fim do Trial';
@@ -124,6 +193,28 @@ export const SubscriptionEditDialog = ({
   };
 
   return (
+    <>
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a empresa/assinatura de <strong>{subscription.nome}</strong>?
+              Esta ação não pode ser desfeita e todos os dados serão perdidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -204,6 +295,14 @@ export const SubscriptionEditDialog = ({
           </div>
 
           <div className="flex gap-2 pt-4">
+            <Button 
+              onClick={() => setShowDeleteConfirm(true)} 
+              variant="destructive" 
+              size="sm"
+              disabled={loading}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
             <Button onClick={onClose} variant="outline" className="flex-1">
               Cancelar
             </Button>
@@ -215,5 +314,6 @@ export const SubscriptionEditDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
