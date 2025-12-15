@@ -62,14 +62,28 @@ export const useSubscription = () => {
     const activeSubscriptionDaysRemaining = calculateDaysRemaining(activeSubscriptionEndDate);
     const now = new Date();
     
+    // Calcular hasActiveSubscription baseado nas datas reais
     const hasActiveSubscription = 
       (data.subscription_status === 'active' && activeSubscriptionEndDate && activeSubscriptionEndDate > now) || 
       (data.subscription_status === 'trial' && trialEndDate && trialEndDate > now);
 
+    // Calcular status efetivo baseado nas datas (corrige inconsistência do banco)
+    let effectiveStatus: 'trial' | 'active' | 'expired' | 'canceled' = data.subscription_status as any;
+    
+    // Se status é 'active' mas a data expirou, marcar como 'expired'
+    if (data.subscription_status === 'active' && activeSubscriptionEndDate && activeSubscriptionEndDate <= now) {
+      effectiveStatus = 'expired';
+    }
+    
+    // Se status é 'trial' mas a data expirou, marcar como 'expired'
+    if (data.subscription_status === 'trial' && trialEndDate && trialEndDate <= now) {
+      effectiveStatus = 'expired';
+    }
+
     const canMakeChanges = hasActiveSubscription;
 
     setSubscriptionStatus({
-      status: data.subscription_status as 'trial' | 'active' | 'expired' | 'canceled',
+      status: effectiveStatus, // Usar status efetivo calculado
       plan: data.subscription_plan || 'free',
       trialStartDate,
       trialEndDate,

@@ -73,11 +73,14 @@ export const SubscriptionStatus = () => {
   };
 
   const showTrialWarning = subscriptionStatus.status === 'trial' && subscriptionStatus.daysRemaining <= 3;
-  const showExpiredWarning = subscriptionStatus.status === 'expired' || subscriptionStatus.status === 'canceled';
+  // Usar hasActiveSubscription para determinar se assinatura expirou
+  const showExpiredWarning = !subscriptionStatus.hasActiveSubscription || 
+    subscriptionStatus.status === 'expired' || 
+    subscriptionStatus.status === 'canceled';
 
-  // Mostrar botão de assinatura apenas quando NÃO tem assinatura ativa
+  // Mostrar botão de assinatura quando NÃO tem assinatura ativa (baseado na lógica de datas)
   const shouldShowSubscribeButton = () => {
-    return subscriptionStatus.status !== 'active';
+    return !subscriptionStatus.hasActiveSubscription;
   };
 
   return (
