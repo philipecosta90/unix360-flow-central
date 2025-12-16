@@ -12,6 +12,7 @@ import { AccessDeniedMessage } from "@/components/auth/AccessDeniedMessage";
 import { SubscriptionExpiredDialog } from "@/components/subscription/SubscriptionExpiredDialog";
 import { UpdateNotification } from "@/components/common/UpdateNotification";
 import { ResetPasswordPage } from "@/components/auth/ResetPasswordPage";
+import { AnamnesePublicPage } from "@/components/anamnese/AnamnesePublicPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -44,8 +45,9 @@ const App = () => {
             <UpdateNotification />
             <BrowserRouter>
               <Routes>
-                {/* Password Reset Route - Public */}
+                {/* Public Routes */}
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/anamnese/preencher/:token" element={<AnamnesePublicPage />} />
                 
                 {/* All routes - now directly accessible */}
                 <Route path="/" element={<Index />} />
