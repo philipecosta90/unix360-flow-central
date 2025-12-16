@@ -94,8 +94,8 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent key={`edit-${transaction?.id}-${open}`} className="sm:max-w-[425px]">
+    <Dialog key={transaction?.id || 'new'} open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Editar Transação</DialogTitle>
         </DialogHeader>
