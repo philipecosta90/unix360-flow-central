@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye, Edit, Trash2, CheckCircle2 } from "lucide-react";
 import { InteractionDialog } from "./InteractionDialog";
 import { EditInteractionDialog } from "./EditInteractionDialog";
 import { DocumentUploadDialog } from "./DocumentUploadDialog";
@@ -54,7 +54,7 @@ interface ClientDocument {
 export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
-  const { deleteTransaction } = useFinancialTransactions();
+  const { deleteTransaction, updateTransaction } = useFinancialTransactions();
   const [showInteractionDialog, setShowInteractionDialog] = useState(false);
   const [showEditInteractionDialog, setShowEditInteractionDialog] = useState(false);
   const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
@@ -326,6 +326,34 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
       toast({
         title: "Erro",
         description: "Não foi possível excluir a movimentação.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMarkAsPaid = async (transaction: any) => {
+    try {
+      await updateTransaction.mutateAsync({
+        id: transaction.id,
+        tipo: transaction.tipo,
+        descricao: transaction.descricao,
+        valor: transaction.valor,
+        categoria: transaction.categoria,
+        data: transaction.data,
+        a_receber: false,
+        recorrente: transaction.recorrente ?? false,
+        cliente_id: transaction.cliente_id,
+      });
+      toast({
+        title: "Transação atualizada",
+        description: "Transação marcada como recebida.",
+      });
+      fetchTransactions();
+    } catch (error) {
+      console.error('Erro ao marcar como recebido:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a transação.",
         variant: "destructive",
       });
     }
@@ -707,6 +735,17 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                               <p className="text-xs text-muted-foreground capitalize">{transaction.tipo === 'entrada' ? 'Receita' : 'Despesa'}</p>
                             </div>
                             <div className="flex gap-1">
+                              {transaction.tipo === 'entrada' && transaction.a_receber && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleMarkAsPaid(transaction)}
+                                  className="h-8 w-8 p-0 hover:bg-green-100"
+                                  title="Marcar como recebido"
+                                >
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
