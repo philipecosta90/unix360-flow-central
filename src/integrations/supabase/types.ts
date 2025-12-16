@@ -14,6 +14,182 @@ export type Database = {
   }
   public: {
     Tables: {
+      anamnese_envios: {
+        Row: {
+          cliente_id: string
+          created_at: string | null
+          empresa_id: string
+          enviado_em: string | null
+          expira_em: string
+          id: string
+          preenchido_em: string | null
+          status: string
+          template_id: string
+          token: string
+          updated_at: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string | null
+          empresa_id: string
+          enviado_em?: string | null
+          expira_em: string
+          id?: string
+          preenchido_em?: string | null
+          status?: string
+          template_id: string
+          token: string
+          updated_at?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string | null
+          empresa_id?: string
+          enviado_em?: string | null
+          expira_em?: string
+          id?: string
+          preenchido_em?: string | null
+          status?: string
+          template_id?: string
+          token?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnese_envios_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnese_envios_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "anamnese_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anamnese_perguntas: {
+        Row: {
+          created_at: string | null
+          id: string
+          obrigatoria: boolean | null
+          opcoes: Json | null
+          ordem: number
+          pergunta: string
+          placeholder: string | null
+          secao: string
+          secao_icone: string | null
+          template_id: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          obrigatoria?: boolean | null
+          opcoes?: Json | null
+          ordem: number
+          pergunta: string
+          placeholder?: string | null
+          secao: string
+          secao_icone?: string | null
+          template_id: string
+          tipo?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          obrigatoria?: boolean | null
+          opcoes?: Json | null
+          ordem?: number
+          pergunta?: string
+          placeholder?: string | null
+          secao?: string
+          secao_icone?: string | null
+          template_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnese_perguntas_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "anamnese_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anamnese_respostas: {
+        Row: {
+          created_at: string | null
+          envio_id: string
+          id: string
+          pergunta_id: string
+          resposta: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          envio_id: string
+          id?: string
+          pergunta_id: string
+          resposta?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          envio_id?: string
+          id?: string
+          pergunta_id?: string
+          resposta?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnese_respostas_envio_id_fkey"
+            columns: ["envio_id"]
+            isOneToOne: false
+            referencedRelation: "anamnese_envios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnese_respostas_pergunta_id_fkey"
+            columns: ["pergunta_id"]
+            isOneToOne: false
+            referencedRelation: "anamnese_perguntas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anamnese_templates: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          descricao: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       assinaturas_cakto: {
         Row: {
           created_at: string
@@ -993,6 +1169,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_default_anamnese_template_for_company: {
+        Args: { p_empresa_id: string }
+        Returns: string
+      }
       create_default_crm_stages_for_company: {
         Args: { p_empresa_id: string }
         Returns: undefined
