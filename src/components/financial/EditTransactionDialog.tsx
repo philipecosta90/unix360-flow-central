@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,15 +39,12 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
     recorrente: false,
   });
   
-  // Ref para rastrear se o form já foi inicializado para a transação atual
-  const initializedForRef = useRef<string | null>(null);
 
   const { updateTransaction } = useFinancialTransactions();
 
-  // Populate form when dialog opens with transaction
+  // Popula o formulário sempre que abrir com uma transação selecionada
   useEffect(() => {
-    if (open && transaction && initializedForRef.current !== transaction.id) {
-      // Só popula se ainda não foi inicializado para esta transação
+    if (open && transaction) {
       setFormData({
         tipo: transaction.tipo,
         descricao: transaction.descricao,
@@ -57,19 +54,17 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
         a_receber: transaction.a_receber ?? false,
         recorrente: transaction.recorrente ?? false,
       });
-      initializedForRef.current = transaction.id;
     }
   }, [open, transaction]);
 
-  // Reset form when dialog closes
+  // Reset quando fechar (evita “vazar” dados entre edições)
   useEffect(() => {
     if (!open) {
-      initializedForRef.current = null;
       setFormData({
-        tipo: 'entrada',
-        descricao: '',
-        valor: '',
-        categoria: '',
+        tipo: "entrada",
+        descricao: "",
+        valor: "",
+        categoria: "",
         data: toLocalISODate(),
         a_receber: false,
         recorrente: false,
@@ -103,7 +98,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
   };
 
   return (
-    <Dialog key={`${transaction?.id || 'new'}-${open}`} open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Editar Transação</DialogTitle>
