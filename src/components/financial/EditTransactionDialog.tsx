@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,13 +38,16 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
     a_receber: false,
     recorrente: false,
   });
+  
+  // Ref para rastrear se o form já foi inicializado para a transação atual
+  const initializedForRef = useRef<string | null>(null);
 
   const { updateTransaction } = useFinancialTransactions();
 
-  // Populate form when dialog opens with transaction, reset when closes
+  // Populate form when dialog opens with transaction
   useEffect(() => {
-    if (open && transaction) {
-      // Quando abre com uma transação, popula os dados
+    if (open && transaction && initializedForRef.current !== transaction.id) {
+      // Só popula se ainda não foi inicializado para esta transação
       setFormData({
         tipo: transaction.tipo,
         descricao: transaction.descricao,
@@ -54,8 +57,14 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
         a_receber: transaction.a_receber ?? false,
         recorrente: transaction.recorrente ?? false,
       });
-    } else if (!open) {
-      // Quando fecha, reseta o form
+      initializedForRef.current = transaction.id;
+    }
+  }, [open, transaction]);
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      initializedForRef.current = null;
       setFormData({
         tipo: 'entrada',
         descricao: '',
@@ -66,7 +75,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
         recorrente: false,
       });
     }
-  }, [open, transaction]);
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +103,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
   };
 
   return (
-    <Dialog key={transaction?.id || 'new'} open={open} onOpenChange={onOpenChange}>
+    <Dialog key={`${transaction?.id || 'new'}-${open}`} open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Editar Transação</DialogTitle>

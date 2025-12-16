@@ -273,7 +273,10 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
   const handleEditTransaction = (transaction: any) => {
     setSelectedTransaction(transaction);
-    setShowEditTransactionDialog(true);
+    // Usar setTimeout para garantir que o estado foi atualizado antes de abrir o dialog
+    setTimeout(() => {
+      setShowEditTransactionDialog(true);
+    }, 0);
   };
 
   const handleEditInteraction = (interaction: Interaction) => {
