@@ -20,9 +20,11 @@ export const FinancialModule = () => {
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [tipoFilter, setTipoFilter] = useState("");
   const filters = {
     startDate: startDate || null,
-    endDate: endDate || null
+    endDate: endDate || null,
+    tipo: tipoFilter && tipoFilter !== "todos" ? tipoFilter as 'entrada' | 'saida' : null
   };
   const {
     transactions,
@@ -81,6 +83,7 @@ export const FinancialModule = () => {
   const handleClearFilters = () => {
     setStartDate("");
     setEndDate("");
+    setTipoFilter("");
   };
   if (isLoading) {
     return <div className="space-y-6">
@@ -114,8 +117,8 @@ export const FinancialModule = () => {
         </div>
       </div>
 
-      {/* Filtros de Período */}
-      <FinancialFilters startDate={startDate} endDate={endDate} onStartDateChange={setStartDate} onEndDateChange={setEndDate} onClearFilters={handleClearFilters} />
+      {/* Filtros de Período e Tipo */}
+      <FinancialFilters startDate={startDate} endDate={endDate} tipo={tipoFilter} onStartDateChange={setStartDate} onEndDateChange={setEndDate} onTipoChange={setTipoFilter} onClearFilters={handleClearFilters} />
 
       {/* KPIs Principais */}
       <FinancialKPIs kpis={kpis} />
