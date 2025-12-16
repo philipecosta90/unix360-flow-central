@@ -126,15 +126,17 @@ export const ClientsModule = () => {
         return status;
     }
   };
-  const handleAddClient = async (clientData: any) => {
+  const handleAddClient = async (clientData: any): Promise<{ id: string } | void> => {
     if (!clientData || !userProfile?.empresa_id) return;
     try {
-      const {
-        error
-      } = await supabase.from('clientes').insert([{
-        ...clientData,
-        empresa_id: userProfile.empresa_id
-      }]);
+      const { data, error } = await supabase
+        .from('clientes')
+        .insert([{
+          ...clientData,
+          empresa_id: userProfile.empresa_id
+        }])
+        .select('id')
+        .single();
       if (error) throw error;
       toast({
         title: "Cliente adicionado!",
@@ -142,6 +144,7 @@ export const ClientsModule = () => {
       });
       fetchClients();
       setShowAddDrawer(false);
+      return { id: data.id };
     } catch (error) {
       console.error('Erro ao adicionar cliente:', error);
       toast({
