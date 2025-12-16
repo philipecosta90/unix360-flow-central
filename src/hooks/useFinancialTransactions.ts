@@ -36,6 +36,7 @@ interface CreateTransactionData {
 interface FinancialFilters {
   startDate?: string | null;
   endDate?: string | null;
+  tipo?: 'entrada' | 'saida' | null;
 }
 
 const getCurrentMonthRange = () => {
@@ -75,6 +76,10 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       
       if (effectiveFilters.endDate) {
         query = query.lte('data', effectiveFilters.endDate);
+      }
+
+      if (filters?.tipo) {
+        query = query.eq('tipo', filters.tipo);
       }
 
       const { data, error } = await query.order('data', { ascending: false });
