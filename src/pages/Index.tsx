@@ -13,6 +13,7 @@ import { TasksModule } from "@/components/tasks/TasksModule";
 import { ClientsModule } from "@/components/clients/ClientsModule";
 import { ContractsModule } from "@/components/contracts/ContractsModule";
 import { CSModule } from "@/components/cs/CSModule";
+import { AnamneseModule } from "@/components/anamnese/AnamneseModule";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import Settings from "./Settings";
 import Admin from "./Admin";
@@ -24,7 +25,8 @@ import {
   FileText, 
   UserCheck, 
   Settings as SettingsIcon,
-  Shield
+  Shield,
+  ClipboardList
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MainLogo } from "@/components/layout/MainLogo";
@@ -63,6 +65,7 @@ const Index = () => {
     { icon: DollarSign, label: "Financeiro", path: "/financeiro" },
     { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
     { icon: Users, label: "Clientes", path: "/clientes" },
+    { icon: ClipboardList, label: "Anamnese", path: "/anamnese" },
     { icon: FileText, label: "Contratos", path: "/contratos" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
     { icon: SettingsIcon, label: "Configurações", path: "/configuracoes" },
@@ -83,6 +86,8 @@ const Index = () => {
         return <TasksModule />;
       case '/clientes':
         return <ClientsModule />;
+      case '/anamnese':
+        return <AnamneseModule />;
       case '/contratos':
         return <ContractsModule />;
       case '/cs':
