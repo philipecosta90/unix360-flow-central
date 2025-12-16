@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,19 +8,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { X, CalendarIcon } from "lucide-react";
+import { useAnamnese } from "@/hooks/useAnamnese";
+import { X, CalendarIcon, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface AddClientDrawerProps {
   open: boolean;
   onClose: () => void;
-  onSave: (clientData: any) => void;
+  onSave: (clientData: any) => Promise<{ id: string } | void>;
 }
 
 export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps) => {
   const { toast } = useToast();
+  const { templates, fetchTemplates, sendAnamnese } = useAnamnese();
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -32,8 +35,21 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     data_inicio_plano: null as Date | null,
     data_fim_plano: null as Date | null
   });
-
+  const [enviarAnamnese, setEnviarAnamnese] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      fetchTemplates();
+    }
+  }, [open, fetchTemplates]);
+
+  useEffect(() => {
+    if (templates.length > 0 && !selectedTemplateId) {
+      setSelectedTemplateId(templates[0].id);
+    }
+  }, [templates, selectedTemplateId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +58,15 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       toast({
         title: "Erro",
         description: "O nome do cliente é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (enviarAnamnese && !formData.email.trim()) {
+      toast({
+        title: "Erro",
+        description: "O e-mail é obrigatório para enviar a anamnese.",
         variant: "destructive",
       });
       return;
@@ -62,7 +87,17 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         data_fim_plano: formData.data_fim_plano ? formData.data_fim_plano.toISOString().split('T')[0] : null
       };
 
-      await onSave(clientData);
+      const result = await onSave(clientData);
+      
+      // Se cliente foi criado e deve enviar anamnese
+      if (enviarAnamnese && result && 'id' in result && selectedTemplateId && formData.email) {
+        await sendAnamnese(
+          result.id,
+          selectedTemplateId,
+          formData.nome.trim(),
+          formData.email.trim()
+        );
+      }
       
       // Reset form
       setFormData({
@@ -76,6 +111,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         data_inicio_plano: null,
         data_fim_plano: null
       });
+      setEnviarAnamnese(false);
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
     } finally {
@@ -95,6 +131,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       data_inicio_plano: null,
       data_fim_plano: null
     });
+    setEnviarAnamnese(false);
     onClose();
   };
 
@@ -123,7 +160,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">E-mail {enviarAnamnese && "*"}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -252,6 +289,47 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                 placeholder="Informações adicionais sobre o cliente..."
                 rows={4}
               />
+            </div>
+
+            {/* Seção de Anamnese */}
+            <div className="border rounded-lg p-4 bg-muted/30">
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="enviarAnamnese"
+                  checked={enviarAnamnese}
+                  onCheckedChange={(checked) => setEnviarAnamnese(checked === true)}
+                />
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-[#43B26D]" />
+                  <Label htmlFor="enviarAnamnese" className="cursor-pointer font-medium">
+                    Enviar questionário de anamnese após cadastro
+                  </Label>
+                </div>
+              </div>
+              
+              {enviarAnamnese && templates.length > 0 && (
+                <div className="mt-3 pl-6">
+                  <Label className="text-sm text-muted-foreground">Template</Label>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecione o template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {enviarAnamnese && templates.length === 0 && (
+                <p className="text-sm text-muted-foreground mt-2 pl-6">
+                  Nenhum template disponível. Crie um na aba Anamnese.
+                </p>
+              )}
             </div>
           </div>
         </form>

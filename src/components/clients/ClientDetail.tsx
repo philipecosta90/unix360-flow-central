@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye, Edit, Trash2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye, Edit, Trash2, CheckCircle2, ClipboardList } from "lucide-react";
+import { AnamneseClienteTab } from "@/components/anamnese/AnamneseClienteTab";
 import { InteractionDialog } from "./InteractionDialog";
 import { EditInteractionDialog } from "./EditInteractionDialog";
 import { DocumentUploadDialog } from "./DocumentUploadDialog";
@@ -435,7 +436,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
       {/* Client Tabs */}
       <Tabs defaultValue="informacoes" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto">
           <TabsTrigger value="informacoes" className="text-xs sm:text-sm py-2">
             <span className="hidden xs:inline">Informações</span>
             <span className="xs:hidden">Info</span>
@@ -451,6 +452,10 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
           <TabsTrigger value="financeiro" className="text-xs sm:text-sm py-2">
             <span className="hidden xs:inline">Financeiro</span>
             <span className="xs:hidden">$$</span>
+          </TabsTrigger>
+          <TabsTrigger value="anamnese" className="text-xs sm:text-sm py-2">
+            <ClipboardList className="h-3 w-3 sm:h-4 sm:w-4 mr-1 inline" />
+            <span className="hidden sm:inline">Anamnese</span>
           </TabsTrigger>
         </TabsList>
 
@@ -783,6 +788,13 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="anamnese">
+          <AnamneseClienteTab
+            clienteId={client.id}
+            clienteNome={client.nome}
+            clienteEmail={client.email}
+          />
         </TabsContent>
       </Tabs>
 

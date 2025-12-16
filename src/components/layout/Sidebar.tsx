@@ -29,7 +29,8 @@ import {
   FileText, 
   UserCheck, 
   Settings,
-  Shield  // New import for admin icon
+  Shield,
+  ClipboardList
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -43,6 +44,7 @@ export const Sidebar = () => {
     { icon: DollarSign, label: "Financeiro", path: "/financeiro" },
     { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
     { icon: Users, label: "Clientes", path: "/clientes" },
+    { icon: ClipboardList, label: "Anamnese", path: "/anamnese" },
     { icon: FileText, label: "Contratos", path: "/contratos" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
     { icon: Settings, label: "Configurações", path: "/configuracoes" },
