@@ -41,24 +41,21 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
 
   const { updateTransaction } = useFinancialTransactions();
 
-  // Populate form when transaction changes
+  // Populate form when dialog opens with transaction, reset when closes
   useEffect(() => {
-    if (transaction) {
+    if (open && transaction) {
+      // Quando abre com uma transação, popula os dados
       setFormData({
         tipo: transaction.tipo,
         descricao: transaction.descricao,
         valor: transaction.valor.toString(),
         categoria: transaction.categoria,
         data: transaction.data,
-        a_receber: transaction.a_receber,
-        recorrente: transaction.recorrente,
+        a_receber: transaction.a_receber ?? false,
+        recorrente: transaction.recorrente ?? false,
       });
-    }
-  }, [transaction]);
-
-  // Reset form when dialog closes
-  useEffect(() => {
-    if (!open) {
+    } else if (!open) {
+      // Quando fecha, reseta o form
       setFormData({
         tipo: 'entrada',
         descricao: '',
@@ -69,7 +66,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
         recorrente: false,
       });
     }
-  }, [open]);
+  }, [open, transaction]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +95,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent key={transaction?.id || 'new'} className="sm:max-w-[425px]">
+      <DialogContent key={`edit-${transaction?.id}-${open}`} className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Editar Transação</DialogTitle>
         </DialogHeader>
