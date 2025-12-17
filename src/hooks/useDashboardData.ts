@@ -56,12 +56,13 @@ export const useDashboardData = () => {
         .eq('empresa_id', empresaId)
         .eq('status', 'ativo');
 
-      // 2. Receita Mensal
+      // 2. Receita Mensal (apenas entradas JÁ RECEBIDAS)
       const { data: receitasData } = await supabase
         .from('financeiro_lancamentos')
         .select('valor')
         .eq('empresa_id', empresaId)
         .eq('tipo', 'entrada')
+        .eq('a_receber', false)
         .gte('data', primeiroDiaMes)
         .lte('data', ultimoDiaMes);
 
