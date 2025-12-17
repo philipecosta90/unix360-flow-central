@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,14 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAnamnese } from "@/hooks/useAnamnese";
-import { X, CalendarIcon, ClipboardList } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { X, ClipboardList } from "lucide-react";
 
 interface AddClientDrawerProps {
   open: boolean;
@@ -32,8 +27,8 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     plano_contratado: "",
     tags: "",
     observacoes: "",
-    data_inicio_plano: null as Date | null,
-    data_fim_plano: null as Date | null
+    data_inicio_plano: "",
+    data_fim_plano: ""
   });
   const [enviarAnamnese, setEnviarAnamnese] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
@@ -72,6 +67,16 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       return;
     }
 
+    // Validar datas
+    if (formData.data_inicio_plano && formData.data_fim_plano && formData.data_fim_plano < formData.data_inicio_plano) {
+      toast({
+        title: "Erro",
+        description: "A data de fim do plano não pode ser anterior à data de início.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -83,8 +88,8 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         plano_contratado: formData.plano_contratado.trim() || null,
         observacoes: formData.observacoes.trim() || null,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
-        data_inicio_plano: formData.data_inicio_plano ? formData.data_inicio_plano.toISOString().split('T')[0] : null,
-        data_fim_plano: formData.data_fim_plano ? formData.data_fim_plano.toISOString().split('T')[0] : null
+        data_inicio_plano: formData.data_inicio_plano || null,
+        data_fim_plano: formData.data_fim_plano || null
       };
 
       const result = await onSave(clientData);
@@ -108,8 +113,8 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         plano_contratado: "",
         tags: "",
         observacoes: "",
-        data_inicio_plano: null,
-        data_fim_plano: null
+        data_inicio_plano: "",
+        data_fim_plano: ""
       });
       setEnviarAnamnese(false);
     } catch (error) {
@@ -128,8 +133,8 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       plano_contratado: "",
       tags: "",
       observacoes: "",
-      data_inicio_plano: null,
-      data_fim_plano: null
+      data_inicio_plano: "",
+      data_fim_plano: ""
     });
     setEnviarAnamnese(false);
     onClose();
@@ -223,60 +228,24 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Data de Início do Plano</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !formData.data_inicio_plano && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.data_inicio_plano ? format(formData.data_inicio_plano, "dd/MM/yyyy") : "Selecione a data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData.data_inicio_plano || undefined}
-                      onSelect={(date) => setFormData({...formData, data_inicio_plano: date || null})}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="data_inicio_plano">Data de Início do Plano</Label>
+                <Input
+                  id="data_inicio_plano"
+                  type="date"
+                  value={formData.data_inicio_plano}
+                  onChange={(e) => setFormData({...formData, data_inicio_plano: e.target.value})}
+                />
               </div>
 
               <div className="space-y-2">
-                <Label>Data de Término do Plano</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !formData.data_fim_plano && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.data_fim_plano ? format(formData.data_fim_plano, "dd/MM/yyyy") : "Selecione a data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData.data_fim_plano || undefined}
-                      onSelect={(date) => setFormData({...formData, data_fim_plano: date || null})}
-                      initialFocus
-                      className="pointer-events-auto"
-                      disabled={(date) => 
-                        formData.data_inicio_plano ? date < formData.data_inicio_plano : false
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="data_fim_plano">Data de Término do Plano</Label>
+                <Input
+                  id="data_fim_plano"
+                  type="date"
+                  value={formData.data_fim_plano}
+                  onChange={(e) => setFormData({...formData, data_fim_plano: e.target.value})}
+                  min={formData.data_inicio_plano || undefined}
+                />
               </div>
             </div>
 
