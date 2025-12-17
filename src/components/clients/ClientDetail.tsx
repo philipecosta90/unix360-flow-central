@@ -829,6 +829,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
       {showEditTransactionDialog && selectedTransaction && (
         <EditTransactionDialog
+          key={selectedTransaction.id}
           open={showEditTransactionDialog}
           onOpenChange={(open) => {
             setShowEditTransactionDialog(open);

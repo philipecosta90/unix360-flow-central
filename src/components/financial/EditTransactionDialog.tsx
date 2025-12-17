@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,34 +28,35 @@ interface EditTransactionDialogProps {
   onTransactionUpdated?: () => void;
 }
 
+// Categorias disponíveis com valores normalizados
+const CATEGORIAS = [
+  { value: "servicos", label: "Serviços" },
+  { value: "produtos", label: "Produtos" },
+  { value: "consultoria", label: "Consultoria" },
+  { value: "marketing", label: "Marketing" },
+  { value: "tecnologia", label: "Tecnologia" },
+  { value: "administrativo", label: "Administrativo" },
+  { value: "outros", label: "Outros" },
+];
+
+// Normaliza categoria para lowercase para comparação
+const normalizeCategoria = (categoria: string): string => {
+  return categoria?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+};
+
 export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTransactionUpdated }: EditTransactionDialogProps) => {
-  const [formData, setFormData] = useState({
-    tipo: 'entrada' as 'entrada' | 'saida',
-    descricao: '',
-    valor: '',
-    categoria: '',
-    data: toLocalISODate(),
-    a_receber: false,
-    recorrente: false,
-  });
-  
+  // Inicialização DIRETA do estado com dados da transação (sem useEffect)
+  const [formData, setFormData] = useState(() => ({
+    tipo: transaction?.tipo ?? 'entrada' as 'entrada' | 'saida',
+    descricao: transaction?.descricao ?? '',
+    valor: transaction?.valor?.toString() ?? '',
+    categoria: normalizeCategoria(transaction?.categoria ?? ''),
+    data: transaction?.data ?? toLocalISODate(),
+    a_receber: transaction?.a_receber ?? false,
+    recorrente: transaction?.recorrente ?? false,
+  }));
 
   const { updateTransaction } = useFinancialTransactions();
-
-  // Popula o formulário quando a transação muda
-  useEffect(() => {
-    if (transaction) {
-      setFormData({
-        tipo: transaction.tipo,
-        descricao: transaction.descricao,
-        valor: transaction.valor.toString(),
-        categoria: transaction.categoria,
-        data: transaction.data,
-        a_receber: transaction.a_receber ?? false,
-        recorrente: transaction.recorrente ?? false,
-      });
-    }
-  }, [transaction]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,12 +71,12 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
         id: transaction.id,
         ...formData,
         valor: parseFloat(formData.valor),
-        cliente_id: transaction.cliente_id, // Preserve client relationship
+        cliente_id: transaction.cliente_id,
       });
       
       toast.success("Transação atualizada com sucesso!");
       onOpenChange(false);
-      onTransactionUpdated?.(); // Refresh client transactions if callback provided
+      onTransactionUpdated?.();
     } catch (error) {
       console.error('Erro ao atualizar transação:', error);
       toast.error("Erro ao atualizar transação");
@@ -134,13 +135,9 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
                 <SelectValue placeholder="Selecione a categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Serviços">Serviços</SelectItem>
-                <SelectItem value="Produtos">Produtos</SelectItem>
-                <SelectItem value="Consultoria">Consultoria</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Tecnologia">Tecnologia</SelectItem>
-                <SelectItem value="Administrativo">Administrativo</SelectItem>
-                <SelectItem value="Outros">Outros</SelectItem>
+                {CATEGORIAS.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
