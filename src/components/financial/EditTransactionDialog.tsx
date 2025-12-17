@@ -42,9 +42,9 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
 
   const { updateTransaction } = useFinancialTransactions();
 
-  // Popula o formulário sempre que abrir com uma transação selecionada
+  // Popula o formulário quando a transação muda
   useEffect(() => {
-    if (open && transaction) {
+    if (transaction) {
       setFormData({
         tipo: transaction.tipo,
         descricao: transaction.descricao,
@@ -55,22 +55,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onTrans
         recorrente: transaction.recorrente ?? false,
       });
     }
-  }, [open, transaction]);
-
-  // Reset quando fechar (evita “vazar” dados entre edições)
-  useEffect(() => {
-    if (!open) {
-      setFormData({
-        tipo: "entrada",
-        descricao: "",
-        valor: "",
-        categoria: "",
-        data: toLocalISODate(),
-        a_receber: false,
-        recorrente: false,
-      });
-    }
-  }, [open]);
+  }, [transaction]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
