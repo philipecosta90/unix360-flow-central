@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,9 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useAnamnese } from "@/hooks/useAnamnese";
-import { X, ClipboardList } from "lucide-react";
+import { X, ClipboardList, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AddClientDrawerProps {
   open: boolean;
@@ -27,9 +32,9 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     plano_contratado: "",
     tags: "",
     observacoes: "",
-    data_inicio_plano: "",
-    data_fim_plano: ""
   });
+  const [dataInicioPlano, setDataInicioPlano] = useState<Date | undefined>();
+  const [dataFimPlano, setDataFimPlano] = useState<Date | undefined>();
   const [enviarAnamnese, setEnviarAnamnese] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -68,7 +73,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     }
 
     // Validar datas
-    if (formData.data_inicio_plano && formData.data_fim_plano && formData.data_fim_plano < formData.data_inicio_plano) {
+    if (dataInicioPlano && dataFimPlano && dataFimPlano < dataInicioPlano) {
       toast({
         title: "Erro",
         description: "A data de fim do plano não pode ser anterior à data de início.",
@@ -88,8 +93,8 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         plano_contratado: formData.plano_contratado.trim() || null,
         observacoes: formData.observacoes.trim() || null,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
-        data_inicio_plano: formData.data_inicio_plano || null,
-        data_fim_plano: formData.data_fim_plano || null
+        data_inicio_plano: dataInicioPlano ? format(dataInicioPlano, "yyyy-MM-dd") : null,
+        data_fim_plano: dataFimPlano ? format(dataFimPlano, "yyyy-MM-dd") : null
       };
 
       const result = await onSave(clientData);
@@ -113,9 +118,9 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         plano_contratado: "",
         tags: "",
         observacoes: "",
-        data_inicio_plano: "",
-        data_fim_plano: ""
       });
+      setDataInicioPlano(undefined);
+      setDataFimPlano(undefined);
       setEnviarAnamnese(false);
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
@@ -133,15 +138,15 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       plano_contratado: "",
       tags: "",
       observacoes: "",
-      data_inicio_plano: "",
-      data_fim_plano: ""
     });
+    setDataInicioPlano(undefined);
+    setDataFimPlano(undefined);
     setEnviarAnamnese(false);
     onClose();
   };
 
   return (
-    <Drawer open={open} onOpenChange={handleClose}>
+    <Drawer open={open} onOpenChange={handleClose} modal={false}>
       <DrawerContent className="max-h-[90vh]">
         <DrawerHeader className="flex items-center justify-between">
           <DrawerTitle>Adicionar Novo Cliente</DrawerTitle>
@@ -228,24 +233,58 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="data_inicio_plano">Data de Início do Plano</Label>
-                <Input
-                  id="data_inicio_plano"
-                  type="date"
-                  value={formData.data_inicio_plano}
-                  onChange={(e) => setFormData({...formData, data_inicio_plano: e.target.value})}
-                />
+                <Label>Data de Início do Plano</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal pointer-events-auto",
+                        !dataInicioPlano && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dataInicioPlano ? format(dataInicioPlano, "dd/MM/yyyy") : "Selecione uma data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dataInicioPlano}
+                      onSelect={setDataInicioPlano}
+                      locale={ptBR}
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="data_fim_plano">Data de Término do Plano</Label>
-                <Input
-                  id="data_fim_plano"
-                  type="date"
-                  value={formData.data_fim_plano}
-                  onChange={(e) => setFormData({...formData, data_fim_plano: e.target.value})}
-                  min={formData.data_inicio_plano || undefined}
-                />
+                <Label>Data de Término do Plano</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal pointer-events-auto",
+                        !dataFimPlano && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dataFimPlano ? format(dataFimPlano, "dd/MM/yyyy") : "Selecione uma data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dataFimPlano}
+                      onSelect={setDataFimPlano}
+                      locale={ptBR}
+                      disabled={(date) => dataInicioPlano ? date < dataInicioPlano : false}
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 

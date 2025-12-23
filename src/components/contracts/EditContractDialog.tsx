@@ -1,12 +1,17 @@
-
 import { useState, useEffect } from "react";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Contract {
   id: string;
@@ -36,12 +41,12 @@ export const EditContractDialog = ({ contract, open, onOpenChange, onSubmit }: E
     titulo: "",
     cliente_nome: "",
     valor: "",
-    data_inicio: "",
-    data_fim: "",
     status: "pendente" as 'ativo' | 'inativo' | 'pendente' | 'cancelado',
     tipo: "",
     observacoes: "",
   });
+  const [dataInicio, setDataInicio] = useState<Date | undefined>();
+  const [dataFim, setDataFim] = useState<Date | undefined>();
 
   useEffect(() => {
     if (contract) {
@@ -49,18 +54,18 @@ export const EditContractDialog = ({ contract, open, onOpenChange, onSubmit }: E
         titulo: contract.titulo || "",
         cliente_nome: contract.cliente_nome || "",
         valor: contract.valor ? contract.valor.toString() : "",
-        data_inicio: contract.data_inicio || "",
-        data_fim: contract.data_fim || "",
         status: contract.status || "pendente",
         tipo: contract.tipo || "",
         observacoes: contract.observacoes || "",
       });
+      setDataInicio(contract.data_inicio ? parseISO(contract.data_inicio) : undefined);
+      setDataFim(contract.data_fim ? parseISO(contract.data_fim) : undefined);
     }
   }, [contract]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.titulo.trim() || !formData.data_inicio) {
+    if (!formData.titulo.trim() || !dataInicio) {
       toast({
         title: "Erro",
         description: "Título e data de início são obrigatórios.",
@@ -76,8 +81,8 @@ export const EditContractDialog = ({ contract, open, onOpenChange, onSubmit }: E
         titulo: formData.titulo,
         cliente_nome: formData.cliente_nome || undefined,
         valor: formData.valor ? parseFloat(formData.valor) : undefined,
-        data_inicio: formData.data_inicio,
-        data_fim: formData.data_fim || undefined,
+        data_inicio: format(dataInicio, "yyyy-MM-dd"),
+        data_fim: dataFim ? format(dataFim, "yyyy-MM-dd") : undefined,
         status: formData.status,
         tipo: formData.tipo || undefined,
         observacoes: formData.observacoes || undefined,
@@ -137,25 +142,59 @@ export const EditContractDialog = ({ contract, open, onOpenChange, onSubmit }: E
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="data_inicio">Data Início*</Label>
-              <Input
-                id="data_inicio"
-                type="date"
-                value={formData.data_inicio}
-                onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
-                required
-              />
+            <div className="space-y-2">
+              <Label>Data Início*</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal pointer-events-auto",
+                      !dataInicio && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dataInicio ? format(dataInicio, "dd/MM/yyyy") : "Selecione"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dataInicio}
+                    onSelect={setDataInicio}
+                    locale={ptBR}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
-            <div>
-              <Label htmlFor="data_fim">Data Fim</Label>
-              <Input
-                id="data_fim"
-                type="date"
-                value={formData.data_fim}
-                onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
-              />
+            <div className="space-y-2">
+              <Label>Data Fim</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal pointer-events-auto",
+                      !dataFim && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dataFim ? format(dataFim, "dd/MM/yyyy") : "Selecione"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dataFim}
+                    onSelect={setDataFim}
+                    locale={ptBR}
+                    disabled={(date) => dataInicio ? date < dataInicio : false}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
