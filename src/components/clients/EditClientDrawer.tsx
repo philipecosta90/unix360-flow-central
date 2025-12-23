@@ -8,6 +8,8 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { useDatePickerDebug } from "@/hooks/useDatePickerDebug";
+import { logger } from "@/utils/logger";
 import { X, CalendarIcon } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -47,6 +49,22 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
   const [dataInicioPlano, setDataInicioPlano] = useState<Date | undefined>(undefined);
   const [dataFimPlano, setDataFimPlano] = useState<Date | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+
+  // Debug hooks para os datepickers
+  const dataInicioDebug = useDatePickerDebug({ 
+    componentName: 'EditClientDrawer', 
+    fieldName: 'DataInicio' 
+  });
+  const dataFimDebug = useDatePickerDebug({ 
+    componentName: 'EditClientDrawer', 
+    fieldName: 'DataFim' 
+  });
+
+  // Log de montagem do componente
+  useEffect(() => {
+    logger.ui('EditClientDrawer', 'Component MOUNTED', { clientId: client?.id });
+    return () => logger.ui('EditClientDrawer', 'Component UNMOUNTED');
+  }, []);
 
   useEffect(() => {
     if (client) {
@@ -113,6 +131,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
     <Drawer
       open={open}
       onOpenChange={(nextOpen) => {
+        logger.ui('EditClientDrawer', 'Drawer onOpenChange', { nextOpen });
         if (!nextOpen) onClose();
       }}
       modal={false}
@@ -194,10 +213,14 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Data de Início do Plano</Label>
-                <Popover>
+                <Popover 
+                  open={dataInicioDebug.isOpen} 
+                  onOpenChange={dataInicioDebug.handleOpenChange}
+                >
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      onClick={dataInicioDebug.handleTriggerClick}
                       className={cn(
                         "w-full justify-start text-left font-normal pointer-events-auto",
                         !dataInicioPlano && "text-muted-foreground"
@@ -215,7 +238,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                     <Calendar
                       mode="single"
                       selected={dataInicioPlano}
-                      onSelect={setDataInicioPlano}
+                      onSelect={(date) => dataInicioDebug.handleSelect(date, setDataInicioPlano)}
                       locale={ptBR}
                       initialFocus
                       className="pointer-events-auto"
@@ -226,10 +249,14 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
 
               <div className="space-y-2">
                 <Label>Data de Término do Plano</Label>
-                <Popover>
+                <Popover 
+                  open={dataFimDebug.isOpen} 
+                  onOpenChange={dataFimDebug.handleOpenChange}
+                >
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      onClick={dataFimDebug.handleTriggerClick}
                       className={cn(
                         "w-full justify-start text-left font-normal pointer-events-auto",
                         !dataFimPlano && "text-muted-foreground"
@@ -247,7 +274,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                     <Calendar
                       mode="single"
                       selected={dataFimPlano}
-                      onSelect={setDataFimPlano}
+                      onSelect={(date) => dataFimDebug.handleSelect(date, setDataFimPlano)}
                       locale={ptBR}
                       initialFocus
                       className="pointer-events-auto"

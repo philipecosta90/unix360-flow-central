@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useAnamnese } from "@/hooks/useAnamnese";
+import { useDatePickerDebug } from "@/hooks/useDatePickerDebug";
+import { logger } from "@/utils/logger";
 import { X, ClipboardList, CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +40,22 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   const [enviarAnamnese, setEnviarAnamnese] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [loading, setLoading] = useState(false);
+
+  // Debug hooks para os datepickers
+  const dataInicioDebug = useDatePickerDebug({ 
+    componentName: 'AddClientDrawer', 
+    fieldName: 'DataInicio' 
+  });
+  const dataFimDebug = useDatePickerDebug({ 
+    componentName: 'AddClientDrawer', 
+    fieldName: 'DataFim' 
+  });
+
+  // Log de montagem do componente
+  useEffect(() => {
+    logger.ui('AddClientDrawer', 'Component MOUNTED');
+    return () => logger.ui('AddClientDrawer', 'Component UNMOUNTED');
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -149,6 +167,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     <Drawer
       open={open}
       onOpenChange={(nextOpen) => {
+        logger.ui('AddClientDrawer', 'Drawer onOpenChange', { nextOpen });
         if (!nextOpen) handleClose();
       }}
       modal={false}
@@ -240,10 +259,14 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Data de Início do Plano</Label>
-                <Popover>
+                <Popover 
+                  open={dataInicioDebug.isOpen} 
+                  onOpenChange={dataInicioDebug.handleOpenChange}
+                >
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      onClick={dataInicioDebug.handleTriggerClick}
                       className={cn(
                         "w-full justify-start text-left font-normal pointer-events-auto",
                         !dataInicioPlano && "text-muted-foreground"
@@ -261,7 +284,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                     <Calendar
                       mode="single"
                       selected={dataInicioPlano}
-                      onSelect={setDataInicioPlano}
+                      onSelect={(date) => dataInicioDebug.handleSelect(date, setDataInicioPlano)}
                       locale={ptBR}
                       className="pointer-events-auto"
                     />
@@ -271,10 +294,14 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
 
               <div className="space-y-2">
                 <Label>Data de Término do Plano</Label>
-                <Popover>
+                <Popover 
+                  open={dataFimDebug.isOpen} 
+                  onOpenChange={dataFimDebug.handleOpenChange}
+                >
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      onClick={dataFimDebug.handleTriggerClick}
                       className={cn(
                         "w-full justify-start text-left font-normal pointer-events-auto",
                         !dataFimPlano && "text-muted-foreground"
@@ -292,7 +319,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                     <Calendar
                       mode="single"
                       selected={dataFimPlano}
-                      onSelect={setDataFimPlano}
+                      onSelect={(date) => dataFimDebug.handleSelect(date, setDataFimPlano)}
                       locale={ptBR}
                       disabled={(date) => dataInicioPlano ? date < dataInicioPlano : false}
                       className="pointer-events-auto"
