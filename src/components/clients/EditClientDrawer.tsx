@@ -144,7 +144,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
           </Button>
         </DrawerHeader>
         
-        <form onSubmit={handleSubmit} className="flex-1 overflow-auto px-6">
+        <form id="edit-client-form" onSubmit={handleSubmit} className="flex-1 overflow-auto px-6">
           <div className="space-y-4 pb-6">
             <div className="space-y-2">
               <Label htmlFor="nome">Nome completo *</Label>
@@ -219,6 +219,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                 >
                   <PopoverTrigger asChild>
                     <Button
+                      type="button"
                       variant="outline"
                       onClick={dataInicioDebug.handleTriggerClick}
                       className={cn(
@@ -234,6 +235,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                     portalled={false}
                     className="w-auto p-0 z-[9999] pointer-events-auto"
                     align="start"
+                    onPointerDown={(e) => e.stopPropagation()}
                   >
                     <Calendar
                       mode="single"
@@ -255,6 +257,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                 >
                   <PopoverTrigger asChild>
                     <Button
+                      type="button"
                       variant="outline"
                       onClick={dataFimDebug.handleTriggerClick}
                       className={cn(
@@ -270,6 +273,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                     portalled={false}
                     className="w-auto p-0 z-[9999] pointer-events-auto"
                     align="start"
+                    onPointerDown={(e) => e.stopPropagation()}
                   >
                     <Calendar
                       mode="single"
@@ -312,11 +316,10 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
           <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button 
-            type="submit" 
-            onClick={handleSubmit}
+          <Button
+            type="submit"
+            form="edit-client-form"
             disabled={loading}
-            className="bg-[#43B26D] hover:bg-[#37A05B]"
           >
             {loading ? "Salvando..." : "Salvar Alterações"}
           </Button>
