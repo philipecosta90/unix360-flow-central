@@ -141,11 +141,17 @@ export const FinancialModule = () => {
 
       <AddTransactionDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
 
-      <EditTransactionDialog 
-        open={isEditDialogOpen} 
-        onOpenChange={setIsEditDialogOpen} 
-        transaction={editingTransaction}
-      />
+      {isEditDialogOpen && editingTransaction && (
+        <EditTransactionDialog
+          key={editingTransaction.id}
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) setEditingTransaction(null);
+          }}
+          transaction={editingTransaction}
+        />
+      )}
 
       <ExportDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen} transactions={transactions} kpis={kpis} startDate={startDate} endDate={endDate} />
 
