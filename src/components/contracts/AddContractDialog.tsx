@@ -151,7 +151,11 @@ export const AddContractDialog = ({ open, onOpenChange, onSubmit }: AddContractD
                     {dataInicio ? format(dataInicio, "dd/MM/yyyy") : "Selecione"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
+                <PopoverContent
+                  portalled={false}
+                  className="w-auto p-0 z-[9999] pointer-events-auto"
+                  align="start"
+                >
                   <Calendar
                     mode="single"
                     selected={dataInicio}
@@ -178,7 +182,11 @@ export const AddContractDialog = ({ open, onOpenChange, onSubmit }: AddContractD
                     {dataFim ? format(dataFim, "dd/MM/yyyy") : "Selecione"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
+                <PopoverContent
+                  portalled={false}
+                  className="w-auto p-0 z-[9999] pointer-events-auto"
+                  align="start"
+                >
                   <Calendar
                     mode="single"
                     selected={dataFim}

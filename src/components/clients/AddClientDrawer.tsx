@@ -146,7 +146,13 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   };
 
   return (
-    <Drawer open={open} onOpenChange={handleClose} modal={false}>
+    <Drawer
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) handleClose();
+      }}
+      modal={false}
+    >
       <DrawerContent className="max-h-[90vh]">
         <DrawerHeader className="flex items-center justify-between">
           <DrawerTitle>Adicionar Novo Cliente</DrawerTitle>
@@ -247,7 +253,11 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                       {dataInicioPlano ? format(dataInicioPlano, "dd/MM/yyyy") : "Selecione uma data"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
+                  <PopoverContent
+                    portalled={false}
+                    className="w-auto p-0 z-[9999] pointer-events-auto"
+                    align="start"
+                  >
                     <Calendar
                       mode="single"
                       selected={dataInicioPlano}
@@ -274,7 +284,11 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                       {dataFimPlano ? format(dataFimPlano, "dd/MM/yyyy") : "Selecione uma data"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
+                  <PopoverContent
+                    portalled={false}
+                    className="w-auto p-0 z-[9999] pointer-events-auto"
+                    align="start"
+                  >
                     <Calendar
                       mode="single"
                       selected={dataFimPlano}
