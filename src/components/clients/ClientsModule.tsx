@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ClientDetail } from "./ClientDetail";
 import { AddClientDrawer } from "./AddClientDrawer";
 import { EditClientDrawer } from "./EditClientDrawer";
+import { RenewPlanButton } from "./RenewPlanButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -374,20 +375,23 @@ export const ClientsModule = () => {
                            <span className="text-sm text-gray-600">
                              Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '-'}
                            </span>
-                           <div className="flex gap-2">
+                           <div className="flex gap-1">
+                            <RenewPlanButton
+                              clientId={client.id}
+                              clientName={client.nome}
+                              onSuccess={fetchClients}
+                            />
                             <Button variant="ghost" size="sm" onClick={e => {
                       e.stopPropagation();
-                      console.log('✏️ Editando cliente:', client.nome);
                       setEditingClient(client);
                     }}>
                               Editar
                             </Button>
                             <Button variant="ghost" size="sm" onClick={e => {
                       e.stopPropagation();
-                      console.log('👁️ Botão Ver detalhes clicado para:', client.nome);
                       handleViewDetails(client);
                     }}>
-                              Ver detalhes
+                              Detalhes
                             </Button>
                             <Button variant="ghost" size="sm" onClick={async e => {
                       e.stopPropagation();
