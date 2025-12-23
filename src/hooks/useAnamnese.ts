@@ -286,6 +286,306 @@ export function useAnamnese() {
     }
   }, [sendAnamnese, toast]);
 
+  // ========== CRUD Templates ==========
+
+  const createTemplate = useCallback(async (nome: string, descricao: string) => {
+    if (!userProfile?.empresa_id) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from("anamnese_templates")
+        .insert({
+          empresa_id: userProfile.empresa_id,
+          nome,
+          descricao,
+          ativo: true,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Template criado!",
+        description: "Agora adicione as perguntas ao template.",
+      });
+
+      await fetchTemplates();
+      return data as AnamneseTemplate;
+    } catch (error: any) {
+      console.error("Erro ao criar template:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o template.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  }, [userProfile?.empresa_id, fetchTemplates, toast]);
+
+  const updateTemplate = useCallback(async (
+    templateId: string,
+    dados: { nome?: string; descricao?: string; ativo?: boolean }
+  ) => {
+    try {
+      const { error } = await supabase
+        .from("anamnese_templates")
+        .update({ ...dados, updated_at: new Date().toISOString() })
+        .eq("id", templateId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Template atualizado!",
+        description: "As alterações foram salvas.",
+      });
+
+      await fetchTemplates();
+      return true;
+    } catch (error: any) {
+      console.error("Erro ao atualizar template:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o template.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [fetchTemplates, toast]);
+
+  const deleteTemplate = useCallback(async (templateId: string) => {
+    try {
+      // Primeiro, deletar todas as perguntas do template
+      const { error: perguntasError } = await supabase
+        .from("anamnese_perguntas")
+        .delete()
+        .eq("template_id", templateId);
+
+      if (perguntasError) throw perguntasError;
+
+      // Depois, deletar o template
+      const { error } = await supabase
+        .from("anamnese_templates")
+        .delete()
+        .eq("id", templateId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Template excluído!",
+        description: "O template foi removido com sucesso.",
+      });
+
+      await fetchTemplates();
+      return true;
+    } catch (error: any) {
+      console.error("Erro ao excluir template:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o template.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [fetchTemplates, toast]);
+
+  const duplicateTemplate = useCallback(async (templateId: string, novoNome: string) => {
+    if (!userProfile?.empresa_id) return null;
+
+    try {
+      // Buscar template original
+      const { data: templateOriginal, error: templateError } = await supabase
+        .from("anamnese_templates")
+        .select("*")
+        .eq("id", templateId)
+        .single();
+
+      if (templateError || !templateOriginal) throw templateError;
+
+      // Criar novo template
+      const { data: novoTemplate, error: novoError } = await supabase
+        .from("anamnese_templates")
+        .insert({
+          empresa_id: userProfile.empresa_id,
+          nome: novoNome,
+          descricao: templateOriginal.descricao,
+          ativo: true,
+        })
+        .select()
+        .single();
+
+      if (novoError || !novoTemplate) throw novoError;
+
+      // Buscar perguntas do template original
+      const { data: perguntasOriginais, error: perguntasError } = await supabase
+        .from("anamnese_perguntas")
+        .select("*")
+        .eq("template_id", templateId)
+        .order("ordem", { ascending: true });
+
+      if (perguntasError) throw perguntasError;
+
+      // Duplicar perguntas para o novo template
+      if (perguntasOriginais && perguntasOriginais.length > 0) {
+        const novasPerguntas = perguntasOriginais.map((p) => ({
+          template_id: novoTemplate.id,
+          secao: p.secao,
+          secao_icone: p.secao_icone,
+          ordem: p.ordem,
+          pergunta: p.pergunta,
+          tipo: p.tipo,
+          opcoes: p.opcoes,
+          obrigatoria: p.obrigatoria,
+          placeholder: p.placeholder,
+        }));
+
+        const { error: insertError } = await supabase
+          .from("anamnese_perguntas")
+          .insert(novasPerguntas);
+
+        if (insertError) throw insertError;
+      }
+
+      toast({
+        title: "Template duplicado!",
+        description: "O template foi copiado com sucesso.",
+      });
+
+      await fetchTemplates();
+      return novoTemplate as AnamneseTemplate;
+    } catch (error: any) {
+      console.error("Erro ao duplicar template:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível duplicar o template.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  }, [userProfile?.empresa_id, fetchTemplates, toast]);
+
+  // ========== CRUD Perguntas ==========
+
+  const addPergunta = useCallback(async (
+    templateId: string,
+    pergunta: {
+      secao: string;
+      secao_icone?: string;
+      ordem: number;
+      pergunta: string;
+      tipo: string;
+      opcoes?: string[];
+      obrigatoria: boolean;
+      placeholder?: string;
+    }
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from("anamnese_perguntas")
+        .insert({
+          template_id: templateId,
+          secao: pergunta.secao,
+          secao_icone: pergunta.secao_icone || null,
+          ordem: pergunta.ordem,
+          pergunta: pergunta.pergunta,
+          tipo: pergunta.tipo,
+          opcoes: pergunta.opcoes ? JSON.stringify(pergunta.opcoes) : null,
+          obrigatoria: pergunta.obrigatoria,
+          placeholder: pergunta.placeholder || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data as AnamnesePergunta;
+    } catch (error: any) {
+      console.error("Erro ao adicionar pergunta:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar a pergunta.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  }, [toast]);
+
+  const updatePergunta = useCallback(async (
+    perguntaId: string,
+    dados: {
+      secao?: string;
+      secao_icone?: string;
+      ordem?: number;
+      pergunta?: string;
+      tipo?: string;
+      opcoes?: string[];
+      obrigatoria?: boolean;
+      placeholder?: string;
+    }
+  ) => {
+    try {
+      const updateData: Record<string, unknown> = { ...dados };
+      if (dados.opcoes) {
+        updateData.opcoes = JSON.stringify(dados.opcoes);
+      }
+
+      const { error } = await supabase
+        .from("anamnese_perguntas")
+        .update(updateData)
+        .eq("id", perguntaId);
+
+      if (error) throw error;
+
+      return true;
+    } catch (error: any) {
+      console.error("Erro ao atualizar pergunta:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a pergunta.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [toast]);
+
+  const deletePergunta = useCallback(async (perguntaId: string) => {
+    try {
+      const { error } = await supabase
+        .from("anamnese_perguntas")
+        .delete()
+        .eq("id", perguntaId);
+
+      if (error) throw error;
+
+      return true;
+    } catch (error: any) {
+      console.error("Erro ao excluir pergunta:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a pergunta.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [toast]);
+
+  const updatePerguntasOrdem = useCallback(async (
+    perguntas: { id: string; ordem: number }[]
+  ) => {
+    try {
+      for (const p of perguntas) {
+        await supabase
+          .from("anamnese_perguntas")
+          .update({ ordem: p.ordem })
+          .eq("id", p.id);
+      }
+      return true;
+    } catch (error: any) {
+      console.error("Erro ao reordenar perguntas:", error);
+      return false;
+    }
+  }, []);
+
   return {
     templates,
     perguntas,
@@ -299,5 +599,15 @@ export function useAnamnese() {
     createDefaultTemplate,
     sendAnamnese,
     resendAnamnese,
+    // CRUD Templates
+    createTemplate,
+    updateTemplate,
+    deleteTemplate,
+    duplicateTemplate,
+    // CRUD Perguntas
+    addPergunta,
+    updatePergunta,
+    deletePergunta,
+    updatePerguntasOrdem,
   };
 }
