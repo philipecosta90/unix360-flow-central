@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays } from "date-fns";
 
@@ -25,24 +26,55 @@ const RENEWAL_OPTIONS = [
 
 export const RenewPlanButton = ({ clientId, clientName, onSuccess }: RenewPlanButtonProps) => {
   const { toast } = useToast();
+  const { userProfile } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const handleRenew = async (days: number, label: string) => {
+    if (!userProfile?.empresa_id) {
+      toast({
+        title: "Erro",
+        description: "Perfil não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const today = new Date();
       const endDate = addDays(today, days);
+      const dataInicio = format(today, "yyyy-MM-dd");
+      const dataFim = format(endDate, "yyyy-MM-dd");
 
-      const { error } = await supabase
+      // 1. Atualizar cliente
+      const { error: updateError } = await supabase
         .from("clientes")
         .update({
-          data_inicio_plano: format(today, "yyyy-MM-dd"),
-          data_fim_plano: format(endDate, "yyyy-MM-dd"),
+          data_inicio_plano: dataInicio,
+          data_fim_plano: dataFim,
           status: "ativo",
         })
         .eq("id", clientId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // 2. Registrar histórico de renovação
+      const { error: historyError } = await supabase
+        .from("historico_renovacoes")
+        .insert({
+          cliente_id: clientId,
+          empresa_id: userProfile.empresa_id,
+          data_inicio_plano: dataInicio,
+          data_fim_plano: dataFim,
+          periodo_dias: days,
+          periodo_label: label,
+          renovado_por: userProfile.id,
+        });
+
+      if (historyError) {
+        console.error("Erro ao registrar histórico:", historyError);
+        // Não falhar a operação se o histórico falhar
+      }
 
       toast({
         title: "Plano renovado!",
