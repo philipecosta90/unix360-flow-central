@@ -46,6 +46,12 @@ class Logger {
       console.info(`💼 ${message}`, data ? data : '');
     }
   }
+
+  ui(component: string, action: string, data?: LogData) {
+    if (this.isDevelopment) {
+      console.log(`🎨 [${component}] ${action}`, data ? data : '');
+    }
+  }
 }
 
 export const logger = new Logger();
