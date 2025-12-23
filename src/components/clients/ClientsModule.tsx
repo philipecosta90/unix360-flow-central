@@ -157,21 +157,31 @@ export const ClientsModule = () => {
   const handleEditClient = async (clientData: any) => {
     if (!editingClient || !clientData) return;
     try {
-      const {
-        error
-      } = await supabase.from('clientes').update(clientData).eq('id', editingClient.id);
+      console.log('💾 Atualizando cliente (payload):', { id: editingClient.id, ...clientData });
+
+      const { data, error } = await supabase
+        .from('clientes')
+        .update(clientData)
+        .eq('id', editingClient.id)
+        .select('id, nome, data_inicio_plano, data_fim_plano')
+        .single();
+
       if (error) throw error;
+
       toast({
         title: "Cliente atualizado!",
-        description: `${clientData.nome} foi atualizado com sucesso.`
+        description: `${data?.nome || clientData.nome} foi atualizado com sucesso.`
       });
+
+      console.log('✅ Cliente atualizado (retorno):', data);
+
       fetchClients();
       setEditingClient(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao atualizar cliente:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o cliente.",
+        description: error?.message || "Não foi possível atualizar o cliente.",
         variant: "destructive"
       });
     }
