@@ -20,6 +20,8 @@ interface RenewPlanButtonProps {
 
 const RENEWAL_OPTIONS = [
   { label: "30 dias", days: 30 },
+  { label: "60 dias", days: 60 },
+  { label: "90 dias", days: 90 },
   { label: "6 meses", days: 180 },
   { label: "1 ano", days: 365 },
 ];
