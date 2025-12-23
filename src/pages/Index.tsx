@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MainLogo } from "@/components/layout/MainLogo";
+import { BuildVersion } from "@/components/layout/BuildVersion";
 
 const Index = () => {
   const { user, userProfile, loading, signOut } = useAuth();
@@ -149,6 +150,9 @@ const Index = () => {
           </div>
         </main>
       </div>
+      
+      {/* Indicador de versão para debug */}
+      <BuildVersion />
     </div>
   );
 };
