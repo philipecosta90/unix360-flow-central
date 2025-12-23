@@ -110,7 +110,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
   };
 
   return (
-    <Drawer open={open} onOpenChange={onClose}>
+    <Drawer open={open} onOpenChange={onClose} modal={false}>
       <DrawerContent className="max-h-[90vh]">
         <DrawerHeader className="flex items-center justify-between">
           <DrawerTitle>Editar Cliente</DrawerTitle>
@@ -193,7 +193,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal pointer-events-auto",
                         !dataInicioPlano && "text-muted-foreground"
                       )}
                     >
@@ -201,7 +201,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                       {dataInicioPlano ? format(dataInicioPlano, "dd/MM/yyyy") : "Selecione uma data"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                  <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
                     <Calendar
                       mode="single"
                       selected={dataInicioPlano}
@@ -221,7 +221,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal pointer-events-auto",
                         !dataFimPlano && "text-muted-foreground"
                       )}
                     >
@@ -229,7 +229,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                       {dataFimPlano ? format(dataFimPlano, "dd/MM/yyyy") : "Selecione uma data"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                  <PopoverContent className="w-auto p-0 z-[9999] pointer-events-auto" align="start">
                     <Calendar
                       mode="single"
                       selected={dataFimPlano}
