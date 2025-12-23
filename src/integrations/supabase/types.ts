@@ -994,6 +994,57 @@ export type Database = {
           },
         ]
       }
+      historico_renovacoes: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          data_fim_plano: string
+          data_inicio_plano: string
+          empresa_id: string
+          id: string
+          periodo_dias: number
+          periodo_label: string
+          renovado_por: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          data_fim_plano: string
+          data_inicio_plano: string
+          empresa_id: string
+          id?: string
+          periodo_dias: number
+          periodo_label: string
+          renovado_por?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          data_fim_plano?: string
+          data_inicio_plano?: string
+          empresa_id?: string
+          id?: string
+          periodo_dias?: number
+          periodo_label?: string
+          renovado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_renovacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historico_renovacoes_renovado_por_fkey"
+            columns: ["renovado_por"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
