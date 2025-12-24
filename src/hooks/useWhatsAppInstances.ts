@@ -98,20 +98,14 @@ export const useWhatsAppInstances = () => {
   };
 
   // Obter QR Code
-  const getQRCode = async (instanceId: string) => {
+  const getQRCode = useCallback(async (instanceId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "whatsapp-qrcode",
-        {
-          body: {},
-          headers: {},
-        }
-      );
-
-      // Workaround: passar instanceId via query params no invoke não funciona bem
-      // Vamos usar fetch direto
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
+
+      if (!token) {
+        throw new Error("Usuário não autenticado");
+      }
 
       const response = await fetch(
         `https://hfqzbljiwkrksmjyfdiy.supabase.co/functions/v1/whatsapp-qrcode?instanceId=${instanceId}`,
@@ -135,7 +129,7 @@ export const useWhatsAppInstances = () => {
       console.error("Erro ao obter QR Code:", error);
       throw error;
     }
-  };
+  }, []);
 
   // Obter código de pareamento por telefone
   const getPairCode = async (instanceId: string, phone: string) => {
