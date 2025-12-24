@@ -6,6 +6,7 @@ interface Cliente {
   id: string;
   nome: string;
   email: string | null;
+  telefone: string | null;
   status: string;
 }
 
@@ -21,7 +22,7 @@ export const useClients = () => {
 
       const { data, error } = await supabase
         .from('clientes')
-        .select('id, nome, email, status')
+        .select('id, nome, email, telefone, status')
         .eq('empresa_id', userProfile.empresa_id)
         .order('nome');
 
