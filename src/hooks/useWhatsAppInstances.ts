@@ -98,7 +98,7 @@ export const useWhatsAppInstances = () => {
   };
 
   // Obter QR Code
-  const getQRCode = useCallback(async (instanceId: string) => {
+  const getQRCode = async (instanceId: string) => {
     try {
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
@@ -129,7 +129,7 @@ export const useWhatsAppInstances = () => {
       console.error("Erro ao obter QR Code:", error);
       throw error;
     }
-  }, []);
+  };
 
   // Obter código de pareamento por telefone
   const getPairCode = async (instanceId: string, phone: string) => {
