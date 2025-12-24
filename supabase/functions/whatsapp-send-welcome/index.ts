@@ -148,21 +148,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    const checkData: CheckUserResponse = await checkResponse.json();
-    console.log("Resposta da verificação:", JSON.stringify(checkData));
+    const checkJson = await checkResponse.json();
+    console.log("Resposta da verificação:", JSON.stringify(checkJson));
 
-    if (!checkData.Users || checkData.Users.length === 0 || !checkData.Users[0].IsInWhatsapp) {
+    const users = (checkJson?.data?.Users ?? checkJson?.Users ?? checkJson?.data?.data?.Users) as
+      | CheckUserResponse["Users"]
+      | undefined;
+
+    const firstUser = users?.[0];
+
+    if (!firstUser || !firstUser.IsInWhatsapp) {
       console.log("Número não possui WhatsApp");
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: "Número não possui WhatsApp" 
+        JSON.stringify({
+          success: false,
+          message: "Número não possui WhatsApp",
+          checkedPhone: clienteTelefone,
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const jid = checkData.Users[0].JID;
+    const jid = firstUser.JID;
     console.log(`Número verificado, JID: ${jid}`);
 
     // 2. Montar mensagem de boas-vindas
@@ -179,6 +186,9 @@ Equipe ${nomeEmpresa}`;
 
     // 3. Enviar mensagem
     console.log("Enviando mensagem de boas-vindas...");
+
+    const destino = jid?.includes("@") ? jid : clienteTelefone;
+
     const sendResponse = await fetch(`${WHATSAPP_API_URL}/chat/send/text`, {
       method: "POST",
       headers: {
@@ -186,7 +196,7 @@ Equipe ${nomeEmpresa}`;
         "token": instancia.user_token,
       },
       body: JSON.stringify({
-        Phone: clienteTelefone,
+        Phone: destino,
         Body: mensagem,
       }),
     });
@@ -195,11 +205,13 @@ Equipe ${nomeEmpresa}`;
       const errorText = await sendResponse.text();
       console.error("Erro ao enviar mensagem:", errorText);
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: "Erro ao enviar mensagem" 
+        JSON.stringify({
+          success: false,
+          message: "Erro ao enviar mensagem",
+          checkedPhone: clienteTelefone,
+          jid,
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -207,11 +219,13 @@ Equipe ${nomeEmpresa}`;
     console.log("Mensagem enviada com sucesso:", JSON.stringify(sendData));
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "Mensagem de boas-vindas enviada com sucesso" 
+      JSON.stringify({
+        success: true,
+        message: "Mensagem de boas-vindas enviada com sucesso",
+        checkedPhone: clienteTelefone,
+        jid,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
 
   } catch (error) {

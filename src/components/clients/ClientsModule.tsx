@@ -151,22 +151,38 @@ export const ClientsModule = () => {
           const { data: whatsappData, error: whatsappError } = await supabase.functions.invoke('whatsapp-send-welcome', {
             body: {
               clienteNome: clientData.nome,
-              clienteTelefone: clientData.telefone
-            }
+              clienteTelefone: clientData.telefone,
+            },
           });
 
           if (whatsappError) {
             console.warn("Erro ao enviar WhatsApp:", whatsappError);
+            toast({
+              title: "WhatsApp: não enviado",
+              description: whatsappError.message || "Não foi possível enviar a mensagem de boas-vindas.",
+              variant: "destructive",
+            });
           } else if (whatsappData?.success) {
             toast({
               title: "Mensagem enviada!",
               description: "Boas-vindas enviada via WhatsApp.",
             });
-          } else if (whatsappData?.message) {
-            console.log("WhatsApp:", whatsappData.message);
+          } else {
+            const msg = whatsappData?.message || "Não foi possível enviar a mensagem de boas-vindas.";
+            console.log("WhatsApp (falha):", whatsappData);
+            toast({
+              title: "WhatsApp: não enviado",
+              description: msg,
+              variant: "destructive",
+            });
           }
         } catch (whatsappErr) {
           console.warn("Não foi possível enviar WhatsApp:", whatsappErr);
+          toast({
+            title: "WhatsApp: não enviado",
+            description: "Falha inesperada ao enviar a mensagem de boas-vindas.",
+            variant: "destructive",
+          });
         }
       }
 
