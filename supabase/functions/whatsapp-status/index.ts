@@ -85,16 +85,25 @@ serve(async (req) => {
     const statusResult = await statusResponse.json();
     console.log('[whatsapp-status] Resposta WUZAPI:', JSON.stringify(statusResult));
 
+    // Extrair payload - WUZAPI retorna dados em statusResult.data
+    const payload = statusResult?.data ?? statusResult;
+    
     // Mapear status da WUZAPI para nosso padrão
     let newStatus = 'disconnected';
     let jid = null;
 
-    if (statusResult.Connected || statusResult.connected) {
+    // Verificar conexão (considerar variações de case)
+    const isConnected = payload.Connected || payload.connected;
+    const isLoggedIn = payload.LoggedIn ?? payload.loggedIn ?? payload.logged_in;
+    
+    if (isConnected === true) {
       newStatus = 'connected';
-      jid = statusResult.Jid || statusResult.jid || statusResult.JID;
-    } else if (statusResult.LoggedIn === false || statusResult.logged_in === false) {
+      jid = payload.Jid || payload.jid || payload.JID;
+    } else if (isLoggedIn === false) {
       newStatus = 'connecting';
     }
+    
+    console.log('[whatsapp-status] Status mapeado:', { isConnected, isLoggedIn, newStatus, jid });
 
     // Atualizar status no banco se mudou usando cliente admin
     if (newStatus !== instance.status || jid !== instance.jid) {
