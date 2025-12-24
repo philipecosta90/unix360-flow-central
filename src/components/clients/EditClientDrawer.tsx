@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -160,11 +161,10 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
 
               <div className="space-y-2">
                 <Label htmlFor="telefone">Telefone</Label>
-                <Input
+                <PhoneInput
                   id="telefone"
                   value={formData.telefone}
-                  onChange={(e) => setFormData({...formData, telefone: e.target.value})}
-                  placeholder="(11) 99999-9999"
+                  onChange={(value) => setFormData({...formData, telefone: value})}
                 />
               </div>
             </div>
