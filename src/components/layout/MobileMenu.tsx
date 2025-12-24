@@ -17,7 +17,8 @@ import {
   Settings as SettingsIcon,
   Shield,
   Menu,
-  CreditCard
+  CreditCard,
+  MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -43,6 +44,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
     { icon: Users, label: "Clientes", path: "/clientes" },
     { icon: FileText, label: "Contratos", path: "/contratos" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
+    { icon: MessageCircle, label: "Conectar WhatsApp", path: "/whatsapp" },
     { icon: SettingsIcon, label: "Configurações", path: "/configuracoes" },
   ];
 

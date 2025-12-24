@@ -30,7 +30,8 @@ import {
   UserCheck, 
   Settings,
   Shield,
-  ClipboardList
+  ClipboardList,
+  MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -47,6 +48,7 @@ export const Sidebar = () => {
     { icon: ClipboardList, label: "Anamnese", path: "/anamnese" },
     { icon: FileText, label: "Contratos", path: "/contratos" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
+    { icon: MessageCircle, label: "Conectar WhatsApp", path: "/whatsapp" },
     { icon: Settings, label: "Configurações", path: "/configuracoes" },
   ];
 
