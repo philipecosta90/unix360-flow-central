@@ -17,7 +17,7 @@ import { X, ClipboardList, MessageCircle } from "lucide-react";
 interface AddClientDrawerProps {
   open: boolean;
   onClose: () => void;
-  onSave: (clientData: any) => Promise<{ id: string } | void>;
+  onSave: (clientData: any, options?: { enviarBoasVindas?: boolean }) => Promise<{ id: string } | void>;
 }
 
 export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps) => {
@@ -107,7 +107,10 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         data_fim_plano: dataFimPlano || null
       };
 
-      const result = await onSave(clientData);
+      // Passa a flag de enviarBoasVindas para o ClientsModule
+      const result = await onSave(clientData, { 
+        enviarBoasVindas: enviarBoasVindas && !!formData.telefone 
+      });
       
       // Se cliente foi criado e deve enviar anamnese
       if (enviarAnamnese && result && 'id' in result && selectedTemplateId && formData.email) {
@@ -117,31 +120,6 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
           formData.nome.trim(),
           formData.email.trim()
         );
-      }
-
-      // Se cliente foi criado e deve enviar boas-vindas via WhatsApp
-      if (enviarBoasVindas && result && formData.telefone) {
-        try {
-          const { data, error } = await supabase.functions.invoke('whatsapp-send-welcome', {
-            body: {
-              clienteNome: formData.nome.trim(),
-              clienteTelefone: formData.telefone.trim()
-            }
-          });
-
-          if (error) {
-            console.warn("Erro ao enviar WhatsApp:", error);
-          } else if (data?.success) {
-            toast({
-              title: "Mensagem enviada!",
-              description: "Boas-vindas enviada via WhatsApp.",
-            });
-          } else if (data?.message) {
-            console.log("WhatsApp:", data.message);
-          }
-        } catch (whatsappError) {
-          console.warn("Não foi possível enviar WhatsApp:", whatsappError);
-        }
       }
       
       // Reset form

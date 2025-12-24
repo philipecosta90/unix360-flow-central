@@ -127,7 +127,7 @@ export const ClientsModule = () => {
         return status;
     }
   };
-  const handleAddClient = async (clientData: any): Promise<{ id: string } | void> => {
+  const handleAddClient = async (clientData: any, options?: { enviarBoasVindas?: boolean }): Promise<{ id: string } | void> => {
     if (!clientData || !userProfile?.empresa_id) return;
     try {
       const { data, error } = await supabase
@@ -143,6 +143,33 @@ export const ClientsModule = () => {
         title: "Cliente adicionado!",
         description: `${clientData.nome} foi adicionado com sucesso.`
       });
+
+      // Enviar WhatsApp ANTES de fechar o drawer
+      if (options?.enviarBoasVindas && clientData.telefone) {
+        try {
+          console.log('📱 Enviando mensagem de boas-vindas via WhatsApp...');
+          const { data: whatsappData, error: whatsappError } = await supabase.functions.invoke('whatsapp-send-welcome', {
+            body: {
+              clienteNome: clientData.nome,
+              clienteTelefone: clientData.telefone
+            }
+          });
+
+          if (whatsappError) {
+            console.warn("Erro ao enviar WhatsApp:", whatsappError);
+          } else if (whatsappData?.success) {
+            toast({
+              title: "Mensagem enviada!",
+              description: "Boas-vindas enviada via WhatsApp.",
+            });
+          } else if (whatsappData?.message) {
+            console.log("WhatsApp:", whatsappData.message);
+          }
+        } catch (whatsappErr) {
+          console.warn("Não foi possível enviar WhatsApp:", whatsappErr);
+        }
+      }
+
       fetchClients();
       setShowAddDrawer(false);
       return { id: data.id };
