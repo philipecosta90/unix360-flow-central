@@ -17,7 +17,7 @@ serve(async (req) => {
   try {
     console.log('[whatsapp-connect] Iniciando...');
 
-    // Criar cliente Supabase com token do usuário
+    // Criar cliente Supabase com token do usuário para autenticação
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Authorization header required');
@@ -29,10 +29,27 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // Cliente admin para operações de banco (bypassa RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Verificar usuário autenticado
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       throw new Error('User not authenticated');
+    }
+
+    // Buscar empresa_id do usuário para validação
+    const { data: perfil, error: perfilError } = await supabase
+      .from('perfis')
+      .select('empresa_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (perfilError || !perfil) {
+      throw new Error('Perfil não encontrado');
     }
 
     // Parse do body
@@ -44,11 +61,12 @@ serve(async (req) => {
 
     console.log(`[whatsapp-connect] Reconectando instância: ${instanceId}`);
 
-    // Buscar instância do banco (RLS garante que é da empresa do usuário)
-    const { data: instance, error: instanceError } = await supabase
+    // Buscar instância do banco usando admin, mas validar empresa_id
+    const { data: instance, error: instanceError } = await supabaseAdmin
       .from('whatsapp_instances')
       .select('*')
       .eq('id', instanceId)
+      .eq('empresa_id', perfil.empresa_id)
       .single();
 
     if (instanceError || !instance) {
@@ -68,8 +86,8 @@ serve(async (req) => {
     const connectResult = await connectResponse.json();
     console.log('[whatsapp-connect] Resposta WUZAPI:', JSON.stringify(connectResult));
 
-    // Atualizar status para connecting
-    await supabase
+    // Atualizar status para connecting usando cliente admin
+    await supabaseAdmin
       .from('whatsapp_instances')
       .update({
         status: 'connecting',
