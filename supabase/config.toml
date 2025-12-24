@@ -1,4 +1,3 @@
-
 project_id = "hfqzbljiwkrksmjyfdiy"
 
 [api]
@@ -82,3 +81,18 @@ verify_jwt = true
 
 [functions.submit-anamnese]
 verify_jwt = false
+
+[functions.whatsapp-create-instance]
+verify_jwt = true
+
+[functions.whatsapp-connect]
+verify_jwt = true
+
+[functions.whatsapp-qrcode]
+verify_jwt = true
+
+[functions.whatsapp-pair-phone]
+verify_jwt = true
+
+[functions.whatsapp-status]
+verify_jwt = true
