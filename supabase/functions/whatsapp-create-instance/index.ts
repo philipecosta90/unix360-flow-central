@@ -18,7 +18,7 @@ serve(async (req) => {
   try {
     console.log('[whatsapp-create-instance] Iniciando...');
 
-    // Criar cliente Supabase com token do usuário
+    // Criar cliente Supabase com token do usuário para autenticação
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Authorization header required');
@@ -30,13 +30,19 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // Cliente admin para operações de banco (bypassa RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Verificar usuário autenticado
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       throw new Error('User not authenticated');
     }
 
-    // Buscar empresa_id do usuário
+    // Buscar empresa_id do usuário (usando cliente do usuário para RLS)
     const { data: perfil, error: perfilError } = await supabase
       .from('perfis')
       .select('empresa_id')
@@ -81,8 +87,8 @@ serve(async (req) => {
       throw new Error(createUserResult.message || 'Erro ao criar usuário na API WhatsApp');
     }
 
-    // Salvar instância no banco
-    const { data: instance, error: insertError } = await supabase
+    // Salvar instância no banco usando cliente admin
+    const { data: instance, error: insertError } = await supabaseAdmin
       .from('whatsapp_instances')
       .insert({
         empresa_id: perfil.empresa_id,
@@ -114,8 +120,8 @@ serve(async (req) => {
     const connectResult = await connectResponse.json();
     console.log('[whatsapp-create-instance] Conexão iniciada:', JSON.stringify(connectResult));
 
-    // Atualizar status para connecting
-    await supabase
+    // Atualizar status para connecting usando cliente admin
+    await supabaseAdmin
       .from('whatsapp_instances')
       .update({ status: 'connecting' })
       .eq('id', instance.id);
