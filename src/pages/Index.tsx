@@ -14,6 +14,7 @@ import { ClientsModule } from "@/components/clients/ClientsModule";
 import { ContractsModule } from "@/components/contracts/ContractsModule";
 import { CSModule } from "@/components/cs/CSModule";
 import { AnamneseModule } from "@/components/anamnese/AnamneseModule";
+import { WhatsAppModule } from "@/components/whatsapp/WhatsAppModule";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import Settings from "./Settings";
 import Admin from "./Admin";
@@ -26,7 +27,8 @@ import {
   UserCheck, 
   Settings as SettingsIcon,
   Shield,
-  ClipboardList
+  ClipboardList,
+  MessageCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MainLogo } from "@/components/layout/MainLogo";
@@ -69,6 +71,7 @@ const Index = () => {
     { icon: ClipboardList, label: "Anamnese", path: "/anamnese" },
     { icon: FileText, label: "Contratos", path: "/contratos" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
+    { icon: MessageCircle, label: "Conectar WhatsApp", path: "/whatsapp" },
     { icon: SettingsIcon, label: "Configurações", path: "/configuracoes" },
   ];
 
@@ -95,6 +98,8 @@ const Index = () => {
         return <CSModule />;
       case '/sucesso-cliente':
         return <CSModule />;
+      case '/whatsapp':
+        return <WhatsAppModule />;
       case '/admin':
         return <Admin />;
       case '/configuracoes':
