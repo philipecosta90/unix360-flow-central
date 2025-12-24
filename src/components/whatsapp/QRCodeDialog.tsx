@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -38,10 +38,11 @@ export const QRCodeDialog = ({
   const [isLoadingQR, setIsLoadingQR] = useState(false);
   const [isLoadingPair, setIsLoadingPair] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const hasLoadedQRRef = useRef(false);
 
   // Buscar QR Code
-  const fetchQRCode = useCallback(async () => {
-    if (!instance) return;
+  const fetchQRCode = async () => {
+    if (!instance || isLoadingQR) return;
 
     setIsLoadingQR(true);
     try {
@@ -53,7 +54,7 @@ export const QRCodeDialog = ({
     } finally {
       setIsLoadingQR(false);
     }
-  }, [instance, getQRCode]);
+  };
 
   // Solicitar código de pareamento
   const requestPairCode = async () => {
@@ -96,16 +97,18 @@ export const QRCodeDialog = ({
     return () => clearInterval(interval);
   }, [open, instance, isConnected, checkStatus, onConnected]);
 
-  // Buscar QR quando abrir
+  // Buscar QR apenas uma vez quando abrir
   useEffect(() => {
-    if (open && instance && !isConnected) {
+    if (open && instance && !isConnected && !hasLoadedQRRef.current) {
+      hasLoadedQRRef.current = true;
       fetchQRCode();
     }
-  }, [open, instance, isConnected, fetchQRCode]);
+  }, [open, instance, isConnected]);
 
   // Resetar ao fechar
   useEffect(() => {
     if (!open) {
+      hasLoadedQRRef.current = false;
       setQrCode(null);
       setPairCode(null);
       setPhone("");
