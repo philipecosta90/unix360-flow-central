@@ -96,3 +96,6 @@ verify_jwt = true
 
 [functions.whatsapp-status]
 verify_jwt = true
+
+[functions.whatsapp-send-welcome]
+verify_jwt = true

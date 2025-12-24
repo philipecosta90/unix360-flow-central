@@ -11,7 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAnamnese } from "@/hooks/useAnamnese";
 import { logger } from "@/utils/logger";
-import { X, ClipboardList } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { X, ClipboardList, MessageCircle } from "lucide-react";
 
 interface AddClientDrawerProps {
   open: boolean;
@@ -34,6 +35,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   const [dataInicioPlano, setDataInicioPlano] = useState<string>("");
   const [dataFimPlano, setDataFimPlano] = useState<string>("");
   const [enviarAnamnese, setEnviarAnamnese] = useState(false);
+  const [enviarBoasVindas, setEnviarBoasVindas] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
@@ -116,6 +118,31 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
           formData.email.trim()
         );
       }
+
+      // Se cliente foi criado e deve enviar boas-vindas via WhatsApp
+      if (enviarBoasVindas && result && formData.telefone) {
+        try {
+          const { data, error } = await supabase.functions.invoke('whatsapp-send-welcome', {
+            body: {
+              clienteNome: formData.nome.trim(),
+              clienteTelefone: formData.telefone.trim()
+            }
+          });
+
+          if (error) {
+            console.warn("Erro ao enviar WhatsApp:", error);
+          } else if (data?.success) {
+            toast({
+              title: "Mensagem enviada!",
+              description: "Boas-vindas enviada via WhatsApp.",
+            });
+          } else if (data?.message) {
+            console.log("WhatsApp:", data.message);
+          }
+        } catch (whatsappError) {
+          console.warn("Não foi possível enviar WhatsApp:", whatsappError);
+        }
+      }
       
       // Reset form
       setFormData({
@@ -130,6 +157,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       setDataInicioPlano("");
       setDataFimPlano("");
       setEnviarAnamnese(false);
+      setEnviarBoasVindas(true);
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
     } finally {
@@ -150,6 +178,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     setDataInicioPlano("");
     setDataFimPlano("");
     setEnviarAnamnese(false);
+    setEnviarBoasVindas(true);
     onClose();
   };
 
@@ -277,6 +306,28 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                 placeholder="Informações adicionais sobre o cliente..."
                 rows={4}
               />
+            </div>
+
+            {/* Seção de WhatsApp Boas-Vindas */}
+            <div className="border rounded-lg p-4 bg-muted/30">
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="enviarBoasVindas"
+                  checked={enviarBoasVindas}
+                  onCheckedChange={(checked) => setEnviarBoasVindas(checked === true)}
+                />
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-green-500" />
+                  <Label htmlFor="enviarBoasVindas" className="cursor-pointer font-medium">
+                    Enviar mensagem de boas-vindas via WhatsApp
+                  </Label>
+                </div>
+              </div>
+              {enviarBoasVindas && !formData.telefone && (
+                <p className="text-xs text-muted-foreground mt-2 pl-6">
+                  Preencha o telefone para enviar a mensagem.
+                </p>
+              )}
             </div>
 
             {/* Seção de Anamnese */}
