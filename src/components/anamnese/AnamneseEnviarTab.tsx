@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useClients } from "@/hooks/useClients";
 import { useAnamnese } from "@/hooks/useAnamnese";
 import { Input } from "@/components/ui/input";
@@ -24,8 +24,11 @@ export const AnamneseEnviarTab = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   
   const { data: clientes, isLoading, refetch } = useClients();
-  const { templates, loading: loadingTemplates } = useAnamnese();
+  const { templates, loading: loadingTemplates, fetchTemplates } = useAnamnese();
 
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
   // Filtrar clientes pela busca
   const filteredClientes = useMemo(() => {
     if (!clientes) return [];
