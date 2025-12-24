@@ -17,7 +17,7 @@ serve(async (req) => {
   try {
     console.log('[whatsapp-qrcode] Iniciando...');
 
-    // Criar cliente Supabase com token do usuário
+    // Criar cliente Supabase com token do usuário para autenticação
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Authorization header required');
@@ -29,13 +29,30 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // Cliente admin para operações de banco (bypassa RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Verificar usuário autenticado
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       throw new Error('User not authenticated');
     }
 
-    // Parse do body ou query params
+    // Buscar empresa_id do usuário para validação
+    const { data: perfil, error: perfilError } = await supabase
+      .from('perfis')
+      .select('empresa_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (perfilError || !perfil) {
+      throw new Error('Perfil não encontrado');
+    }
+
+    // Parse query params
     const url = new URL(req.url);
     const instanceId = url.searchParams.get('instanceId');
 
@@ -45,14 +62,16 @@ serve(async (req) => {
 
     console.log(`[whatsapp-qrcode] Buscando QR Code para instância: ${instanceId}`);
 
-    // Buscar instância do banco (RLS garante que é da empresa do usuário)
-    const { data: instance, error: instanceError } = await supabase
+    // Buscar instância do banco usando admin, mas validar empresa_id
+    const { data: instance, error: instanceError } = await supabaseAdmin
       .from('whatsapp_instances')
       .select('*')
       .eq('id', instanceId)
+      .eq('empresa_id', perfil.empresa_id)
       .single();
 
     if (instanceError || !instance) {
+      console.error('[whatsapp-qrcode] Instância não encontrada:', instanceError);
       throw new Error('Instância não encontrada');
     }
 
