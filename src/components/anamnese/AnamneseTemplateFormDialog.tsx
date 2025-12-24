@@ -197,126 +197,128 @@ export function AnamneseTemplateFormDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
-            {/* Dados básicos do template */}
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="nome">Nome do Template *</Label>
-                <Input
-                  id="nome"
-                  placeholder="Ex: Anamnese Nutricional"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="descricao">Descrição/Mensagem de Boas-vindas</Label>
-                <Textarea
-                  id="descricao"
-                  placeholder="Mensagem exibida ao cliente no início do questionário..."
-                  value={descricao}
-                  onChange={(e) => setDescricao(e.target.value)}
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            {/* Seção de perguntas - só aparece se já salvou o template */}
-            {templateId && (
-              <div className="flex-1 overflow-hidden flex flex-col border rounded-lg">
-                <div className="flex items-center justify-between p-3 border-b bg-muted/50">
-                  <h3 className="font-semibold text-sm">Perguntas</h3>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleAddPergunta()}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Nova Pergunta
-                  </Button>
+          <ScrollArea className="flex-1 max-h-[calc(90vh-180px)] pr-4">
+            <div className="space-y-4">
+              {/* Dados básicos do template */}
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="nome">Nome do Template *</Label>
+                  <Input
+                    id="nome"
+                    placeholder="Ex: Anamnese Nutricional"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                  />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="descricao">Descrição/Mensagem de Boas-vindas</Label>
+                  <Textarea
+                    id="descricao"
+                    placeholder="Mensagem exibida ao cliente no início do questionário..."
+                    value={descricao}
+                    onChange={(e) => setDescricao(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </div>
 
-                <ScrollArea className="flex-1 p-3">
-                  {loadingPerguntas ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : Object.keys(secoes).length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p className="text-sm">Nenhuma pergunta cadastrada.</p>
-                      <p className="text-xs mt-1">Clique em "Nova Pergunta" para começar.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {Object.entries(secoes).map(([secao, { icone, perguntas: perguntasSecao }]) => (
-                        <div key={secao} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-medium flex items-center gap-2">
-                              {icone && <span>{icone}</span>}
-                              {secao}
-                              <Badge variant="secondary" className="text-xs">
-                                {perguntasSecao.length}
-                              </Badge>
-                            </h4>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 text-xs"
-                              onClick={() => handleAddPergunta(secao)}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Adicionar
-                            </Button>
-                          </div>
-                          <div className="space-y-1 pl-2 border-l-2 border-muted">
-                            {perguntasSecao
-                              .sort((a, b) => a.ordem - b.ordem)
-                              .map((pergunta) => (
-                                <div
-                                  key={pergunta.id}
-                                  className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 group"
-                                >
-                                  <GripVertical className="h-4 w-4 text-muted-foreground/50" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm truncate">{pergunta.pergunta}</p>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <Badge variant="outline" className="text-xs">
-                                        {tipoLabel[pergunta.tipo] || pergunta.tipo}
-                                      </Badge>
-                                      {pergunta.obrigatoria && (
-                                        <span className="text-xs text-destructive">Obrigatória</span>
-                                      )}
+              {/* Seção de perguntas - só aparece se já salvou o template */}
+              {templateId && (
+                <div className="border rounded-lg">
+                  <div className="flex items-center justify-between p-3 border-b bg-muted/50">
+                    <h3 className="font-semibold text-sm">Perguntas</h3>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleAddPergunta()}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Nova Pergunta
+                    </Button>
+                  </div>
+
+                  <div className="p-3">
+                    {loadingPerguntas ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : Object.keys(secoes).length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p className="text-sm">Nenhuma pergunta cadastrada.</p>
+                        <p className="text-xs mt-1">Clique em "Nova Pergunta" para começar.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {Object.entries(secoes).map(([secao, { icone, perguntas: perguntasSecao }]) => (
+                          <div key={secao} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-sm font-medium flex items-center gap-2">
+                                {icone && <span>{icone}</span>}
+                                {secao}
+                                <Badge variant="secondary" className="text-xs">
+                                  {perguntasSecao.length}
+                                </Badge>
+                              </h4>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs"
+                                onClick={() => handleAddPergunta(secao)}
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                Adicionar
+                              </Button>
+                            </div>
+                            <div className="space-y-1 pl-2 border-l-2 border-muted">
+                              {perguntasSecao
+                                .sort((a, b) => a.ordem - b.ordem)
+                                .map((pergunta) => (
+                                  <div
+                                    key={pergunta.id}
+                                    className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 group"
+                                  >
+                                    <GripVertical className="h-4 w-4 text-muted-foreground/50" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm truncate">{pergunta.pergunta}</p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        <Badge variant="outline" className="text-xs">
+                                          {tipoLabel[pergunta.tipo] || pergunta.tipo}
+                                        </Badge>
+                                        {pergunta.obrigatoria && (
+                                          <span className="text-xs text-destructive">Obrigatória</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7"
+                                        onClick={() => handleEditPergunta(pergunta)}
+                                      >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                      </Button>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                        onClick={() => handleDeletePergunta(pergunta)}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7"
-                                      onClick={() => handleEditPergunta(pergunta)}
-                                    >
-                                      <Pencil className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 text-destructive hover:text-destructive"
-                                      onClick={() => handleDeletePergunta(pergunta)}
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
+                                ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </div>
-            )}
-          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
