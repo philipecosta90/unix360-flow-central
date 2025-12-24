@@ -51,12 +51,12 @@ export const WhatsAppModule = () => {
     refetch,
   } = useWhatsAppInstances();
 
-  const handleInstanceCreated = (instance: WhatsAppInstance) => {
-    setSelectedInstance(instance);
-    setShowQRDialog(true);
+  const handleInstanceCreated = () => {
+    refetch();
+    setShowCreateDialog(false);
   };
 
-  const handleConnect = async (instance: WhatsAppInstance) => {
+  const handleGenerateQRCode = async (instance: WhatsAppInstance) => {
     await connectInstance(instance.id);
     setSelectedInstance(instance);
     setShowQRDialog(true);
@@ -169,13 +169,12 @@ export const WhatsAppModule = () => {
                 <div className="flex gap-2">
                   {instance.status !== "connected" && (
                     <Button
-                      variant="outline"
                       size="sm"
-                      className="flex-1"
-                      onClick={() => handleConnect(instance)}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      onClick={() => handleGenerateQRCode(instance)}
                     >
                       <QrCode className="h-4 w-4 mr-2" />
-                      Conectar
+                      GERAR QRCODE
                     </Button>
                   )}
                   <Button
