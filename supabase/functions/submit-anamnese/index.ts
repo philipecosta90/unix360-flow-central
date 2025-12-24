@@ -33,14 +33,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`submit-anamnese: Processing submission for token ${token}`);
 
-    // Buscar o envio pelo token
+    // Buscar o envio pelo token (sem join com empresas pois não há FK)
     const { data: envio, error: envioError } = await supabase
       .from("anamnese_envios")
       .select(`
         *,
         cliente:clientes(nome, email),
-        template:anamnese_templates(nome),
-        empresa:empresas(nome, email)
+        template:anamnese_templates(nome)
       `)
       .eq("token", token)
       .single();
@@ -52,6 +51,19 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    // Buscar dados da empresa separadamente
+    let empresa: { nome: string; email: string | null } | null = null;
+    if (envio.empresa_id) {
+      const { data: empresaData } = await supabase
+        .from("empresas")
+        .select("nome, email")
+        .eq("id", envio.empresa_id)
+        .maybeSingle();
+      empresa = empresaData;
+    }
+
+    console.log(`submit-anamnese: Found envio for empresa ${empresa?.nome || envio.empresa_id}`);
 
     // Verificar se já foi preenchido
     if (envio.status === "preenchido") {
@@ -112,9 +124,9 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("submit-anamnese: Respostas saved successfully");
 
     // Enviar email de notificação para a empresa
-    const empresaEmail = envio.empresa?.email;
+    const empresaEmail = empresa?.email;
     const clienteNome = envio.cliente?.nome || "Cliente";
-    const empresaNome = envio.empresa?.nome || "UniX360";
+    const empresaNome = empresa?.nome || "UniX360";
 
     if (empresaEmail) {
       try {
