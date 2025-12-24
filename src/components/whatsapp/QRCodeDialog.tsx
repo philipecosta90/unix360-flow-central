@@ -88,6 +88,11 @@ export const QRCodeDialog = ({
           toast.success("WhatsApp conectado com sucesso!");
           onConnected?.();
           clearInterval(interval);
+          
+          // Fechar modal automaticamente após feedback visual
+          setTimeout(() => {
+            onOpenChange(false);
+          }, 1500);
         }
       } catch (error) {
         // Silenciar erros de polling
@@ -95,7 +100,7 @@ export const QRCodeDialog = ({
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [open, instance, isConnected, checkStatus, onConnected]);
+  }, [open, instance, isConnected, checkStatus, onConnected, onOpenChange]);
 
   // Buscar QR apenas uma vez quando abrir
   useEffect(() => {
