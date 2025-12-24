@@ -93,7 +93,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        qrcode: qrResult.QRCode || qrResult.qrcode || qrResult.data,
+        qrcode: qrResult.data?.QRCode || qrResult.QRCode || qrResult.qrcode,
         status: instance.status,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
