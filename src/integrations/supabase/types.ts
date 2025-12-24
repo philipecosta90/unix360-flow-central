@@ -1215,6 +1215,45 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_instances: {
+        Row: {
+          created_at: string | null
+          empresa_id: string
+          id: string
+          jid: string | null
+          nome: string
+          numero: string
+          status: string | null
+          updated_at: string | null
+          user_token: string
+          webhook: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          empresa_id: string
+          id?: string
+          jid?: string | null
+          nome: string
+          numero: string
+          status?: string | null
+          updated_at?: string | null
+          user_token: string
+          webhook?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          empresa_id?: string
+          id?: string
+          jid?: string | null
+          nome?: string
+          numero?: string
+          status?: string | null
+          updated_at?: string | null
+          user_token?: string
+          webhook?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

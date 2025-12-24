@@ -1,142 +1,290 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, CheckCircle2, Bell, Users, RefreshCw, Plus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Plus,
+  MessageSquare,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  RefreshCw,
+  Trash2,
+  QrCode,
+} from "lucide-react";
 import { CreateInstanceDialog } from "./CreateInstanceDialog";
+import { QRCodeDialog } from "./QRCodeDialog";
+import {
+  useWhatsAppInstances,
+  WhatsAppInstance,
+} from "@/hooks/useWhatsAppInstances";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const WhatsAppModule = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [instances, setInstances] = useState<{ nome: string; numero: string }[]>([]);
+  const [showQRDialog, setShowQRDialog] = useState(false);
+  const [selectedInstance, setSelectedInstance] =
+    useState<WhatsAppInstance | null>(null);
+  const [instanceToDelete, setInstanceToDelete] = useState<WhatsAppInstance | null>(
+    null
+  );
 
-  const handleInstanceCreated = (instance: { nome: string; numero: string }) => {
-    setInstances((prev) => [...prev, instance]);
+  const {
+    instances,
+    isLoading,
+    isCreating,
+    createInstance,
+    connectInstance,
+    getQRCode,
+    getPairCode,
+    checkStatus,
+    deleteInstance,
+    refetch,
+  } = useWhatsAppInstances();
+
+  const handleInstanceCreated = (instance: WhatsAppInstance) => {
+    setSelectedInstance(instance);
+    setShowQRDialog(true);
+  };
+
+  const handleConnect = async (instance: WhatsAppInstance) => {
+    await connectInstance(instance.id);
+    setSelectedInstance(instance);
+    setShowQRDialog(true);
+  };
+
+  const handleDelete = async () => {
+    if (instanceToDelete) {
+      await deleteInstance(instanceToDelete.id);
+      setInstanceToDelete(null);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "connected":
+        return (
+          <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Conectado
+          </Badge>
+        );
+      case "connecting":
+        return (
+          <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            Conectando
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-red-500/20 text-red-500 border-red-500/30">
+            <XCircle className="h-3 w-3 mr-1" />
+            Desconectado
+          </Badge>
+        );
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Conectar WhatsApp</h1>
-          <p className="text-muted-foreground mt-1">
-            Integre seu WhatsApp para automatizar comunicações
+          <h1 className="text-2xl font-bold">Integração WhatsApp</h1>
+          <p className="text-muted-foreground">
+            Conecte suas contas do WhatsApp para automatizar comunicações
           </p>
         </div>
-        <Button
-          onClick={() => setShowCreateDialog(true)}
-          className="bg-gradient-to-r from-green-500 to-purple-600 hover:from-green-600 hover:to-purple-700 text-white"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Criar Instância
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={refetch} disabled={isLoading}>
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
+            Atualizar
+          </Button>
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            className="bg-gradient-to-r from-green-500 to-purple-600 hover:from-green-600 hover:to-purple-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Instância
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full bg-green-500/10">
-                <MessageCircle className="h-8 w-8 text-green-500" />
-              </div>
-              <div>
-                <CardTitle>Integração WhatsApp</CardTitle>
-                <CardDescription>
-                  Conecte sua conta para enviar mensagens automáticas
-                </CardDescription>
-              </div>
-            </div>
-            <Badge variant="destructive" className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-current animate-pulse" />
-              Não conectado
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
-              <Bell className="h-5 w-5 text-primary mt-0.5" />
-              <div>
-                <p className="font-medium text-sm">Lembretes Automáticos</p>
-                <p className="text-xs text-muted-foreground">
-                  Envie lembretes de consultas e treinos
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
-              <RefreshCw className="h-5 w-5 text-primary mt-0.5" />
-              <div>
-                <p className="font-medium text-sm">Notificações de Renovação</p>
-                <p className="text-xs text-muted-foreground">
-                  Avise clientes sobre planos expirando
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
-              <Users className="h-5 w-5 text-primary mt-0.5" />
-              <div>
-                <p className="font-medium text-sm">Comunicação com Prospects</p>
-                <p className="text-xs text-muted-foreground">
-                  Follow-up automático com leads
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {instances.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed rounded-lg">
-              <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4 text-center">
-                Crie uma instância para conectar seu WhatsApp
-              </p>
-              <Button
-                size="lg"
-                onClick={() => setShowCreateDialog(true)}
-                className="bg-gradient-to-r from-green-500 to-purple-600 hover:from-green-600 hover:to-purple-700 text-white"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Criar Instância
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <h4 className="font-medium">Instâncias Criadas</h4>
-              {instances.map((instance, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border"
-                >
+      {/* Lista de Instâncias */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : instances.length === 0 ? (
+        <Card className="bg-card border-border">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <MessageSquare className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              Nenhuma instância configurada
+            </h3>
+            <p className="text-muted-foreground text-center mb-4 max-w-md">
+              Crie uma nova instância do WhatsApp para começar a automatizar
+              suas mensagens e comunicações com clientes.
+            </p>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Criar Primeira Instância
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {instances.map((instance) => (
+            <Card key={instance.id} className="bg-card border-border">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium">{instance.nome}</p>
-                    <p className="text-sm text-muted-foreground">+{instance.numero}</p>
+                    <CardTitle className="text-lg">{instance.nome}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      +{instance.numero}
+                    </p>
                   </div>
-                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-                    Aguardando conexão
-                  </Badge>
+                  {getStatusBadge(instance.status)}
                 </div>
-              ))}
-            </div>
-          )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {instance.jid && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    JID: {instance.jid}
+                  </p>
+                )}
 
-          <div className="rounded-lg bg-muted/30 p-4">
-            <h4 className="font-medium flex items-center gap-2 mb-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              Como funciona
-            </h4>
-            <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Clique em "Criar Instância"</li>
-              <li>Preencha o nome e número do WhatsApp</li>
-              <li>Escaneie o QR Code com seu celular</li>
-              <li>Pronto! Suas mensagens serão enviadas automaticamente</li>
-            </ol>
+                <div className="flex gap-2">
+                  {instance.status !== "connected" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleConnect(instance)}
+                    >
+                      <QrCode className="h-4 w-4 mr-2" />
+                      Conectar
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => checkStatus(instance.id)}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setInstanceToDelete(instance)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Informações */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-green-500" />
+            Como funciona a integração
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center mb-3">
+                <span className="text-primary font-bold">1</span>
+              </div>
+              <h4 className="font-medium mb-1">Crie uma instância</h4>
+              <p className="text-sm text-muted-foreground">
+                Dê um nome e informe o número do WhatsApp que deseja conectar.
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center mb-3">
+                <span className="text-primary font-bold">2</span>
+              </div>
+              <h4 className="font-medium mb-1">Escaneie o QR Code</h4>
+              <p className="text-sm text-muted-foreground">
+                Use o WhatsApp do seu celular para escanear o QR Code ou digite
+                o código de pareamento.
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center mb-3">
+                <span className="text-primary font-bold">3</span>
+              </div>
+              <h4 className="font-medium mb-1">Pronto para usar</h4>
+              <p className="text-sm text-muted-foreground">
+                Sua instância está conectada e pronta para enviar e receber
+                mensagens automatizadas.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Dialogs */}
       <CreateInstanceDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onInstanceCreated={handleInstanceCreated}
+        createInstance={createInstance}
+        isCreating={isCreating}
       />
+
+      <QRCodeDialog
+        open={showQRDialog}
+        onOpenChange={setShowQRDialog}
+        instance={selectedInstance}
+        getQRCode={getQRCode}
+        getPairCode={getPairCode}
+        checkStatus={checkStatus}
+        onConnected={refetch}
+      />
+
+      <AlertDialog
+        open={!!instanceToDelete}
+        onOpenChange={() => setInstanceToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a instância "{instanceToDelete?.nome}
+              "? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

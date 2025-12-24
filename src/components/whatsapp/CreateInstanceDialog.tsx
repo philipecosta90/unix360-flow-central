@@ -8,23 +8,27 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { WhatsAppInstance } from "@/hooks/useWhatsAppInstances";
 
 interface CreateInstanceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onInstanceCreated?: (instance: { nome: string; numero: string }) => void;
+  onInstanceCreated?: (instance: WhatsAppInstance) => void;
+  createInstance: (nome: string, numero: string) => Promise<WhatsAppInstance>;
+  isCreating: boolean;
 }
 
 export const CreateInstanceDialog = ({
   open,
   onOpenChange,
   onInstanceCreated,
+  createInstance,
+  isCreating,
 }: CreateInstanceDialogProps) => {
   const [nome, setNome] = useState("");
   const [numero, setNumero] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleNumeroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Allow only numbers
@@ -50,21 +54,14 @@ export const CreateInstanceDialog = ({
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // TODO: Integrate with WhatsApp API (Evolution API, etc.)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      toast.success("Instância criada com sucesso!");
-      onInstanceCreated?.({ nome, numero });
+      const instance = await createInstance(nome, numero);
+      onInstanceCreated?.(instance);
       setNome("");
       setNumero("");
       onOpenChange(false);
     } catch (error) {
-      toast.error("Erro ao criar instância");
-    } finally {
-      setIsLoading(false);
+      // Erro já tratado no hook
     }
   };
 
@@ -92,6 +89,7 @@ export const CreateInstanceDialog = ({
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               className="bg-background"
+              disabled={isCreating}
             />
           </div>
 
@@ -106,6 +104,7 @@ export const CreateInstanceDialog = ({
               onChange={handleNumeroChange}
               className="bg-background"
               inputMode="numeric"
+              disabled={isCreating}
             />
             <p className="text-xs text-muted-foreground">
               Formato: código do país + DDD + número (sem + ou espaços)
@@ -114,10 +113,17 @@ export const CreateInstanceDialog = ({
 
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isCreating}
             className="w-full bg-gradient-to-r from-green-500 to-purple-600 hover:from-green-600 hover:to-purple-700 text-white font-medium"
           >
-            {isLoading ? "Criando..." : "Criar Instância"}
+            {isCreating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Criando...
+              </>
+            ) : (
+              "Criar Instância"
+            )}
           </Button>
         </form>
       </DialogContent>
