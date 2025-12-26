@@ -185,8 +185,8 @@ export function AnamneseTemplateFormDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="max-w-3xl h-[90vh] !flex !flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>
               {isEditing ? "Editar Template" : "Novo Template"}
             </DialogTitle>
@@ -197,7 +197,7 @@ export function AnamneseTemplateFormDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 max-h-[calc(90vh-180px)] pr-4">
+          <ScrollArea className="flex-1 min-h-0 pr-4">
             <div className="space-y-4">
               {/* Dados básicos do template */}
               <div className="space-y-3">
