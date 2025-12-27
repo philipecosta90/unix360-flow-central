@@ -276,6 +276,270 @@ export type Database = {
         }
         Relationships: []
       }
+      checkin_agendamentos: {
+        Row: {
+          ativo: boolean | null
+          cliente_id: string
+          created_at: string | null
+          empresa_id: string
+          frequencia: string
+          hora_envio: string | null
+          id: string
+          intervalo_dias: number | null
+          proximo_envio: string
+          template_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cliente_id: string
+          created_at?: string | null
+          empresa_id: string
+          frequencia?: string
+          hora_envio?: string | null
+          id?: string
+          intervalo_dias?: number | null
+          proximo_envio: string
+          template_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cliente_id?: string
+          created_at?: string | null
+          empresa_id?: string
+          frequencia?: string
+          hora_envio?: string | null
+          id?: string
+          intervalo_dias?: number | null
+          proximo_envio?: string
+          template_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_agendamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkin_agendamentos_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checkin_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkin_envios: {
+        Row: {
+          agendamento_id: string | null
+          anotacoes_profissional: string | null
+          cliente_id: string
+          created_at: string | null
+          empresa_id: string
+          enviado_em: string | null
+          expira_em: string
+          id: string
+          pontuacao_maxima: number | null
+          pontuacao_total: number | null
+          respondido_em: string | null
+          revisado: boolean | null
+          status: string
+          template_id: string
+          token: string
+        }
+        Insert: {
+          agendamento_id?: string | null
+          anotacoes_profissional?: string | null
+          cliente_id: string
+          created_at?: string | null
+          empresa_id: string
+          enviado_em?: string | null
+          expira_em: string
+          id?: string
+          pontuacao_maxima?: number | null
+          pontuacao_total?: number | null
+          respondido_em?: string | null
+          revisado?: boolean | null
+          status?: string
+          template_id: string
+          token: string
+        }
+        Update: {
+          agendamento_id?: string | null
+          anotacoes_profissional?: string | null
+          cliente_id?: string
+          created_at?: string | null
+          empresa_id?: string
+          enviado_em?: string | null
+          expira_em?: string
+          id?: string
+          pontuacao_maxima?: number | null
+          pontuacao_total?: number | null
+          respondido_em?: string | null
+          revisado?: boolean | null
+          status?: string
+          template_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_envios_agendamento_id_fkey"
+            columns: ["agendamento_id"]
+            isOneToOne: false
+            referencedRelation: "checkin_agendamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkin_envios_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkin_envios_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checkin_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkin_perguntas: {
+        Row: {
+          created_at: string | null
+          id: string
+          obrigatoria: boolean | null
+          opcoes_pontuacao: Json | null
+          ordem: number
+          pergunta: string
+          placeholder: string | null
+          pontos_maximo: number | null
+          secao: string
+          secao_icone: string | null
+          template_id: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          obrigatoria?: boolean | null
+          opcoes_pontuacao?: Json | null
+          ordem: number
+          pergunta: string
+          placeholder?: string | null
+          pontos_maximo?: number | null
+          secao: string
+          secao_icone?: string | null
+          template_id: string
+          tipo?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          obrigatoria?: boolean | null
+          opcoes_pontuacao?: Json | null
+          ordem?: number
+          pergunta?: string
+          placeholder?: string | null
+          pontos_maximo?: number | null
+          secao?: string
+          secao_icone?: string | null
+          template_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_perguntas_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checkin_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkin_respostas: {
+        Row: {
+          created_at: string | null
+          envio_id: string
+          id: string
+          indicador_visual: string | null
+          pergunta_id: string
+          pontuacao: number | null
+          resposta: string | null
+          resposta_arquivo: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          envio_id: string
+          id?: string
+          indicador_visual?: string | null
+          pergunta_id: string
+          pontuacao?: number | null
+          resposta?: string | null
+          resposta_arquivo?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          envio_id?: string
+          id?: string
+          indicador_visual?: string | null
+          pergunta_id?: string
+          pontuacao?: number | null
+          resposta?: string | null
+          resposta_arquivo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_respostas_envio_id_fkey"
+            columns: ["envio_id"]
+            isOneToOne: false
+            referencedRelation: "checkin_envios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkin_respostas_pergunta_id_fkey"
+            columns: ["pergunta_id"]
+            isOneToOne: false
+            referencedRelation: "checkin_perguntas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkin_templates: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          descricao: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       cliente_documentos: {
         Row: {
           cliente_id: string
@@ -832,6 +1096,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      evolucao_fotos: {
+        Row: {
+          categoria: string
+          cliente_id: string
+          created_at: string | null
+          data_foto: string
+          empresa_id: string
+          id: string
+          observacoes: string | null
+          url_arquivo: string
+        }
+        Insert: {
+          categoria?: string
+          cliente_id: string
+          created_at?: string | null
+          data_foto?: string
+          empresa_id: string
+          id?: string
+          observacoes?: string | null
+          url_arquivo: string
+        }
+        Update: {
+          categoria?: string
+          cliente_id?: string
+          created_at?: string | null
+          data_foto?: string
+          empresa_id?: string
+          id?: string
+          observacoes?: string | null
+          url_arquivo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evolucao_fotos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feedback: {
         Row: {
