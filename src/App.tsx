@@ -13,6 +13,7 @@ import { SubscriptionExpiredDialog } from "@/components/subscription/Subscriptio
 import { UpdateNotification } from "@/components/common/UpdateNotification";
 import { ResetPasswordPage } from "@/components/auth/ResetPasswordPage";
 import { AnamnesePublicPage } from "@/components/anamnese/AnamnesePublicPage";
+import { CheckinPublicPage } from "@/components/checkins/CheckinPublicPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -48,6 +49,7 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/anamnese/preencher/:token" element={<AnamnesePublicPage />} />
+                <Route path="/checkin/preencher/:token" element={<CheckinPublicPage />} />
                 
                 {/* All routes - now directly accessible */}
                 <Route path="/" element={<Index />} />
