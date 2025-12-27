@@ -9,6 +9,7 @@ import { CSDashboard } from "./CSDashboard";
 import { CSOnboarding } from "./CSOnboarding";
 import { CSInteracoes } from "./CSInteracoes";
 import { CSClientList } from "./CSClientList";
+import { CheckinModule } from "@/components/checkins/CheckinModule";
 
 export const CSModule = () => {
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
@@ -41,9 +42,10 @@ export const CSModule = () => {
       )}
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
+          <TabsTrigger value="checkins">Check-ins</TabsTrigger>
           <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
           <TabsTrigger value="interacoes">Interações</TabsTrigger>
         </TabsList>
@@ -54,6 +56,10 @@ export const CSModule = () => {
 
         <TabsContent value="clientes" className="space-y-6">
           <CSClientList onSelectClient={setSelectedClient} />
+        </TabsContent>
+
+        <TabsContent value="checkins" className="space-y-6">
+          <CheckinModule />
         </TabsContent>
 
         <TabsContent value="onboarding" className="space-y-6">
