@@ -87,6 +87,10 @@ serve(async (req) => {
       throw new Error(createUserResult.message || 'Erro ao criar usuário na API WhatsApp');
     }
 
+    // Capturar o ID retornado pela WUZAPI
+    const wuzapiId = createUserResult.data?.id?.toString() || createUserResult.id?.toString() || null;
+    console.log('[whatsapp-create-instance] WUZAPI ID capturado:', wuzapiId);
+
     // Salvar instância no banco usando cliente admin
     const { data: instance, error: insertError } = await supabaseAdmin
       .from('whatsapp_instances')
@@ -95,6 +99,7 @@ serve(async (req) => {
         nome,
         numero,
         user_token: userToken,
+        wuzapi_id: wuzapiId,
         status: 'disconnected',
       })
       .select()

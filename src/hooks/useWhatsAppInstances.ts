@@ -191,21 +191,29 @@ export const useWhatsAppInstances = () => {
     }
   };
 
-  // Deletar instância
+  // Deletar instância (remove da API WUZAPI e do banco)
   const deleteInstance = async (instanceId: string) => {
     try {
-      const { error } = await supabase
-        .from("whatsapp_instances")
-        .delete()
-        .eq("id", instanceId);
+      const { data, error } = await supabase.functions.invoke(
+        "whatsapp-delete-instance",
+        {
+          body: { instanceId },
+        }
+      );
 
       if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || "Erro ao deletar instância");
+      }
 
       toast.success("Instância removida com sucesso!");
       await fetchInstances();
     } catch (error) {
       console.error("Erro ao deletar instância:", error);
-      toast.error("Erro ao remover instância");
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao remover instância"
+      );
       throw error;
     }
   };
