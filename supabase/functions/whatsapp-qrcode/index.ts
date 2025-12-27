@@ -75,6 +75,45 @@ serve(async (req) => {
       throw new Error('Instância não encontrada');
     }
 
+    console.log(`[whatsapp-qrcode] Instância encontrada, status: ${instance.status}, token: ${instance.user_token.substring(0, 4)}...`);
+
+    // Primeiro, verificar status atual da sessão na WUZAPI
+    const statusResponse = await fetch(`${WHATSAPP_API_URL}/session/status`, {
+      method: 'GET',
+      headers: {
+        'token': instance.user_token,
+      },
+    });
+
+    const statusResult = await statusResponse.json();
+    console.log('[whatsapp-qrcode] Status da sessão:', JSON.stringify(statusResult));
+
+    // Se não estiver conectado, iniciar a conexão primeiro
+    if (!statusResult.data?.Connected && !statusResult.Connected) {
+      console.log('[whatsapp-qrcode] Sessão não conectada, iniciando conexão...');
+      
+      const connectResponse = await fetch(`${WHATSAPP_API_URL}/session/connect`, {
+        method: 'POST',
+        headers: {
+          'token': instance.user_token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
+
+      const connectResult = await connectResponse.json();
+      console.log('[whatsapp-qrcode] Resposta connect:', JSON.stringify(connectResult));
+
+      // Atualizar status para connecting
+      await supabaseAdmin
+        .from('whatsapp_instances')
+        .update({ status: 'connecting' })
+        .eq('id', instanceId);
+
+      // Aguardar um pouco para o QR ser gerado
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+
     // Buscar QR Code da WUZAPI
     const qrResponse = await fetch(`${WHATSAPP_API_URL}/session/qr`, {
       method: 'GET',
@@ -84,7 +123,7 @@ serve(async (req) => {
     });
 
     const qrResult = await qrResponse.json();
-    console.log('[whatsapp-qrcode] Resposta WUZAPI:', JSON.stringify(qrResult).substring(0, 200));
+    console.log('[whatsapp-qrcode] Resposta QR:', JSON.stringify(qrResult).substring(0, 200));
 
     if (!qrResponse.ok) {
       throw new Error(qrResult.message || 'Erro ao obter QR Code');
@@ -94,7 +133,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         qrcode: qrResult.data?.QRCode || qrResult.QRCode || qrResult.qrcode,
-        status: instance.status,
+        status: 'connecting',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
