@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RefreshCw } from "lucide-react";
 
-const CURRENT_VERSION = "1.0.0";
 const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos
 
 export const UpdateNotification = () => {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [latestVersion, setLatestVersion] = useState<string>("");
 
   const checkForUpdates = async () => {
     try {
@@ -22,10 +22,15 @@ export const UpdateNotification = () => {
       
       if (response.ok) {
         const data = await response.json();
-        const lastCheckedVersion = localStorage.getItem('app-version');
+        const acknowledgedVersion = localStorage.getItem('app-version-acknowledged');
         
-        if (data.version !== CURRENT_VERSION || data.version !== lastCheckedVersion) {
+        // Só mostra atualização se a versão do servidor for diferente
+        // da versão que o usuário já reconheceu
+        if (data.version && data.version !== acknowledgedVersion) {
           setUpdateAvailable(true);
+          setLatestVersion(data.version);
+        } else {
+          setUpdateAvailable(false);
         }
       }
     } catch (error) {
@@ -36,7 +41,10 @@ export const UpdateNotification = () => {
   };
 
   const handleUpdate = () => {
-    localStorage.setItem('app-version', CURRENT_VERSION);
+    // Salva a versão atual como "reconhecida" e recarrega
+    if (latestVersion) {
+      localStorage.setItem('app-version-acknowledged', latestVersion);
+    }
     window.location.reload();
   };
 
