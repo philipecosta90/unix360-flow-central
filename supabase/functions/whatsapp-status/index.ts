@@ -93,14 +93,20 @@ serve(async (req) => {
     let jid = null;
 
     // Verificar conexão (considerar variações de case)
-    const isConnected = payload.Connected || payload.connected;
-    const isLoggedIn = payload.LoggedIn ?? payload.loggedIn ?? payload.logged_in;
+    // IMPORTANTE: connected = websocket ativo, loggedIn = usuário escaneou QR
+    const isConnected = payload.Connected === true || payload.connected === true;
+    const isLoggedIn = payload.LoggedIn === true || payload.loggedIn === true || payload.logged_in === true;
     
-    if (isConnected === true) {
+    if (isConnected && isLoggedIn) {
+      // Realmente autenticado - escaneou QR e está logado
       newStatus = 'connected';
       jid = payload.Jid || payload.jid || payload.JID;
-    } else if (isLoggedIn === false) {
+    } else if (isConnected && !isLoggedIn) {
+      // Websocket ativo mas aguardando scan do QR
       newStatus = 'connecting';
+    } else {
+      // Desconectado
+      newStatus = 'disconnected';
     }
     
     console.log('[whatsapp-status] Status mapeado:', { isConnected, isLoggedIn, newStatus, jid });
