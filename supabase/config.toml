@@ -102,3 +102,9 @@ verify_jwt = true
 
 [functions.send-anamnese-whatsapp]
 verify_jwt = true
+
+[functions.send-checkin-whatsapp]
+verify_jwt = true
+
+[functions.submit-checkin]
+verify_jwt = false
