@@ -62,31 +62,66 @@ serve(async (req) => {
 
     console.log(`[whatsapp-delete-instance] Deletando instância: ${instanceId}`);
 
-    // Buscar a instância para verificar propriedade e obter wuzapi_id
+    // Buscar a instância para verificar propriedade e obter wuzapi_id e user_token
     const { data: instance, error: instanceError } = await supabaseAdmin
       .from('whatsapp_instances')
-      .select('*')
+      .select('id, empresa_id, nome, numero, wuzapi_id, user_token')
       .eq('id', instanceId)
       .eq('empresa_id', perfil.empresa_id)
       .single();
 
     if (instanceError || !instance) {
+      console.error('[whatsapp-delete-instance] Erro ao buscar instância:', instanceError);
       throw new Error('Instância não encontrada ou sem permissão');
     }
 
     console.log(`[whatsapp-delete-instance] Instância encontrada:`, {
       id: instance.id,
       wuzapi_id: instance.wuzapi_id,
+      user_token: instance.user_token ? 'presente' : 'ausente',
       nome: instance.nome
     });
 
-    // Tentar deletar na WUZAPI se tiver o wuzapi_id
-    if (instance.wuzapi_id) {
+    // Tentar deletar na WUZAPI
+    let wuzapiIdToDelete = instance.wuzapi_id;
+
+    // Se não tiver wuzapi_id, tentar encontrar pelo user_token
+    if (!wuzapiIdToDelete && instance.user_token) {
       try {
-        console.log(`[whatsapp-delete-instance] Deletando na WUZAPI: ${instance.wuzapi_id}`);
+        console.log('[whatsapp-delete-instance] Buscando instância na WUZAPI pelo user_token...');
+        
+        const listResponse = await fetch(`${WHATSAPP_API_URL}/admin/users`, {
+          headers: {
+            'Authorization': WHATSAPP_ADMIN_TOKEN,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (listResponse.ok) {
+          const listResult = await listResponse.json();
+          console.log('[whatsapp-delete-instance] Usuários na WUZAPI:', listResult.data?.length || 0);
+          
+          // Encontrar pelo token
+          const wuzapiUser = listResult.data?.find((u: any) => u.token === instance.user_token);
+          if (wuzapiUser) {
+            wuzapiIdToDelete = wuzapiUser.id;
+            console.log(`[whatsapp-delete-instance] Encontrado wuzapi_id via token: ${wuzapiIdToDelete}`);
+          } else {
+            console.log('[whatsapp-delete-instance] Usuário não encontrado na WUZAPI pelo token');
+          }
+        }
+      } catch (searchError) {
+        console.warn('[whatsapp-delete-instance] Erro ao buscar na WUZAPI:', searchError);
+      }
+    }
+
+    // Deletar na WUZAPI se encontrou o ID
+    if (wuzapiIdToDelete) {
+      try {
+        console.log(`[whatsapp-delete-instance] Deletando na WUZAPI: ${wuzapiIdToDelete}`);
         
         const deleteResponse = await fetch(
-          `${WHATSAPP_API_URL}/admin/users/${instance.wuzapi_id}/full`,
+          `${WHATSAPP_API_URL}/admin/users/${wuzapiIdToDelete}/full`,
           {
             method: 'DELETE',
             headers: {
@@ -101,13 +136,14 @@ serve(async (req) => {
 
         if (!deleteResponse.ok) {
           console.warn('[whatsapp-delete-instance] Aviso: Erro ao deletar na WUZAPI, continuando com remoção local');
+        } else {
+          console.log('[whatsapp-delete-instance] Instância deletada da WUZAPI com sucesso');
         }
       } catch (apiError) {
         console.warn('[whatsapp-delete-instance] Aviso: Falha ao conectar na WUZAPI:', apiError);
-        // Continua para deletar do banco mesmo se falhar na API
       }
     } else {
-      console.log('[whatsapp-delete-instance] Instância sem wuzapi_id, pulando delete na API');
+      console.log('[whatsapp-delete-instance] Sem wuzapi_id disponível, apenas removendo do banco');
     }
 
     // Deletar do banco Supabase
