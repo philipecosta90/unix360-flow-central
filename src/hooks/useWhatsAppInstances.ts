@@ -193,6 +193,8 @@ export const useWhatsAppInstances = () => {
 
   // Deletar instância (remove da API WUZAPI e do banco)
   const deleteInstance = async (instanceId: string) => {
+    console.log('[deleteInstance] Iniciando exclusão:', instanceId);
+    
     try {
       const { data, error } = await supabase.functions.invoke(
         "whatsapp-delete-instance",
@@ -201,19 +203,30 @@ export const useWhatsAppInstances = () => {
         }
       );
 
-      if (error) throw error;
+      console.log('[deleteInstance] Resposta:', { data, error });
 
-      if (!data.success) {
-        throw new Error(data.error || "Erro ao deletar instância");
+      if (error) {
+        console.error('[deleteInstance] Erro da função:', error);
+        toast.error(`Erro ao deletar: ${error.message}`);
+        throw error;
+      }
+
+      if (!data?.success) {
+        const errorMsg = data?.error || 'Erro desconhecido ao deletar instância';
+        console.error('[deleteInstance] Falha:', errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       toast.success("Instância removida com sucesso!");
+      
+      // Atualizar lista após exclusão bem-sucedida
+      console.log('[deleteInstance] Atualizando lista...');
       await fetchInstances();
-    } catch (error) {
-      console.error("Erro ao deletar instância:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Erro ao remover instância"
-      );
+      
+      return data;
+    } catch (error: any) {
+      console.error("[deleteInstance] Erro completo:", error);
       throw error;
     }
   };
