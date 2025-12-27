@@ -107,32 +107,13 @@ serve(async (req) => {
 
     console.log(`[whatsapp-create-instance] Instância criada com ID: ${instance.id}`);
 
-    // Iniciar conexão com WhatsApp
-    const connectResponse = await fetch(`${WHATSAPP_API_URL}/session/connect`, {
-      method: 'POST',
-      headers: {
-        'token': userToken,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({}),
-    });
-
-    const connectResult = await connectResponse.json();
-    console.log('[whatsapp-create-instance] Conexão iniciada:', JSON.stringify(connectResult));
-
-    // Atualizar status para connecting usando cliente admin
-    await supabaseAdmin
-      .from('whatsapp_instances')
-      .update({ status: 'connecting' })
-      .eq('id', instance.id);
+    // NÃO iniciar conexão automaticamente - isso será feito quando o usuário solicitar o QR Code
+    // Cada instância fica isolada pelo seu user_token único
 
     return new Response(
       JSON.stringify({
         success: true,
-        instance: {
-          ...instance,
-          status: 'connecting',
-        },
+        instance: instance,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
