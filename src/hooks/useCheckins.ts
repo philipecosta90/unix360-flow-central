@@ -279,12 +279,39 @@ export const useCheckinPerguntas = (templateId: string | null) => {
     },
   });
 
+  const reorderPerguntas = useMutation({
+    mutationFn: async (updates: { id: string; ordem: number; secao?: string }[]) => {
+      // Update each question's order
+      const promises = updates.map(({ id, ordem, secao }) =>
+        supabase
+          .from('checkin_perguntas')
+          .update({ ordem, ...(secao && { secao }) })
+          .eq('id', id)
+      );
+      
+      const results = await Promise.all(promises);
+      const errors = results.filter(r => r.error);
+      
+      if (errors.length > 0) {
+        throw new Error('Erro ao reordenar perguntas');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checkin-perguntas', templateId] });
+      toast.success('Ordem atualizada!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+
   return {
     perguntas,
     isLoading,
     createPergunta,
     updatePergunta,
     deletePergunta,
+    reorderPerguntas,
   };
 };
 
