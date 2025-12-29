@@ -22,6 +22,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +40,7 @@ import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Save } from "lucide-react";
+import { Plus, Save, Pencil, Trash2 } from "lucide-react";
 import {
   useCheckinTemplates,
   useCheckinPerguntas,
@@ -40,6 +50,7 @@ import {
 } from "@/hooks/useCheckins";
 import { CheckinPerguntaFormDialog } from "./CheckinPerguntaFormDialog";
 import { SortableCheckinPergunta } from "./SortableCheckinPergunta";
+import { SecaoEditDialog } from "./SecaoEditDialog";
 import { toast } from "sonner";
 
 interface CheckinTemplateFormDialogProps {
@@ -55,13 +66,18 @@ export const CheckinTemplateFormDialog = ({
 }: CheckinTemplateFormDialogProps) => {
   const isEditing = !!template;
   const { createTemplate, updateTemplate } = useCheckinTemplates();
-  const { perguntas, deletePergunta, reorderPerguntas } = useCheckinPerguntas(template?.id || null);
+  const { perguntas, deletePergunta, reorderPerguntas, updateSecao, deleteSecao } = useCheckinPerguntas(template?.id || null);
 
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [perguntaDialogOpen, setPerguntaDialogOpen] = useState(false);
   const [selectedPergunta, setSelectedPergunta] = useState<CheckinPergunta | null>(null);
+  
+  // Section edit/delete states
+  const [secaoEditDialogOpen, setSecaoEditDialogOpen] = useState(false);
+  const [secaoDeleteDialogOpen, setSecaoDeleteDialogOpen] = useState(false);
+  const [selectedSecao, setSelectedSecao] = useState<{ nome: string; icone: string | null } | null>(null);
 
   // Sensors for drag and drop
   const sensors = useSensors(
@@ -145,6 +161,37 @@ export const CheckinTemplateFormDialog = ({
 
   const getTipoLabel = (tipo: string) => {
     return TIPOS_PERGUNTA_CHECKIN.find(t => t.value === tipo)?.label || tipo;
+  };
+
+  // Section handlers
+  const handleEditSecao = (secao: string, icone: string | null) => {
+    setSelectedSecao({ nome: secao, icone });
+    setSecaoEditDialogOpen(true);
+  };
+
+  const handleDeleteSecao = (secao: string, icone: string | null) => {
+    setSelectedSecao({ nome: secao, icone });
+    setSecaoDeleteDialogOpen(true);
+  };
+
+  const handleSaveSecao = async (novoNome: string, novoIcone: string | null) => {
+    if (!selectedSecao) return;
+    
+    await updateSecao.mutateAsync({
+      secaoAntiga: selectedSecao.nome,
+      secaoNova: novoNome,
+      icone: novoIcone,
+    });
+    setSecaoEditDialogOpen(false);
+    setSelectedSecao(null);
+  };
+
+  const handleConfirmDeleteSecao = async () => {
+    if (!selectedSecao) return;
+    
+    await deleteSecao.mutateAsync(selectedSecao.nome);
+    setSecaoDeleteDialogOpen(false);
+    setSelectedSecao(null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -272,11 +319,34 @@ export const CheckinTemplateFormDialog = ({
                           strategy={verticalListSortingStrategy}
                         >
                           {Object.entries(perguntasPorSecao).map(([secao, secaoPerguntas]) => (
-                            <div key={secao} className="space-y-2">
-                              <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
-                                {secaoPerguntas[0]?.secao_icone && <span>{secaoPerguntas[0].secao_icone}</span>}
-                                {secao}
-                              </h4>
+                            <div key={secao} className="space-y-2 group/secao">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                                  {secaoPerguntas[0]?.secao_icone && <span>{secaoPerguntas[0].secao_icone}</span>}
+                                  {secao}
+                                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                                    {secaoPerguntas.length}
+                                  </span>
+                                </h4>
+                                <div className="flex items-center gap-1 opacity-0 group-hover/secao:opacity-100 transition-opacity">
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6"
+                                    onClick={() => handleEditSecao(secao, secaoPerguntas[0]?.secao_icone)}
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6 text-destructive hover:text-destructive"
+                                    onClick={() => handleDeleteSecao(secao, secaoPerguntas[0]?.secao_icone)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
                               <div className="space-y-2">
                                 {secaoPerguntas.map((pergunta) => (
                                   <SortableCheckinPergunta
@@ -312,14 +382,51 @@ export const CheckinTemplateFormDialog = ({
       </Dialog>
 
       {isEditing && (
-        <CheckinPerguntaFormDialog
-          open={perguntaDialogOpen}
-          onOpenChange={setPerguntaDialogOpen}
-          templateId={template.id}
-          pergunta={selectedPergunta}
-          secoesExistentes={Object.keys(perguntasPorSecao)}
-          proximaOrdem={(perguntas?.length || 0) + 1}
-        />
+        <>
+          <CheckinPerguntaFormDialog
+            open={perguntaDialogOpen}
+            onOpenChange={setPerguntaDialogOpen}
+            templateId={template.id}
+            pergunta={selectedPergunta}
+            secoesExistentes={Object.keys(perguntasPorSecao)}
+            proximaOrdem={(perguntas?.length || 0) + 1}
+          />
+
+          <SecaoEditDialog
+            open={secaoEditDialogOpen}
+            onOpenChange={setSecaoEditDialogOpen}
+            secao={selectedSecao?.nome || ""}
+            icone={selectedSecao?.icone || null}
+            onSave={handleSaveSecao}
+            isLoading={updateSecao.isPending}
+          />
+
+          <AlertDialog open={secaoDeleteDialogOpen} onOpenChange={setSecaoDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir seção "{selectedSecao?.nome}"?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {selectedSecao && perguntasPorSecao[selectedSecao.nome] && (
+                    <>
+                      Todas as <strong>{perguntasPorSecao[selectedSecao.nome].length}</strong> perguntas desta seção serão excluídas.
+                      Esta ação não pode ser desfeita.
+                    </>
+                  )}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={handleConfirmDeleteSecao}
+                  disabled={deleteSecao.isPending}
+                >
+                  Excluir Seção
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
     </>
   );

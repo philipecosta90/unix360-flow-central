@@ -305,6 +305,44 @@ export const useCheckinPerguntas = (templateId: string | null) => {
     },
   });
 
+  const updateSecao = useMutation({
+    mutationFn: async ({ secaoAntiga, secaoNova, icone }: { secaoAntiga: string; secaoNova: string; icone: string | null }) => {
+      const { error } = await supabase
+        .from('checkin_perguntas')
+        .update({ secao: secaoNova, secao_icone: icone })
+        .eq('template_id', templateId!)
+        .eq('secao', secaoAntiga);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checkin-perguntas', templateId] });
+      toast.success('Seção atualizada!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+
+  const deleteSecao = useMutation({
+    mutationFn: async (secao: string) => {
+      const { error } = await supabase
+        .from('checkin_perguntas')
+        .delete()
+        .eq('template_id', templateId!)
+        .eq('secao', secao);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checkin-perguntas', templateId] });
+      toast.success('Seção e perguntas excluídas!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+
   return {
     perguntas,
     isLoading,
@@ -312,6 +350,8 @@ export const useCheckinPerguntas = (templateId: string | null) => {
     updatePergunta,
     deletePergunta,
     reorderPerguntas,
+    updateSecao,
+    deleteSecao,
   };
 };
 
