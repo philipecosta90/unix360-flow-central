@@ -56,13 +56,13 @@ export const SecaoEditDialog = ({
   useEffect(() => {
     if (open) {
       setNome(secao);
-      setIconeValue(icone || "");
+      setIconeValue(icone || "none");
     }
   }, [open, secao, icone]);
 
   const handleSave = () => {
     if (!nome.trim()) return;
-    onSave(nome.trim(), iconeValue || null);
+    onSave(nome.trim(), iconeValue === "none" ? null : iconeValue);
   };
 
   return (
@@ -93,7 +93,7 @@ export const SecaoEditDialog = ({
                 <SelectValue placeholder="Selecione um ícone" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sem ícone</SelectItem>
+                <SelectItem value="none">Sem ícone</SelectItem>
                 {ICONES_SECAO.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
