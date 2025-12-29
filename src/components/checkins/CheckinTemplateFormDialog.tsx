@@ -1,4 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import {
   Dialog,
   DialogContent,
@@ -14,15 +29,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Plus, 
-  Trash2, 
-  GripVertical, 
-  Edit,
-  Save
-} from "lucide-react";
+import { Plus, Save } from "lucide-react";
 import {
   useCheckinTemplates,
   useCheckinPerguntas,
@@ -31,6 +39,7 @@ import {
   TIPOS_PERGUNTA_CHECKIN,
 } from "@/hooks/useCheckins";
 import { CheckinPerguntaFormDialog } from "./CheckinPerguntaFormDialog";
+import { SortableCheckinPergunta } from "./SortableCheckinPergunta";
 import { toast } from "sonner";
 
 interface CheckinTemplateFormDialogProps {
@@ -46,13 +55,25 @@ export const CheckinTemplateFormDialog = ({
 }: CheckinTemplateFormDialogProps) => {
   const isEditing = !!template;
   const { createTemplate, updateTemplate } = useCheckinTemplates();
-  const { perguntas, deletePergunta } = useCheckinPerguntas(template?.id || null);
+  const { perguntas, deletePergunta, reorderPerguntas } = useCheckinPerguntas(template?.id || null);
 
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [perguntaDialogOpen, setPerguntaDialogOpen] = useState(false);
   const [selectedPergunta, setSelectedPergunta] = useState<CheckinPergunta | null>(null);
+
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (template) {
@@ -107,16 +128,55 @@ export const CheckinTemplateFormDialog = ({
     deletePergunta.mutate(id);
   };
 
-  // Agrupar perguntas por seção
-  const perguntasPorSecao = perguntas?.reduce((acc, pergunta) => {
-    const secao = pergunta.secao || "Geral";
-    if (!acc[secao]) acc[secao] = [];
-    acc[secao].push(pergunta);
-    return acc;
-  }, {} as Record<string, CheckinPergunta[]>) || {};
+  // Group questions by section
+  const perguntasPorSecao = useMemo(() => {
+    return perguntas?.reduce((acc, pergunta) => {
+      const secao = pergunta.secao || "Geral";
+      if (!acc[secao]) acc[secao] = [];
+      acc[secao].push(pergunta);
+      return acc;
+    }, {} as Record<string, CheckinPergunta[]>) || {};
+  }, [perguntas]);
+
+  // Flat list of all questions for drag and drop
+  const allPerguntasIds = useMemo(() => {
+    return perguntas?.map(p => p.id) || [];
+  }, [perguntas]);
 
   const getTipoLabel = (tipo: string) => {
     return TIPOS_PERGUNTA_CHECKIN.find(t => t.value === tipo)?.label || tipo;
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || !perguntas) {
+      return;
+    }
+
+    const oldIndex = perguntas.findIndex(p => p.id === active.id);
+    const newIndex = perguntas.findIndex(p => p.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    // Reorder the array
+    const newOrder = arrayMove(perguntas, oldIndex, newIndex);
+
+    // Get the section of the target question (the one we're dropping onto)
+    const targetSecao = perguntas[newIndex].secao;
+    const movedPergunta = perguntas[oldIndex];
+
+    // Create updates with new order and potentially new section
+    const updates = newOrder.map((p, idx) => ({
+      id: p.id,
+      ordem: idx + 1,
+      // If the moved question lands in a different section, update its section
+      secao: p.id === movedPergunta.id ? targetSecao : undefined,
+    }));
+
+    reorderPerguntas.mutate(updates);
   };
 
   return (
@@ -136,7 +196,7 @@ export const CheckinTemplateFormDialog = ({
 
           <ScrollArea className="flex-1 min-h-0 pr-4">
             <div className="space-y-6">
-              {/* Dados básicos */}
+              {/* Basic data */}
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="nome">Nome do Template *</Label>
@@ -170,7 +230,7 @@ export const CheckinTemplateFormDialog = ({
                 </div>
               </div>
 
-              {/* Perguntas - apenas se estiver editando */}
+              {/* Questions - only when editing */}
               {isEditing && (
                 <>
                   <Separator />
@@ -180,7 +240,7 @@ export const CheckinTemplateFormDialog = ({
                       <div>
                         <h3 className="text-lg font-semibold">Perguntas</h3>
                         <p className="text-sm text-muted-foreground">
-                          {perguntas?.length || 0} perguntas no template
+                          {perguntas?.length || 0} perguntas no template • Arraste para reordenar
                         </p>
                       </div>
                       <Button onClick={handleAddPergunta} size="sm">
@@ -202,59 +262,36 @@ export const CheckinTemplateFormDialog = ({
                         </CardContent>
                       </Card>
                     ) : (
-                      Object.entries(perguntasPorSecao).map(([secao, perguntas]) => (
-                        <div key={secao} className="space-y-2">
-                          <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
-                            {perguntas[0]?.secao_icone && <span>{perguntas[0].secao_icone}</span>}
-                            {secao}
-                          </h4>
-                          <div className="space-y-2">
-                            {perguntas.map((pergunta) => (
-                              <Card key={pergunta.id} className="group">
-                                <CardContent className="p-3 flex items-center gap-3">
-                                  <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 cursor-grab" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium truncate">{pergunta.pergunta}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <Badge variant="outline" className="text-xs">
-                                        {getTipoLabel(pergunta.tipo)}
-                                      </Badge>
-                                      {pergunta.pontos_maximo > 0 && (
-                                        <Badge variant="secondary" className="text-xs">
-                                          {pergunta.pontos_maximo} pts
-                                        </Badge>
-                                      )}
-                                      {pergunta.obrigatoria && (
-                                        <Badge className="text-xs bg-primary/10 text-primary">
-                                          Obrigatória
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={() => handleEditPergunta(pergunta)}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-destructive"
-                                      onClick={() => handleDeletePergunta(pergunta.id)}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        </div>
-                      ))
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={allPerguntasIds}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {Object.entries(perguntasPorSecao).map(([secao, secaoPerguntas]) => (
+                            <div key={secao} className="space-y-2">
+                              <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                                {secaoPerguntas[0]?.secao_icone && <span>{secaoPerguntas[0].secao_icone}</span>}
+                                {secao}
+                              </h4>
+                              <div className="space-y-2">
+                                {secaoPerguntas.map((pergunta) => (
+                                  <SortableCheckinPergunta
+                                    key={pergunta.id}
+                                    pergunta={pergunta}
+                                    onEdit={handleEditPergunta}
+                                    onDelete={handleDeletePergunta}
+                                    getTipoLabel={getTipoLabel}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </SortableContext>
+                      </DndContext>
                     )}
                   </div>
                 </>
