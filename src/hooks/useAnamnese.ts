@@ -286,6 +286,41 @@ export function useAnamnese() {
     }
   }, [sendAnamnese, toast]);
 
+  const deleteEnvio = useCallback(async (envioId: string) => {
+    try {
+      // Primeiro, deletar as respostas associadas (se existirem)
+      const { error: respostasError } = await supabase
+        .from("anamnese_respostas")
+        .delete()
+        .eq("envio_id", envioId);
+
+      if (respostasError) throw respostasError;
+
+      // Depois, deletar o envio
+      const { error } = await supabase
+        .from("anamnese_envios")
+        .delete()
+        .eq("id", envioId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Anamnese excluída!",
+        description: "O registro foi removido com sucesso.",
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error("Erro ao excluir envio:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a anamnese.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [toast]);
+
   // ========== CRUD Templates ==========
 
   const createTemplate = useCallback(async (nome: string, descricao: string) => {
@@ -599,6 +634,7 @@ export function useAnamnese() {
     createDefaultTemplate,
     sendAnamnese,
     resendAnamnese,
+    deleteEnvio,
     // CRUD Templates
     createTemplate,
     updateTemplate,

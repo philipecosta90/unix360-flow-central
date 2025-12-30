@@ -18,19 +18,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAnamnese, AnamneseEnvio } from "@/hooks/useAnamnese";
-import { Eye, RefreshCw, Search, Loader2, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Eye, RefreshCw, Search, Loader2, Clock, CheckCircle2, XCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AnamneseRespostasDialog } from "./AnamneseRespostasDialog";
 
 export const AnamneseEnvios = () => {
-  const { envios, loading, fetchEnvios, resendAnamnese } = useAnamnese();
+  const { envios, loading, fetchEnvios, resendAnamnese, deleteEnvio } = useAnamnese();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedEnvio, setSelectedEnvio] = useState<AnamneseEnvio | null>(null);
   const [showRespostas, setShowRespostas] = useState(false);
   const [resending, setResending] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [envioToDelete, setEnvioToDelete] = useState<AnamneseEnvio | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchEnvios();
@@ -46,6 +59,25 @@ export const AnamneseEnvios = () => {
   const handleViewRespostas = (envio: AnamneseEnvio) => {
     setSelectedEnvio(envio);
     setShowRespostas(true);
+  };
+
+  const handleDeleteClick = (envio: AnamneseEnvio) => {
+    setEnvioToDelete(envio);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!envioToDelete) return;
+    
+    setDeleting(true);
+    const success = await deleteEnvio(envioToDelete.id);
+    setDeleting(false);
+    
+    if (success) {
+      setDeleteDialogOpen(false);
+      setEnvioToDelete(null);
+      await fetchEnvios();
+    }
   };
 
   const filteredEnvios = envios.filter((envio) => {
@@ -187,6 +219,14 @@ export const AnamneseEnvios = () => {
                               )}
                             </Button>
                           )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteClick(envio)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -205,6 +245,29 @@ export const AnamneseEnvios = () => {
           envio={selectedEnvio}
         />
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir anamnese?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A anamnese enviada para{" "}
+              <strong>{envioToDelete?.cliente?.nome}</strong> será removida permanentemente
+              {envioToDelete?.status === "preenchido" && ", incluindo todas as respostas"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
