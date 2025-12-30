@@ -63,6 +63,7 @@ const App = () => {
                 <Route path="/cs" element={<Index />} />
                 <Route path="/sucesso-cliente" element={<Index />} />
                 <Route path="/whatsapp" element={<Index />} />
+                <Route path="/mensagens" element={<Index />} />
                 <Route path="/configuracoes" element={<Index />} />
                 <Route path="/admin" element={<Index />} />
                 
