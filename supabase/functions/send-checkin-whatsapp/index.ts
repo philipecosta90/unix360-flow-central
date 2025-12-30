@@ -267,7 +267,9 @@ Deno.serve(async (req) => {
     }
 
     // 4. Montar link e mensagem
-    const link = `https://app.unix360.com.br/checkin/preencher/${token}`;
+    const appBaseUrl = Deno.env.get("APP_BASE_URL") || "https://app.unix360.com.br";
+    const link = `${appBaseUrl}/checkin/preencher/${token}`;
+    console.log(`Link de check-in gerado: ${link}`);
     
     // Usar mensagem personalizada ou padrão
     let mensagem = mensagemConfig?.conteudo || DEFAULT_MESSAGE;
