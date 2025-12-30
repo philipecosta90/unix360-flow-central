@@ -241,7 +241,9 @@ Deno.serve(async (req) => {
     }
 
     // 4. Montar link e mensagem
-    const link = `https://app.unix360.com.br/anamnese/preencher/${token}`;
+    const appBaseUrl = Deno.env.get("APP_BASE_URL") || "https://app.unix360.com.br";
+    const link = `${appBaseUrl}/anamnese/preencher/${token}`;
+    console.log(`Link de anamnese gerado: ${link}`);
     
     // Usar mensagem personalizada ou padrão
     let mensagem = mensagemConfig?.conteudo || DEFAULT_MESSAGE;
