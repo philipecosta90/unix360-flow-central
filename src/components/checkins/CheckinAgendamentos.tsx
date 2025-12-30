@@ -40,6 +40,7 @@ import { CheckinAgendamentoDialog } from "./CheckinAgendamentoDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseLocalDate, formatDateDisplay } from "@/utils/dateUtils";
 
 export const CheckinAgendamentos = () => {
   const { agendamentos, isLoading, updateAgendamento, deleteAgendamento } = useCheckinAgendamentos();
@@ -143,9 +144,7 @@ export const CheckinAgendamentos = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {format(new Date(agendamento.proximo_envio), "dd/MM/yyyy", {
-                        locale: ptBR,
-                      })}
+                      {formatDateDisplay(agendamento.proximo_envio)}
                     </TableCell>
                     <TableCell className="flex items-center gap-1">
                       <Clock className="h-3 w-3 text-muted-foreground" />
