@@ -166,9 +166,9 @@ export const CheckinPublicPage = () => {
         let indicador_visual: string | null = null;
 
         // Calcular pontuação para tipos com escala
-        if (p.tipo === "likert" && resposta) {
+        if ((p.tipo === "likert" || p.tipo === "likert_5" || p.tipo === "likert_10") && resposta) {
           pontuacao = parseInt(resposta);
-          const max = p.pontos_maximo || 5;
+          const max = p.pontos_maximo || (p.tipo === "likert_10" ? 10 : 5);
           const percent = (pontuacao / max) * 100;
           if (percent >= 80) indicador_visual = "verde";
           else if (percent >= 50) indicador_visual = "amarelo";
@@ -271,7 +271,9 @@ export const CheckinPublicPage = () => {
 
     switch (pergunta.tipo) {
       case "likert":
-        const maxPontos = pergunta.pontos_maximo || 5;
+      case "likert_5":
+      case "likert_10":
+        const maxPontos = pergunta.pontos_maximo || (pergunta.tipo === "likert_10" ? 10 : 5);
         return (
           <RadioGroup
             value={value}
