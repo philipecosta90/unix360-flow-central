@@ -35,8 +35,16 @@ interface Agendamento {
   };
 }
 
+// Formata data local para YYYY-MM-DD sem problemas de timezone
+function toLocalISODate(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Calcular próximo envio baseado na frequência
-function calcularProximoEnvio(frequencia: string, intervaloDias: number | null): Date {
+function calcularProximoEnvio(frequencia: string, intervaloDias: number | null): string {
   const now = new Date();
   const proxEnvio = new Date(now);
 
@@ -60,7 +68,7 @@ function calcularProximoEnvio(frequencia: string, intervaloDias: number | null):
       proxEnvio.setDate(proxEnvio.getDate() + 7);
   }
 
-  return proxEnvio;
+  return toLocalISODate(proxEnvio);
 }
 
 Deno.serve(async (req) => {
@@ -81,7 +89,7 @@ Deno.serve(async (req) => {
 
     // Buscar agendamentos que devem ser enviados agora
     const now = new Date();
-    const todayDate = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const todayDate = toLocalISODate(now); // YYYY-MM-DD em timezone local
     const currentTime = now.toTimeString().slice(0, 5); // HH:MM
 
     console.log(`[${startTime}] Buscando agendamentos para data: ${todayDate}, hora atual: ${currentTime}`);
@@ -153,7 +161,7 @@ Deno.serve(async (req) => {
         const proximoEnvio = calcularProximoEnvio(agendamento.frequencia, agendamento.intervalo_dias);
         await supabase
           .from("checkin_agendamentos")
-          .update({ proximo_envio: proximoEnvio.toISOString().split("T")[0] })
+          .update({ proximo_envio: proximoEnvio })
           .eq("id", agendamento.id);
         
         continue;
@@ -181,7 +189,7 @@ Deno.serve(async (req) => {
           const proximoEnvio = calcularProximoEnvio(agendamento.frequencia, agendamento.intervalo_dias);
           await supabase
             .from("checkin_agendamentos")
-            .update({ proximo_envio: proximoEnvio.toISOString().split("T")[0] })
+            .update({ proximo_envio: proximoEnvio })
             .eq("id", agendamento.id);
           
           continue;
@@ -250,7 +258,7 @@ Deno.serve(async (req) => {
           const proximoEnvio = calcularProximoEnvio(agendamento.frequencia, agendamento.intervalo_dias);
           await supabase
             .from("checkin_agendamentos")
-            .update({ proximo_envio: proximoEnvio.toISOString().split("T")[0] })
+            .update({ proximo_envio: proximoEnvio })
             .eq("id", agendamento.id);
           
           continue;
@@ -334,7 +342,7 @@ Equipe *${nomeEmpresa}*`;
         const proximoEnvio = calcularProximoEnvio(agendamento.frequencia, agendamento.intervalo_dias);
         await supabase
           .from("checkin_agendamentos")
-          .update({ proximo_envio: proximoEnvio.toISOString().split("T")[0] })
+          .update({ proximo_envio: proximoEnvio })
           .eq("id", agendamento.id);
 
         resultados.push({
