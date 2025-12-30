@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -22,16 +23,19 @@ import {
   CheckCircle2, 
   AlertCircle,
   XCircle,
-  BarChart3
+  BarChart3,
+  Eye
 } from "lucide-react";
-import { useCheckinEnvios, getIndicadorVisual } from "@/hooks/useCheckins";
+import { useCheckinEnvios, getIndicadorVisual, CheckinEnvio } from "@/hooks/useCheckins";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CheckinRespostasDialog } from "./CheckinRespostasDialog";
 
 export const CheckinRelatorio = () => {
   const { envios, isLoading } = useCheckinEnvios();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [selectedEnvio, setSelectedEnvio] = useState<CheckinEnvio | null>(null);
 
   const enviosFiltrados = envios?.filter((e) => 
     statusFilter === "todos" || e.status === statusFilter
@@ -41,7 +45,7 @@ export const CheckinRelatorio = () => {
   const total = envios?.length || 0;
   const pendentes = envios?.filter((e) => e.status === "pendente").length || 0;
   const parciais = envios?.filter((e) => e.status === "parcial").length || 0;
-  const completos = envios?.filter((e) => e.status === "completo").length || 0;
+  const respondidos = envios?.filter((e) => e.status === "respondido" || e.status === "completo").length || 0;
   const expirados = envios?.filter((e) => e.status === "expirado").length || 0;
 
   const getStatusBadge = (status: string) => {
@@ -50,8 +54,9 @@ export const CheckinRelatorio = () => {
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
       case "parcial":
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200"><AlertCircle className="h-3 w-3 mr-1" />Parcial</Badge>;
+      case "respondido":
       case "completo":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />Completo</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />Respondido</Badge>;
       case "expirado":
         return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" />Expirado</Badge>;
       default:
@@ -125,8 +130,8 @@ export const CheckinRelatorio = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-green-700">{completos}</p>
-                <p className="text-sm text-green-600">Completos</p>
+                <p className="text-2xl font-bold text-green-700">{respondidos}</p>
+                <p className="text-sm text-green-600">Respondidos</p>
               </div>
               <CheckCircle2 className="h-8 w-8 text-green-500" />
             </div>
@@ -162,7 +167,7 @@ export const CheckinRelatorio = () => {
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="pendente">Pendentes</SelectItem>
                 <SelectItem value="parcial">Parciais</SelectItem>
-                <SelectItem value="completo">Completos</SelectItem>
+                <SelectItem value="respondido">Respondidos</SelectItem>
                 <SelectItem value="expirado">Expirados</SelectItem>
               </SelectContent>
             </Select>
@@ -187,6 +192,7 @@ export const CheckinRelatorio = () => {
                   <TableHead>Pontuação</TableHead>
                   <TableHead>Enviado em</TableHead>
                   <TableHead>Respondido em</TableHead>
+                  <TableHead className="w-[80px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -204,7 +210,7 @@ export const CheckinRelatorio = () => {
                       <TableCell>{envio.template?.nome || "—"}</TableCell>
                       <TableCell>{getStatusBadge(envio.status)}</TableCell>
                       <TableCell>
-                        {envio.status === "completo" && envio.pontuacao_maxima > 0 ? (
+                        {(envio.status === "respondido" || envio.status === "completo") && envio.pontuacao_maxima > 0 ? (
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{indicador.emoji}</span>
                             <span className="font-medium">
@@ -239,6 +245,18 @@ export const CheckinRelatorio = () => {
                             })
                           : "—"}
                       </TableCell>
+                      <TableCell>
+                        {(envio.status === "respondido" || envio.status === "completo") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSelectedEnvio(envio)}
+                            title="Ver respostas"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -247,6 +265,13 @@ export const CheckinRelatorio = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog de respostas */}
+      <CheckinRespostasDialog
+        open={!!selectedEnvio}
+        onOpenChange={(open) => !open && setSelectedEnvio(null)}
+        envio={selectedEnvio}
+      />
     </div>
   );
 };
