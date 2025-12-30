@@ -22,6 +22,20 @@ interface CheckUserResponse {
   }>;
 }
 
+const DEFAULT_MESSAGE = `Olá {clienteNome}! 👋
+
+📊 *{nomeTemplate}*
+
+Como está seu progresso? Responda este check-in rápido para que possamos acompanhar sua evolução.
+
+🔗 {link}
+
+⏰ O link é válido por 3 dias.
+
+Dúvidas? Responda esta mensagem!
+
+Equipe *{nomeEmpresa}*`;
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -125,6 +139,21 @@ Deno.serve(async (req) => {
 
     const pontuacaoMaxima = perguntas?.reduce((sum, p) => sum + (p.pontos_maximo || 0), 0) || 0;
 
+    // Buscar mensagem personalizada
+    const { data: mensagemConfig, error: mensagemError } = await supabaseAdmin
+      .from("whatsapp_mensagens")
+      .select("conteudo, ativo")
+      .eq("empresa_id", perfil.empresa_id)
+      .eq("tipo", "checkin")
+      .single();
+
+    if (mensagemError && mensagemError.code !== "PGRST116") {
+      console.error("Erro ao buscar mensagem personalizada:", mensagemError);
+    }
+
+    // Se mensagem está desativada, não enviar via WhatsApp mas ainda criar o registro
+    const enviarWhatsApp = !mensagemConfig || mensagemConfig.ativo;
+
     // Buscar instância WhatsApp conectada da empresa
     const { data: instancia, error: instanciaError } = await supabase
       .from("whatsapp_instances")
@@ -134,7 +163,7 @@ Deno.serve(async (req) => {
       .limit(1)
       .single();
 
-    if (instanciaError || !instancia) {
+    if ((instanciaError || !instancia) && enviarWhatsApp) {
       console.log("Nenhuma instância WhatsApp conectada encontrada");
       return new Response(
         JSON.stringify({ 
@@ -145,10 +174,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Usando instância: ${instancia.nome}`);
+    console.log(`Usando instância: ${instancia?.nome}`);
 
     const WHATSAPP_API_URL = Deno.env.get("WHATSAPP_API_URL");
-    if (!WHATSAPP_API_URL) {
+    if (!WHATSAPP_API_URL && enviarWhatsApp) {
       console.error("WHATSAPP_API_URL não configurada");
       return new Response(
         JSON.stringify({ error: "API WhatsApp não configurada" }),
@@ -156,54 +185,58 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 1. Verificar se o número tem WhatsApp
-    console.log("Verificando número no WhatsApp...");
-    const checkResponse = await fetch(`${WHATSAPP_API_URL}/user/check`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "token": instancia.user_token,
-      },
-      body: JSON.stringify({
-        Phone: [clienteTelefone],
-      }),
-    });
+    let jid = "";
 
-    if (!checkResponse.ok) {
-      const errorText = await checkResponse.text();
-      console.error("Erro ao verificar número:", errorText);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: "Erro ao verificar número no WhatsApp" 
+    if (enviarWhatsApp && instancia) {
+      // 1. Verificar se o número tem WhatsApp
+      console.log("Verificando número no WhatsApp...");
+      const checkResponse = await fetch(`${WHATSAPP_API_URL}/user/check`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "token": instancia.user_token,
+        },
+        body: JSON.stringify({
+          Phone: [clienteTelefone],
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      });
+
+      if (!checkResponse.ok) {
+        const errorText = await checkResponse.text();
+        console.error("Erro ao verificar número:", errorText);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: "Erro ao verificar número no WhatsApp" 
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const checkJson = await checkResponse.json();
+      console.log("Resposta da verificação:", JSON.stringify(checkJson));
+
+      const users = (checkJson?.data?.Users ?? checkJson?.Users ?? checkJson?.data?.data?.Users) as
+        | CheckUserResponse["Users"]
+        | undefined;
+
+      const firstUser = users?.[0];
+
+      if (!firstUser || !firstUser.IsInWhatsapp) {
+        console.log("Número não possui WhatsApp");
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Este número não possui WhatsApp",
+            checkedPhone: clienteTelefone,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      jid = firstUser.JID;
+      console.log(`Número verificado, JID: ${jid}`);
     }
-
-    const checkJson = await checkResponse.json();
-    console.log("Resposta da verificação:", JSON.stringify(checkJson));
-
-    const users = (checkJson?.data?.Users ?? checkJson?.Users ?? checkJson?.data?.data?.Users) as
-      | CheckUserResponse["Users"]
-      | undefined;
-
-    const firstUser = users?.[0];
-
-    if (!firstUser || !firstUser.IsInWhatsapp) {
-      console.log("Número não possui WhatsApp");
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Este número não possui WhatsApp",
-          checkedPhone: clienteTelefone,
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const jid = firstUser.JID;
-    console.log(`Número verificado, JID: ${jid}`);
 
     // 2. Gerar token único para o check-in
     const token = crypto.randomUUID();
@@ -236,19 +269,28 @@ Deno.serve(async (req) => {
     // 4. Montar link e mensagem
     const link = `https://app.unix360.com.br/checkin/preencher/${token}`;
     
-    const mensagem = `Olá ${clienteNome}! 👋
+    // Usar mensagem personalizada ou padrão
+    let mensagem = mensagemConfig?.conteudo || DEFAULT_MESSAGE;
+    
+    // Substituir variáveis
+    mensagem = mensagem
+      .replace(/{clienteNome}/g, clienteNome)
+      .replace(/{nomeTemplate}/g, nomeTemplate)
+      .replace(/{link}/g, link)
+      .replace(/{nomeEmpresa}/g, nomeEmpresa);
 
-📊 *${nomeTemplate}*
-
-Como está seu progresso? Responda este check-in rápido para que possamos acompanhar sua evolução.
-
-🔗 ${link}
-
-⏰ O link é válido por 3 dias.
-
-Dúvidas? Responda esta mensagem!
-
-Equipe *${nomeEmpresa}*`;
+    // Se WhatsApp desativado, retornar sucesso sem enviar
+    if (!enviarWhatsApp) {
+      console.log("Envio de check-in via WhatsApp está desativado");
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Check-in registrado (envio WhatsApp desativado)",
+          token,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // 5. Enviar mensagem via WhatsApp
     console.log("Enviando mensagem com link do check-in...");
@@ -259,7 +301,7 @@ Equipe *${nomeEmpresa}*`;
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "token": instancia.user_token,
+        "token": instancia!.user_token,
       },
       body: JSON.stringify({
         Phone: destino,

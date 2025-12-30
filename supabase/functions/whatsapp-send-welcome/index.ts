@@ -19,6 +19,17 @@ interface CheckUserResponse {
   }>;
 }
 
+const DEFAULT_MESSAGE = `Olá {clienteNome}! 👋
+
+Bem-vindo(a) à *{nomeEmpresa}*! 🎉
+
+Estamos muito felizes em tê-lo(a) como nosso cliente.
+
+Se precisar de algo, é só responder esta mensagem.
+
+Atenciosamente,
+Equipe {nomeEmpresa}`;
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -38,9 +49,14 @@ Deno.serve(async (req) => {
     // Criar cliente Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
+
+    // Cliente com service role para buscar mensagens personalizadas
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Obter usuário autenticado
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -91,6 +107,30 @@ Deno.serve(async (req) => {
     }
 
     const nomeEmpresa = empresa?.nome || "Nossa equipe";
+
+    // Buscar mensagem personalizada
+    const { data: mensagemConfig, error: mensagemError } = await supabaseAdmin
+      .from("whatsapp_mensagens")
+      .select("conteudo, ativo")
+      .eq("empresa_id", perfil.empresa_id)
+      .eq("tipo", "boas_vindas")
+      .single();
+
+    if (mensagemError && mensagemError.code !== "PGRST116") {
+      console.error("Erro ao buscar mensagem personalizada:", mensagemError);
+    }
+
+    // Se mensagem está desativada, não enviar
+    if (mensagemConfig && !mensagemConfig.ativo) {
+      console.log("Envio de boas-vindas está desativado para esta empresa");
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "Envio de boas-vindas está desativado" 
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Buscar instância WhatsApp conectada da empresa
     const { data: instancia, error: instanciaError } = await supabase
@@ -172,17 +212,13 @@ Deno.serve(async (req) => {
     const jid = firstUser.JID;
     console.log(`Número verificado, JID: ${jid}`);
 
-    // 2. Montar mensagem de boas-vindas
-    const mensagem = `Olá ${clienteNome}! 👋
-
-Bem-vindo(a) à *${nomeEmpresa}*! 🎉
-
-Estamos muito felizes em tê-lo(a) como nosso cliente.
-
-Se precisar de algo, é só responder esta mensagem.
-
-Atenciosamente,
-Equipe ${nomeEmpresa}`;
+    // 2. Montar mensagem de boas-vindas (personalizada ou padrão)
+    let mensagem = mensagemConfig?.conteudo || DEFAULT_MESSAGE;
+    
+    // Substituir variáveis
+    mensagem = mensagem
+      .replace(/{clienteNome}/g, clienteNome)
+      .replace(/{nomeEmpresa}/g, nomeEmpresa);
 
     // 3. Enviar mensagem
     console.log("Enviando mensagem de boas-vindas...");

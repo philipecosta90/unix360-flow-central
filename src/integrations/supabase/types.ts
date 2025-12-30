@@ -1562,6 +1562,42 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_mensagens: {
+        Row: {
+          ativo: boolean | null
+          conteudo: string
+          created_at: string | null
+          empresa_id: string
+          id: string
+          tipo: string
+          titulo: string
+          updated_at: string | null
+          variaveis_disponiveis: string[]
+        }
+        Insert: {
+          ativo?: boolean | null
+          conteudo: string
+          created_at?: string | null
+          empresa_id: string
+          id?: string
+          tipo: string
+          titulo: string
+          updated_at?: string | null
+          variaveis_disponiveis?: string[]
+        }
+        Update: {
+          ativo?: boolean | null
+          conteudo?: string
+          created_at?: string | null
+          empresa_id?: string
+          id?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string | null
+          variaveis_disponiveis?: string[]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1572,6 +1608,10 @@ export type Database = {
         Returns: string
       }
       create_default_crm_stages_for_company: {
+        Args: { p_empresa_id: string }
+        Returns: undefined
+      }
+      create_default_whatsapp_messages_for_company: {
         Args: { p_empresa_id: string }
         Returns: undefined
       }
