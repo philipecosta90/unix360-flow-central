@@ -5,13 +5,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAnamnese, AnamneseEnvio, AnamneseResposta } from "@/hooks/useAnamnese";
-import { Loader2, CheckCircle2, Calendar } from "lucide-react";
+import { Loader2, CheckCircle2, Calendar, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { exportAnamneseToPDF } from "@/utils/anamneseExport";
 
 interface AnamneseRespostasDialogProps {
   open: boolean;
@@ -51,14 +53,30 @@ export const AnamneseRespostasDialog = ({
     data.respostas.sort((a, b) => (a.pergunta?.ordem || 0) - (b.pergunta?.ordem || 0));
   });
 
+  const handleExportPDF = () => {
+    exportAnamneseToPDF(envio, respostas);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            Respostas da Anamnese
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              Respostas da Anamnese
+            </DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPDF}
+              disabled={loading || respostas.length === 0}
+              className="mr-6"
+            >
+              <FileDown className="h-4 w-4 mr-1" />
+              Exportar PDF
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="bg-muted/50 rounded-lg p-4 mb-4">
