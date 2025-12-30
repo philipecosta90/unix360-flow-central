@@ -27,6 +27,21 @@ import { useCheckinAgendamentos, useCheckinTemplates, FREQUENCIAS } from "@/hook
 import { useClients } from "@/hooks/useClients";
 import { toast } from "sonner";
 
+// Função para formatar data sem problemas de timezone
+const formatDateForDatabase = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Função para comparar apenas a parte da data (sem horário)
+const startOfDay = (date: Date): Date => {
+  const newDate = new Date(date);
+  newDate.setHours(0, 0, 0, 0);
+  return newDate;
+};
+
 interface CheckinAgendamentoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -74,7 +89,7 @@ export const CheckinAgendamentoDialog = ({
         template_id: templateId,
         frequencia,
         intervalo_dias: frequencia === "personalizado" ? intervaloDias : null,
-        proximo_envio: format(proximoEnvio, "yyyy-MM-dd"),
+        proximo_envio: formatDateForDatabase(proximoEnvio),
         hora_envio: horaEnvio,
         ativo: true,
       });
@@ -198,7 +213,7 @@ export const CheckinAgendamentoDialog = ({
                   selected={proximoEnvio}
                   onSelect={(date) => date && setProximoEnvio(date)}
                   locale={ptBR}
-                  disabled={(date) => date < new Date()}
+                  disabled={(date) => startOfDay(date) < startOfDay(new Date())}
                 />
               </PopoverContent>
             </Popover>
