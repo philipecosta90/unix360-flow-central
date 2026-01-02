@@ -22,6 +22,7 @@ interface Cliente {
   tags?: string[];
   data_inicio_plano?: string;
   data_fim_plano?: string;
+  data_nascimento?: string;
 }
 
 interface EditClientDrawerProps {
@@ -41,6 +42,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
     plano_contratado: "",
     tags: "",
     observacoes: "",
+    data_nascimento: "",
   });
   const [dataInicioPlano, setDataInicioPlano] = useState<string>("");
   const [dataFimPlano, setDataFimPlano] = useState<string>("");
@@ -62,6 +64,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
         plano_contratado: client.plano_contratado || "",
         tags: client.tags ? client.tags.join(', ') : "",
         observacoes: client.observacoes || "",
+        data_nascimento: client.data_nascimento || "",
       });
       setDataInicioPlano(client.data_inicio_plano || "");
       setDataFimPlano(client.data_fim_plano || "");
@@ -106,7 +109,8 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
         observacoes: formData.observacoes.trim() || null,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
         data_inicio_plano: dataInicioPlano || null,
-        data_fim_plano: dataFimPlano || null
+        data_fim_plano: dataFimPlano || null,
+        data_nascimento: formData.data_nascimento || null
       };
 
       await onSave(clientData);
@@ -169,6 +173,15 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="data_nascimento">Data de Nascimento</Label>
+              <Input
+                id="data_nascimento"
+                type="date"
+                value={formData.data_nascimento}
+                onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Status</Label>

@@ -585,6 +585,7 @@ export type Database = {
           created_by: string | null
           data_fim_plano: string | null
           data_inicio_plano: string | null
+          data_nascimento: string | null
           email: string | null
           empresa_id: string
           id: string
@@ -601,6 +602,7 @@ export type Database = {
           created_by?: string | null
           data_fim_plano?: string | null
           data_inicio_plano?: string | null
+          data_nascimento?: string | null
           email?: string | null
           empresa_id: string
           id?: string
@@ -617,6 +619,7 @@ export type Database = {
           created_by?: string | null
           data_fim_plano?: string | null
           data_inicio_plano?: string | null
+          data_nascimento?: string | null
           email?: string | null
           empresa_id?: string
           id?: string
@@ -1346,6 +1349,75 @@ export type Database = {
             columns: ["renovado_por"]
             isOneToOne: false
             referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mensagens_agendamentos: {
+        Row: {
+          ativo: boolean | null
+          cliente_id: string | null
+          created_at: string | null
+          created_by: string | null
+          data_envio: string | null
+          dia_mes: string | null
+          empresa_id: string
+          filtro_clientes: Json | null
+          hora_envio: string | null
+          id: string
+          mensagem_id: string
+          proximo_envio: string | null
+          tipo_agendamento: string
+          ultimo_envio: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cliente_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_envio?: string | null
+          dia_mes?: string | null
+          empresa_id: string
+          filtro_clientes?: Json | null
+          hora_envio?: string | null
+          id?: string
+          mensagem_id: string
+          proximo_envio?: string | null
+          tipo_agendamento: string
+          ultimo_envio?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cliente_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_envio?: string | null
+          dia_mes?: string | null
+          empresa_id?: string
+          filtro_clientes?: Json | null
+          hora_envio?: string | null
+          id?: string
+          mensagem_id?: string
+          proximo_envio?: string | null
+          tipo_agendamento?: string
+          ultimo_envio?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_agendamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_agendamentos_mensagem_id_fkey"
+            columns: ["mensagem_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_mensagens"
             referencedColumns: ["id"]
           },
         ]
