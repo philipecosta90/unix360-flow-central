@@ -54,66 +54,28 @@ export const CheckinPublicPage = () => {
       }
 
       try {
-        // Buscar envio pelo token
-        const { data: envioData, error: envioError } = await supabase
-          .from("checkin_envios")
-          .select(`
-            id,
-            status,
-            expira_em,
-            template:checkin_templates(nome, descricao),
-            cliente:clientes(nome)
-          `)
-          .eq("token", token)
-          .maybeSingle();
+        // Usar edge function segura para buscar dados do formulário
+        const { data, error: fetchError } = await supabase.functions.invoke("get-checkin-form", {
+          body: { token },
+        });
 
-        if (envioError || !envioData) {
-          setError("Link inválido ou não encontrado");
+        if (fetchError || !data?.success) {
+          setError(data?.error || "Link inválido ou não encontrado");
           setLoading(false);
           return;
         }
 
-        // Verificar status
-        if (envioData.status === "respondido") {
-          setError("Este check-in já foi respondido");
-          setLoading(false);
-          return;
-        }
+        const formData = data.data;
 
-        // Verificar expiração
-        const now = new Date();
-        const expiraEm = new Date(envioData.expira_em);
-        if (now > expiraEm) {
-          setError("Este link expirou. Solicite um novo envio.");
-          setLoading(false);
-          return;
-        }
+        setEnvio({
+          id: formData.envio.id,
+          status: formData.envio.status,
+          expira_em: formData.envio.expira_em,
+          template: formData.template,
+          cliente: formData.cliente,
+        });
 
-        // Buscar template_id do envio
-        const { data: envioFull } = await supabase
-          .from("checkin_envios")
-          .select("template_id")
-          .eq("token", token)
-          .single();
-
-        if (!envioFull) {
-          setError("Erro ao carregar dados do check-in");
-          setLoading(false);
-          return;
-        }
-
-        // Buscar perguntas do template
-        const { data: perguntasData, error: perguntasError } = await supabase
-          .from("checkin_perguntas")
-          .select("*")
-          .eq("template_id", envioFull.template_id)
-          .order("ordem");
-
-        if (perguntasError) {
-          throw perguntasError;
-        }
-
-        const mappedPerguntas: Pergunta[] = (perguntasData || []).map(p => ({
+        setPerguntas(formData.perguntas.map((p: any) => ({
           id: p.id,
           pergunta: p.pergunta,
           tipo: p.tipo,
@@ -123,16 +85,7 @@ export const CheckinPublicPage = () => {
           placeholder: p.placeholder,
           pontos_maximo: p.pontos_maximo,
           opcoes_pontuacao: p.opcoes_pontuacao as Array<{ label: string; valor: number }> | undefined
-        }));
-
-        setEnvio({
-          id: envioData.id,
-          status: envioData.status,
-          expira_em: envioData.expira_em,
-          template: envioData.template as { nome: string; descricao?: string },
-          cliente: envioData.cliente as { nome: string }
-        });
-        setPerguntas(mappedPerguntas);
+        })));
       } catch (err) {
         console.error("Erro ao carregar check-in:", err);
         setError("Erro ao carregar o check-in. Tente novamente mais tarde.");

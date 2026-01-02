@@ -114,3 +114,9 @@ verify_jwt = false
 
 [functions.whatsapp-delete-instance]
 verify_jwt = true
+
+[functions.get-checkin-form]
+verify_jwt = false
+
+[functions.get-anamnese-form]
+verify_jwt = false

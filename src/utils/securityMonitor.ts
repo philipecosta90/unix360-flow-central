@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+// Security Monitor - Logs de segurança (sem localStorage por segurança)
 
 interface SecurityEvent {
   event_type: 'login_attempt' | 'failed_login' | 'account_lockout' | 'unauthorized_access' | 'data_access';
@@ -11,6 +11,7 @@ interface SecurityEvent {
 
 class SecurityMonitor {
   private events: SecurityEvent[] = [];
+  private readonly MAX_EVENTS = 100;
 
   async logSecurityEvent(event: Omit<SecurityEvent, 'timestamp'>) {
     const securityEvent: SecurityEvent = {
@@ -20,29 +21,28 @@ class SecurityMonitor {
 
     this.events.push(securityEvent);
     
-    // Keep only last 100 events in memory
-    if (this.events.length > 100) {
-      this.events = this.events.slice(-100);
+    // Keep only last MAX_EVENTS in memory
+    if (this.events.length > this.MAX_EVENTS) {
+      this.events = this.events.slice(-this.MAX_EVENTS);
     }
 
-    // Log to console in development
+    // Log to console in development only
     if (process.env.NODE_ENV === 'development') {
       console.warn('Security Event:', securityEvent);
     }
 
-    // In production, you might want to send this to a logging service
-    // For now, we'll store critical events in localStorage for debugging
+    // Critical events - log to console instead of localStorage
+    // Note: localStorage removed for security - events should be logged server-side
     if (event.event_type === 'account_lockout' || event.event_type === 'unauthorized_access') {
-      const criticalEvents = JSON.parse(localStorage.getItem('security_events') || '[]');
-      criticalEvents.push(securityEvent);
-      localStorage.setItem('security_events', JSON.stringify(criticalEvents.slice(-50)));
+      console.error('CRITICAL Security Event:', securityEvent);
     }
   }
 
   async logLoginAttempt(email: string, success: boolean, details?: Record<string, any>) {
     await this.logSecurityEvent({
       event_type: success ? 'login_attempt' : 'failed_login',
-      details: { email, success, ...details }
+      // Mask email for security - don't log full email
+      details: { email: email.substring(0, 3) + '***', success, ...details }
     });
   }
 
@@ -70,6 +70,11 @@ class SecurityMonitor {
     return this.events
       .filter(event => event.event_type === eventType)
       .slice(-limit);
+  }
+
+  // Clear in-memory events (for logout/session end)
+  clearEvents() {
+    this.events = [];
   }
 }
 
