@@ -2,9 +2,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 import { NPSSettings } from "@/components/settings/NPSSettings";
+import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { DocumentExporter } from "@/components/export/DocumentExporter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Download, Users, Lock, Star } from "lucide-react";
+import { Settings as SettingsIcon, Download, Users, Lock, Star, User } from "lucide-react";
 
 export default function Settings() {
   return (
@@ -17,8 +18,12 @@ export default function Settings() {
         <SettingsIcon className="w-6 h-6 sm:w-8 sm:h-8 text-[#43B26D]" />
       </div>
 
-      <Tabs defaultValue="password" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+      <Tabs defaultValue="profile" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto">
+          <TabsTrigger value="profile" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
+            <User className="w-4 h-4" />
+            <span>Perfil</span>
+          </TabsTrigger>
           <TabsTrigger value="password" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Lock className="w-4 h-4" />
             <span>Senha</span>
@@ -37,6 +42,10 @@ export default function Settings() {
             <span>Equipe</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="profile">
+          <ProfileSettings />
+        </TabsContent>
 
         <TabsContent value="password">
           <ChangePasswordForm />
