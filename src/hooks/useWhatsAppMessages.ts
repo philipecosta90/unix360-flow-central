@@ -13,6 +13,9 @@ export interface WhatsAppMessage {
   ativo: boolean;
   created_at: string;
   updated_at: string;
+  icone?: string;
+  descricao?: string;
+  is_system?: boolean;
 }
 
 interface MessageTypeConfig {
@@ -23,6 +26,9 @@ interface MessageTypeConfig {
   conteudoPadrao: string;
   variaveis: string[];
 }
+
+// System message types (cannot be deleted)
+const SYSTEM_MESSAGE_TYPES = ['boas_vindas', 'anamnese', 'checkin'];
 
 export const MESSAGE_TYPES: MessageTypeConfig[] = [
   {
@@ -100,7 +106,8 @@ export const useWhatsAppMessages = () => {
       const { data, error } = await supabase
         .from('whatsapp_mensagens')
         .select('*')
-        .order('tipo');
+        .order('is_system', { ascending: false })
+        .order('titulo');
 
       if (error) throw error;
       setMessages(data || []);
@@ -115,7 +122,6 @@ export const useWhatsAppMessages = () => {
     if (!user) return;
 
     try {
-      // Buscar empresa_id do perfil
       const { data: perfil, error: perfilError } = await supabase
         .from('perfis')
         .select('empresa_id')
@@ -127,7 +133,6 @@ export const useWhatsAppMessages = () => {
         return;
       }
 
-      // Verificar se já existem mensagens
       const { data: existingMessages } = await supabase
         .from('whatsapp_mensagens')
         .select('id')
@@ -135,11 +140,9 @@ export const useWhatsAppMessages = () => {
         .limit(1);
 
       if (existingMessages && existingMessages.length > 0) {
-        // Já existem mensagens, não precisa inicializar
         return;
       }
 
-      // Chamar função para criar mensagens padrão
       const { error } = await supabase.rpc('create_default_whatsapp_messages_for_company', {
         p_empresa_id: perfil.empresa_id,
       });
@@ -147,7 +150,6 @@ export const useWhatsAppMessages = () => {
       if (error) {
         console.error('Erro ao inicializar mensagens:', error);
       } else {
-        // Recarregar mensagens
         await fetchMessages();
       }
     } catch (error) {
@@ -174,6 +176,112 @@ export const useWhatsAppMessages = () => {
     } catch (error) {
       console.error('Erro ao atualizar mensagem:', error);
       toast.error('Erro ao atualizar mensagem');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateCustomMessage = async (
+    id: string,
+    data: { titulo?: string; conteudo?: string; descricao?: string; icone?: string }
+  ) => {
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from('whatsapp_mensagens')
+        .update(data)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, ...data } : m))
+      );
+
+      toast.success('Mensagem atualizada com sucesso!');
+      return true;
+    } catch (error) {
+      console.error('Erro ao atualizar mensagem:', error);
+      toast.error('Erro ao atualizar mensagem');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const createMessage = async (data: {
+    titulo: string;
+    tipo: string;
+    conteudo: string;
+    variaveis_disponiveis: string[];
+    icone?: string;
+    descricao?: string;
+  }) => {
+    try {
+      setSaving(true);
+
+      const { data: perfil, error: perfilError } = await supabase
+        .from('perfis')
+        .select('empresa_id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (perfilError || !perfil) throw new Error('Perfil não encontrado');
+
+      const { data: newMessage, error } = await supabase
+        .from('whatsapp_mensagens')
+        .insert({
+          empresa_id: perfil.empresa_id,
+          titulo: data.titulo,
+          tipo: data.tipo,
+          conteudo: data.conteudo,
+          variaveis_disponiveis: data.variaveis_disponiveis,
+          icone: data.icone || '📩',
+          descricao: data.descricao || null,
+          ativo: true,
+          is_system: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setMessages((prev) => [...prev, newMessage]);
+      toast.success('Mensagem criada com sucesso!');
+      return true;
+    } catch (error) {
+      console.error('Erro ao criar mensagem:', error);
+      toast.error('Erro ao criar mensagem');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteMessage = async (id: string) => {
+    try {
+      setSaving(true);
+
+      const message = messages.find((m) => m.id === id);
+      if (message && isSystemMessage(message.tipo)) {
+        toast.error('Mensagens do sistema não podem ser excluídas');
+        return false;
+      }
+
+      const { error } = await supabase
+        .from('whatsapp_mensagens')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+      toast.success('Mensagem excluída com sucesso!');
+      return true;
+    } catch (error) {
+      console.error('Erro ao excluir mensagem:', error);
+      toast.error('Erro ao excluir mensagem');
       return false;
     } finally {
       setSaving(false);
@@ -243,6 +351,18 @@ export const useWhatsAppMessages = () => {
     return MESSAGE_TYPES.find((m) => m.tipo === tipo);
   };
 
+  const isSystemMessage = (tipo: string): boolean => {
+    return SYSTEM_MESSAGE_TYPES.includes(tipo);
+  };
+
+  const getSystemMessages = (): WhatsAppMessage[] => {
+    return messages.filter((m) => isSystemMessage(m.tipo));
+  };
+
+  const getCustomMessages = (): WhatsAppMessage[] => {
+    return messages.filter((m) => !isSystemMessage(m.tipo));
+  };
+
   useEffect(() => {
     if (user) {
       initializeMessages().then(() => fetchMessages());
@@ -255,10 +375,16 @@ export const useWhatsAppMessages = () => {
     saving,
     fetchMessages,
     updateMessage,
+    updateCustomMessage,
+    createMessage,
+    deleteMessage,
     toggleActive,
     resetToDefault,
     getMessage,
     getMessageConfig,
+    isSystemMessage,
+    getSystemMessages,
+    getCustomMessages,
     initializeMessages,
     MESSAGE_TYPES,
   };

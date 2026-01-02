@@ -1567,8 +1567,11 @@ export type Database = {
           ativo: boolean | null
           conteudo: string
           created_at: string | null
+          descricao: string | null
           empresa_id: string
+          icone: string | null
           id: string
+          is_system: boolean | null
           tipo: string
           titulo: string
           updated_at: string | null
@@ -1578,8 +1581,11 @@ export type Database = {
           ativo?: boolean | null
           conteudo: string
           created_at?: string | null
+          descricao?: string | null
           empresa_id: string
+          icone?: string | null
           id?: string
+          is_system?: boolean | null
           tipo: string
           titulo: string
           updated_at?: string | null
@@ -1589,8 +1595,11 @@ export type Database = {
           ativo?: boolean | null
           conteudo?: string
           created_at?: string | null
+          descricao?: string | null
           empresa_id?: string
+          icone?: string | null
           id?: string
+          is_system?: boolean | null
           tipo?: string
           titulo?: string
           updated_at?: string | null
