@@ -31,6 +31,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     plano_contratado: "",
     tags: "",
     observacoes: "",
+    data_nascimento: "",
   });
   const [dataInicioPlano, setDataInicioPlano] = useState<string>("");
   const [dataFimPlano, setDataFimPlano] = useState<string>("");
@@ -104,7 +105,8 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         observacoes: formData.observacoes.trim() || null,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
         data_inicio_plano: dataInicioPlano || null,
-        data_fim_plano: dataFimPlano || null
+        data_fim_plano: dataFimPlano || null,
+        data_nascimento: formData.data_nascimento || null
       };
 
       // Passa a flag de enviarBoasVindas para o ClientsModule
@@ -131,6 +133,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         plano_contratado: "",
         tags: "",
         observacoes: "",
+        data_nascimento: "",
       });
       setDataInicioPlano("");
       setDataFimPlano("");
@@ -152,6 +155,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       plano_contratado: "",
       tags: "",
       observacoes: "",
+      data_nascimento: "",
     });
     setDataInicioPlano("");
     setDataFimPlano("");
@@ -212,6 +216,15 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="data_nascimento">Data de Nascimento</Label>
+              <Input
+                id="data_nascimento"
+                type="date"
+                value={formData.data_nascimento}
+                onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Status</Label>
