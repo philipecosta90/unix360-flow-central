@@ -28,7 +28,18 @@ import {
 } from "@/hooks/useCheckins";
 import { toast } from "sonner";
 
-const ICONES_SECAO = ["📋", "💪", "🍎", "😴", "💧", "🎯", "📊", "💬", "⚡", "🏃"];
+const ICONES_SECAO = [
+  { value: "📋", label: "📋 Geral" },
+  { value: "💪", label: "💪 Treino" },
+  { value: "🍽️", label: "🍽️ Alimentação" },
+  { value: "😴", label: "😴 Sono" },
+  { value: "💧", label: "💧 Hidratação" },
+  { value: "🎯", label: "🎯 Objetivos" },
+  { value: "⚡", label: "⚡ Energia" },
+  { value: "🧠", label: "🧠 Mental" },
+  { value: "❤️", label: "❤️ Saúde" },
+  { value: "📊", label: "📊 Métricas" },
+];
 
 interface CheckinPerguntaFormDialogProps {
   open: boolean;
@@ -225,13 +236,15 @@ export const CheckinPerguntaFormDialog = ({
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <Select value={secaoIcone} onValueChange={setSecaoIcone}>
-                      <SelectTrigger className="w-20">
-                        <SelectValue />
+                      <SelectTrigger className="w-auto min-w-[160px]">
+                        <SelectValue>
+                          {ICONES_SECAO.find(i => i.value === secaoIcone)?.label || secaoIcone}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {ICONES_SECAO.map((icon) => (
-                          <SelectItem key={icon} value={icon}>
-                            {icon}
+                        {ICONES_SECAO.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
