@@ -1629,6 +1629,52 @@ export type Database = {
           usuarios_ativos: number
         }[]
       }
+      get_anamnese_perguntas_by_template: {
+        Args: { p_template_id: string }
+        Returns: {
+          id: string
+          obrigatoria: boolean
+          opcoes: Json
+          ordem: number
+          pergunta: string
+          placeholder: string
+          secao: string
+          secao_icone: string
+          tipo: string
+        }[]
+      }
+      get_anamnese_template: {
+        Args: { p_template_id: string }
+        Returns: {
+          descricao: string
+          id: string
+          nome: string
+        }[]
+      }
+      get_checkin_perguntas_by_template: {
+        Args: { p_template_id: string }
+        Returns: {
+          id: string
+          obrigatoria: boolean
+          opcoes_pontuacao: Json
+          ordem: number
+          pergunta: string
+          placeholder: string
+          pontos_maximo: number
+          secao: string
+          secao_icone: string
+          tipo: string
+        }[]
+      }
+      get_checkin_template: {
+        Args: { p_template_id: string }
+        Returns: {
+          descricao: string
+          id: string
+          nome: string
+        }[]
+      }
+      get_cliente_nome: { Args: { p_cliente_id: string }; Returns: string }
       get_security_report: {
         Args: never
         Returns: {
@@ -1658,6 +1704,28 @@ export type Database = {
       log_sensitive_access: {
         Args: { p_action: string; p_record_id?: string; p_table_name: string }
         Returns: undefined
+      }
+      validate_anamnese_token: {
+        Args: { p_token: string }
+        Returns: {
+          cliente_id: string
+          empresa_id: string
+          envio_id: string
+          expira_em: string
+          status: string
+          template_id: string
+        }[]
+      }
+      validate_checkin_token: {
+        Args: { p_token: string }
+        Returns: {
+          cliente_id: string
+          empresa_id: string
+          envio_id: string
+          expira_em: string
+          status: string
+          template_id: string
+        }[]
       }
       validate_permission_levels: { Args: never; Returns: boolean }
       validate_user_empresa_integrity: { Args: never; Returns: boolean }

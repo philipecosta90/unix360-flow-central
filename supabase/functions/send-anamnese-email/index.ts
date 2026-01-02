@@ -4,10 +4,23 @@ import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// CORS seguro - domínios específicos permitidos
+const ALLOWED_ORIGINS = [
+  'https://app.unix360.com.br',
+  'https://unix360-flow-central.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.some(o => origin.startsWith(o.replace('/**', '')))
+    ? origin 
+    : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+}
 
 interface SendAnamneseRequest {
   cliente_id: string;
@@ -29,6 +42,8 @@ function generateToken(): string {
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-anamnese-email: Received request");
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
 
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });

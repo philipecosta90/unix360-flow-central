@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 interface Pergunta {
@@ -26,11 +26,10 @@ interface EnvioData {
   id: string;
   status: string;
   expira_em: string;
-  template_id: string;
   template: {
     nome: string;
     descricao: string | null;
-  } | null;
+  };
 }
 
 export const AnamnesePublicPage = () => {
@@ -52,39 +51,37 @@ export const AnamnesePublicPage = () => {
       }
 
       try {
-        const { data: envioData, error: envioError } = await supabase
-          .from("anamnese_envios")
-          .select(`*, template:anamnese_templates(nome, descricao)`)
-          .eq("token", token)
-          .single();
+        // Usar edge function segura para buscar dados do formulário
+        const { data, error: fetchError } = await supabase.functions.invoke("get-anamnese-form", {
+          body: { token },
+        });
 
-        if (envioError || !envioData) {
-          setError("Link não encontrado ou inválido");
+        if (fetchError || !data?.success) {
+          setError(data?.error || "Link não encontrado ou inválido");
           setLoading(false);
           return;
         }
 
-        if (envioData.status === "preenchido") {
-          setError("Este questionário já foi preenchido");
-          setLoading(false);
-          return;
-        }
+        const formData = data.data;
 
-        if (new Date(envioData.expira_em) < new Date()) {
-          setError("Este link expirou. Solicite um novo envio.");
-          setLoading(false);
-          return;
-        }
+        setEnvio({
+          id: formData.envio.id,
+          status: formData.envio.status,
+          expira_em: formData.envio.expira_em,
+          template: formData.template,
+        });
 
-        setEnvio(envioData as EnvioData);
-
-        const { data: perguntasData } = await supabase
-          .from("anamnese_perguntas")
-          .select("*")
-          .eq("template_id", envioData.template_id)
-          .order("ordem", { ascending: true });
-
-        setPerguntas((perguntasData || []) as Pergunta[]);
+        setPerguntas(formData.perguntas.map((p: any) => ({
+          id: p.id,
+          secao: p.secao,
+          secao_icone: p.secao_icone,
+          ordem: p.ordem,
+          pergunta: p.pergunta,
+          tipo: p.tipo,
+          opcoes: p.opcoes,
+          obrigatoria: p.obrigatoria ?? false,
+          placeholder: p.placeholder,
+        })));
       } catch (err) {
         setError("Erro ao carregar questionário");
       } finally {
