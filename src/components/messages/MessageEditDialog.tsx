@@ -19,14 +19,15 @@ interface MessageEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   message: WhatsAppMessage | undefined;
-  config: {
+  config?: {
     tipo: string;
     titulo: string;
     descricao: string;
     icone: string;
     variaveis: string[];
     conteudoPadrao: string;
-  };
+  } | null;
+  isSystemMessage?: boolean;
   onSave: (conteudo: string) => Promise<boolean>;
   onToggleActive: (ativo: boolean) => Promise<boolean>;
   saving: boolean;
@@ -37,6 +38,9 @@ const EXAMPLE_VALUES: Record<string, string> = {
   nomeEmpresa: 'Studio Fitness',
   link: 'https://app.unix360.com.br/anamnese/preencher/abc123',
   nomeTemplate: 'Check-in Semanal',
+  dataAtual: new Date().toLocaleDateString('pt-BR'),
+  telefone: '(11) 99999-9999',
+  email: 'cliente@email.com',
 };
 
 export const MessageEditDialog = ({
@@ -44,6 +48,7 @@ export const MessageEditDialog = ({
   onOpenChange,
   message,
   config,
+  isSystemMessage = true,
   onSave,
   onToggleActive,
   saving,
@@ -52,17 +57,23 @@ export const MessageEditDialog = ({
   const [ativo, setAtivo] = useState(true);
   const [activeTab, setActiveTab] = useState('editar');
 
+  // Get display values
+  const displayIcon = message?.icone || config?.icone || '📩';
+  const displayTitle = message?.titulo || config?.titulo || 'Editar Mensagem';
+  const displayDescription = message?.descricao || config?.descricao || '';
+  const displayVariables = message?.variaveis_disponiveis || config?.variaveis || [];
+  const defaultContent = config?.conteudoPadrao || '';
+
   useEffect(() => {
     if (open) {
-      setConteudo(message?.conteudo || config.conteudoPadrao);
+      setConteudo(message?.conteudo || defaultContent);
       setAtivo(message?.ativo ?? true);
     }
-  }, [open, message, config.conteudoPadrao]);
+  }, [open, message, defaultContent]);
 
   const handleSave = async () => {
     const success = await onSave(conteudo);
     if (success) {
-      // Check if ativo status changed
       if (message && message.ativo !== ativo) {
         await onToggleActive(ativo);
       }
@@ -76,7 +87,7 @@ export const MessageEditDialog = ({
 
   const getPreview = () => {
     let preview = conteudo;
-    config.variaveis.forEach((variable) => {
+    displayVariables.forEach((variable) => {
       const regex = new RegExp(`\\{${variable}\\}`, 'g');
       preview = preview.replace(regex, EXAMPLE_VALUES[variable] || `[${variable}]`);
     });
@@ -88,10 +99,17 @@ export const MessageEditDialog = ({
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span>{config.icone}</span>
-            {config.titulo}
+            <span>{displayIcon}</span>
+            {displayTitle}
+            {!isSystemMessage && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                Personalizada
+              </Badge>
+            )}
           </DialogTitle>
-          <DialogDescription>{config.descricao}</DialogDescription>
+          {displayDescription && (
+            <DialogDescription>{displayDescription}</DialogDescription>
+          )}
         </DialogHeader>
 
         <div className="space-y-4">
@@ -119,24 +137,26 @@ export const MessageEditDialog = ({
 
             <TabsContent value="editar" className="space-y-3">
               {/* Variables */}
-              <div>
-                <Label className="mb-2 block">Variáveis disponíveis</Label>
-                <div className="flex flex-wrap gap-2">
-                  {config.variaveis.map((variable) => (
-                    <Badge
-                      key={variable}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
-                      onClick={() => insertVariable(variable)}
-                    >
-                      {`{${variable}}`}
-                    </Badge>
-                  ))}
+              {displayVariables.length > 0 && (
+                <div>
+                  <Label className="mb-2 block">Variáveis disponíveis</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {displayVariables.map((variable) => (
+                      <Badge
+                        key={variable}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                        onClick={() => insertVariable(variable)}
+                      >
+                        {`{${variable}}`}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Clique para inserir no final da mensagem
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Clique para inserir no final da mensagem
-                </p>
-              </div>
+              )}
 
               {/* Content Editor */}
               <div>
