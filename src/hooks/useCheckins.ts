@@ -82,6 +82,8 @@ export const TIPOS_PERGUNTA_CHECKIN = [
   { value: 'likert_5', label: 'Escala 1-5 (😞 a 😄)', pontuavel: true },
   { value: 'likert_10', label: 'Escala 0-10 (NPS)', pontuavel: true },
   { value: 'select_pontuado', label: 'Opções com pontuação', pontuavel: true },
+  { value: 'sim_nao', label: 'Sim ou Não', pontuavel: false },
+  { value: 'multipla_escolha', label: 'Múltipla escolha', pontuavel: false },
   { value: 'texto', label: 'Texto livre', pontuavel: false },
   { value: 'numero', label: 'Número', pontuavel: false },
   { value: 'foto', label: 'Upload de foto', pontuavel: false },

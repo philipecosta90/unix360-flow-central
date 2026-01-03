@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, CheckCircle, AlertCircle, Clock, FileText, Upload } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,7 +20,7 @@ interface Pergunta {
   obrigatoria: boolean;
   placeholder?: string;
   pontos_maximo?: number;
-  opcoes_pontuacao?: Array<{ label: string; valor: number }>;
+  opcoes_pontuacao?: Record<string, number>;
 }
 
 interface EnvioData {
@@ -84,7 +85,7 @@ export const CheckinPublicPage = () => {
           obrigatoria: p.obrigatoria ?? false,
           placeholder: p.placeholder,
           pontos_maximo: p.pontos_maximo,
-          opcoes_pontuacao: p.opcoes_pontuacao as Array<{ label: string; valor: number }> | undefined
+          opcoes_pontuacao: p.opcoes_pontuacao as Record<string, number> | undefined
         })));
       } catch (err) {
         console.error("Erro ao carregar check-in:", err);
@@ -126,11 +127,10 @@ export const CheckinPublicPage = () => {
           if (percent >= 80) indicador_visual = "verde";
           else if (percent >= 50) indicador_visual = "amarelo";
           else indicador_visual = "vermelho";
-        } else if (p.tipo === "select_pontos" && resposta && p.opcoes_pontuacao) {
-          const opcao = p.opcoes_pontuacao.find(o => o.label === resposta);
-          if (opcao) {
-            pontuacao = opcao.valor;
-            const max = p.pontos_maximo || Math.max(...p.opcoes_pontuacao.map(o => o.valor));
+        } else if (p.tipo === "select_pontuado" && resposta && p.opcoes_pontuacao) {
+          pontuacao = p.opcoes_pontuacao[resposta] ?? null;
+          if (pontuacao !== null) {
+            const max = p.pontos_maximo || Math.max(...Object.values(p.opcoes_pontuacao));
             const percent = (pontuacao / max) * 100;
             if (percent >= 80) indicador_visual = "verde";
             else if (percent >= 50) indicador_visual = "amarelo";
@@ -258,19 +258,20 @@ export const CheckinPublicPage = () => {
           </RadioGroup>
         );
 
-      case "select_pontos":
-        if (pergunta.opcoes_pontuacao && pergunta.opcoes_pontuacao.length > 0) {
+      case "select_pontuado":
+        if (pergunta.opcoes_pontuacao && Object.keys(pergunta.opcoes_pontuacao).length > 0) {
+          const opcoes = Object.entries(pergunta.opcoes_pontuacao);
           return (
             <RadioGroup
               value={value}
               onValueChange={(v) => setRespostas({ ...respostas, [pergunta.id]: v })}
               className="space-y-2 mt-2"
             >
-              {pergunta.opcoes_pontuacao.map((opcao, idx) => (
+              {opcoes.map(([label, pontos], idx) => (
                 <div key={idx} className="flex items-center space-x-3">
-                  <RadioGroupItem value={opcao.label} id={`${pergunta.id}-${idx}`} />
+                  <RadioGroupItem value={label} id={`${pergunta.id}-${idx}`} />
                   <Label htmlFor={`${pergunta.id}-${idx}`} className="cursor-pointer">
-                    {opcao.label} <span className="text-muted-foreground text-sm">({opcao.valor} pts)</span>
+                    {label} <span className="text-muted-foreground text-sm">({pontos} pts)</span>
                   </Label>
                 </div>
               ))}
@@ -279,7 +280,59 @@ export const CheckinPublicPage = () => {
         }
         return null;
 
+      case "sim_nao":
+        return (
+          <RadioGroup
+            value={value}
+            onValueChange={(v) => setRespostas({ ...respostas, [pergunta.id]: v })}
+            className="flex gap-6 mt-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="sim" id={`${pergunta.id}-sim`} />
+              <Label htmlFor={`${pergunta.id}-sim`} className="cursor-pointer font-medium">
+                Sim
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="nao" id={`${pergunta.id}-nao`} />
+              <Label htmlFor={`${pergunta.id}-nao`} className="cursor-pointer font-medium">
+                Não
+              </Label>
+            </div>
+          </RadioGroup>
+        );
+
+      case "multipla_escolha":
+        if (pergunta.opcoes_pontuacao && Object.keys(pergunta.opcoes_pontuacao).length > 0) {
+          const opcoes = Object.keys(pergunta.opcoes_pontuacao);
+          const selectedValues = value ? value.split("|||") : [];
+          
+          return (
+            <div className="space-y-2 mt-2">
+              {opcoes.map((opcao, idx) => (
+                <div key={idx} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={`${pergunta.id}-${idx}`}
+                    checked={selectedValues.includes(opcao)}
+                    onCheckedChange={(checked) => {
+                      const newValues = checked
+                        ? [...selectedValues, opcao]
+                        : selectedValues.filter(v => v !== opcao);
+                      setRespostas({ ...respostas, [pergunta.id]: newValues.join("|||") });
+                    }}
+                  />
+                  <Label htmlFor={`${pergunta.id}-${idx}`} className="cursor-pointer">
+                    {opcao}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          );
+        }
+        return null;
+
       case "texto_longo":
+      case "texto":
         return (
           <Textarea
             value={value}
