@@ -1,7 +1,7 @@
 // Configuração de CORS segura para Edge Functions
-// Substitui os headers genéricos "*" por domínios específicos permitidos
+// Suporta produção, preview Lovable e desenvolvimento local
 
-const ALLOWED_ORIGINS = [
+const ALLOWED_ORIGINS_EXACT = [
   'https://app.unix360.com.br',
   'https://unix360-flow-central.lovable.app',
   'http://localhost:5173',
@@ -9,37 +9,57 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:5173',
 ];
 
+const ALLOWED_ORIGIN_PATTERNS = [
+  /\.lovableproject\.com$/,
+  /\.lovable\.app$/,
+];
+
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return false;
+  
+  // Verifica origens exatas
+  if (ALLOWED_ORIGINS_EXACT.includes(origin)) {
+    return true;
+  }
+  
+  // Verifica padrões (ex: *.lovableproject.com)
+  try {
+    const url = new URL(origin);
+    return ALLOWED_ORIGIN_PATTERNS.some(pattern => pattern.test(url.hostname));
+  } catch {
+    return false;
+  }
+}
+
 export function getCorsHeaders(origin: string | null): Record<string, string> {
-  // Verificar se a origem é permitida
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) 
-    ? origin 
-    : ALLOWED_ORIGINS[0]; // Fallback para o domínio principal
+  // Se a origem é permitida, ecoa ela; senão usa o domínio principal
+  const allowedOrigin = isOriginAllowed(origin) ? origin! : ALLOWED_ORIGINS_EXACT[0];
 
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Max-Age': '86400', // Cache preflight por 24h
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin',
   };
 }
 
 export function handleCorsPreflightRequest(origin: string | null): Response {
   return new Response(null, { 
     headers: getCorsHeaders(origin),
-    status: 204 // No Content
+    status: 204
   });
 }
 
-// Para funções que precisam aceitar qualquer origem (formulários públicos)
-// Ainda assim, não usamos "*" - usamos o fallback para o domínio principal
+// Para funções públicas (formulários) - mesma lógica mas sem fallback restritivo
 export function getPublicCorsHeaders(origin: string | null): Record<string, string> {
-  // Para formulários públicos, permitimos qualquer origem mas ainda retornamos
-  // o domínio principal como fallback para segurança do browser
-  const allowedOrigin = origin || ALLOWED_ORIGINS[0];
+  // Para formulários públicos, aceitar qualquer origem permitida
+  const allowedOrigin = isOriginAllowed(origin) ? origin! : ALLOWED_ORIGINS_EXACT[0];
   
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Vary': 'Origin',
   };
 }
