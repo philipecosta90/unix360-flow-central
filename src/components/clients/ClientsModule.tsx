@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePlanExpirationAlerts } from "@/hooks/usePlanExpirationAlerts";
 import { formatDateDisplay } from "@/utils/dateUtils";
-import { Loader2, Plus, Search, CalendarDays, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Loader2, Plus, Search, CalendarDays, AlertTriangle, ChevronDown, ChevronUp, Users, UserPlus } from "lucide-react";
 interface Cliente {
   id: string;
   nome: string;
@@ -74,6 +76,23 @@ export const ClientsModule = () => {
   useEffect(() => {
     fetchClients();
   }, [userProfile?.empresa_id]);
+  // Métricas de clientes
+  const clientesAtivos = useMemo(() => {
+    return clients.filter(c => c.status === 'ativo').length;
+  }, [clients]);
+
+  const clientesNovosMes = useMemo(() => {
+    const now = new Date();
+    const mesAtual = now.getMonth();
+    const anoAtual = now.getFullYear();
+    
+    return clients.filter(c => {
+      const dataCreated = new Date(c.created_at);
+      return dataCreated.getMonth() === mesAtual && 
+             dataCreated.getFullYear() === anoAtual;
+    }).length;
+  }, [clients]);
+
   const filteredClients = clients.filter(client => {
     if (!client) return false;
     const matchesSearch = client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || client.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -283,6 +302,40 @@ export const ClientsModule = () => {
           <Plus className="w-4 h-4 mr-2" />
           Novo Cliente
         </Button>
+      </div>
+
+      {/* Métricas de Clientes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600">Clientes Ativos</p>
+                <p className="text-3xl font-bold text-green-700">{clientesAtivos}</p>
+              </div>
+              <div className="p-3 bg-green-200 rounded-full">
+                <Users className="w-6 h-6 text-green-700" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600">Novos este mês</p>
+                <p className="text-3xl font-bold text-blue-700">{clientesNovosMes}</p>
+                <p className="text-xs text-blue-500">
+                  {format(new Date(), 'MMMM yyyy', { locale: ptBR })}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-200 rounded-full">
+                <UserPlus className="w-6 h-6 text-blue-700" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Alertas de Vencimento */}
