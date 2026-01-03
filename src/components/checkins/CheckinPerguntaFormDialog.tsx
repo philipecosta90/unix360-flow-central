@@ -72,6 +72,10 @@ export const CheckinPerguntaFormDialog = ({
   const [opcoesPontuacao, setOpcoesPontuacao] = useState<{ label: string; pontos: number }[]>([]);
   const [novaOpcaoLabel, setNovaOpcaoLabel] = useState("");
   const [novaOpcaoPontos, setNovaOpcaoPontos] = useState(0);
+  
+  // Estado para múltipla escolha
+  const [opcoesMultipla, setOpcoesMultipla] = useState<string[]>([]);
+  const [novaOpcaoMultipla, setNovaOpcaoMultipla] = useState("");
 
   useEffect(() => {
     if (pergunta) {
@@ -84,13 +88,21 @@ export const CheckinPerguntaFormDialog = ({
       setPlaceholder(pergunta.placeholder || "");
       
       if (pergunta.opcoes_pontuacao) {
-        const opcoes = Object.entries(pergunta.opcoes_pontuacao).map(([label, pontos]) => ({
-          label,
-          pontos: pontos as number,
-        }));
-        setOpcoesPontuacao(opcoes);
+        if (pergunta.tipo === "multipla_escolha") {
+          // Para múltipla escolha, extrair apenas os labels
+          setOpcoesMultipla(Object.keys(pergunta.opcoes_pontuacao));
+          setOpcoesPontuacao([]);
+        } else {
+          const opcoes = Object.entries(pergunta.opcoes_pontuacao).map(([label, pontos]) => ({
+            label,
+            pontos: pontos as number,
+          }));
+          setOpcoesPontuacao(opcoes);
+          setOpcoesMultipla([]);
+        }
       } else {
         setOpcoesPontuacao([]);
+        setOpcoesMultipla([]);
       }
     } else {
       setSecao(secoesExistentes[0] || "");
@@ -102,6 +114,7 @@ export const CheckinPerguntaFormDialog = ({
       setObrigatoria(true);
       setPlaceholder("");
       setOpcoesPontuacao([]);
+      setOpcoesMultipla([]);
     }
   }, [pergunta, open, secoesExistentes]);
 
@@ -133,6 +146,23 @@ export const CheckinPerguntaFormDialog = ({
     setOpcoesPontuacao(opcoesPontuacao.filter((_, i) => i !== index));
   };
 
+  const handleAddOpcaoMultipla = () => {
+    if (!novaOpcaoMultipla.trim()) {
+      toast.error("Opção é obrigatória");
+      return;
+    }
+    if (opcoesMultipla.includes(novaOpcaoMultipla.trim())) {
+      toast.error("Esta opção já existe");
+      return;
+    }
+    setOpcoesMultipla([...opcoesMultipla, novaOpcaoMultipla.trim()]);
+    setNovaOpcaoMultipla("");
+  };
+
+  const handleRemoveOpcaoMultipla = (index: number) => {
+    setOpcoesMultipla(opcoesMultipla.filter((_, i) => i !== index));
+  };
+
   const handleSave = async () => {
     if (!textoPergunta.trim()) {
       toast.error("Pergunta é obrigatória");
@@ -150,9 +180,20 @@ export const CheckinPerguntaFormDialog = ({
       return;
     }
 
-    const opcoesPontuacaoObj = opcoesPontuacao.length > 0
-      ? opcoesPontuacao.reduce((acc, opt) => ({ ...acc, [opt.label]: opt.pontos }), {})
-      : null;
+    if (tipo === "multipla_escolha" && opcoesMultipla.length < 2) {
+      toast.error("Adicione pelo menos 2 opções para múltipla escolha");
+      return;
+    }
+
+    // Preparar opcoes_pontuacao baseado no tipo
+    let opcoesPontuacaoObj: Record<string, number> | null = null;
+    
+    if (tipo === "multipla_escolha" && opcoesMultipla.length > 0) {
+      // Para múltipla escolha, salvar com pontuação 0
+      opcoesPontuacaoObj = opcoesMultipla.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {});
+    } else if (tipo === "select_pontuado" && opcoesPontuacao.length > 0) {
+      opcoesPontuacaoObj = opcoesPontuacao.reduce((acc, opt) => ({ ...acc, [opt.label]: opt.pontos }), {});
+    }
 
     try {
       if (isEditing) {
@@ -349,6 +390,50 @@ export const CheckinPerguntaFormDialog = ({
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {/* Opções múltipla escolha */}
+            {tipo === "multipla_escolha" && (
+              <div className="space-y-3">
+                <Label>Opções de Resposta</Label>
+                
+                {opcoesMultipla.map((opcao, index) => (
+                  <Card key={index}>
+                    <CardContent className="p-2 flex items-center justify-between">
+                      <span>{opcao}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive"
+                        onClick={() => handleRemoveOpcaoMultipla(index)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                <div className="flex gap-2">
+                  <Input
+                    value={novaOpcaoMultipla}
+                    onChange={(e) => setNovaOpcaoMultipla(e.target.value)}
+                    placeholder="Ex: Opção A"
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddOpcaoMultipla();
+                      }
+                    }}
+                  />
+                  <Button variant="outline" size="icon" onClick={handleAddOpcaoMultipla}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  O cliente poderá selecionar múltiplas opções
+                </p>
               </div>
             )}
 
