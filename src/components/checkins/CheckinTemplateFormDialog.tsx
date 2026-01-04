@@ -51,6 +51,7 @@ import {
 import { CheckinPerguntaFormDialog } from "./CheckinPerguntaFormDialog";
 import { SortableCheckinPergunta } from "./SortableCheckinPergunta";
 import { SecaoEditDialog } from "./SecaoEditDialog";
+import { ClientPagePreview } from "@/components/common/ClientPagePreview";
 import { toast } from "sonner";
 
 interface CheckinTemplateFormDialogProps {
@@ -226,10 +227,24 @@ export const CheckinTemplateFormDialog = ({
     reorderPerguntas.mutate(updates);
   };
 
+  // Prepare questions for preview
+  const previewPerguntas = useMemo(() => {
+    return (perguntas || []).map(p => ({
+      id: p.id,
+      secao: p.secao,
+      secao_icone: p.secao_icone,
+      pergunta: p.pergunta,
+      tipo: p.tipo,
+      obrigatoria: p.obrigatoria,
+    }));
+  }, [perguntas]);
+
+  const hasQuestions = isEditing && (perguntas?.length || 0) > 0;
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl h-[90vh] !flex !flex-col">
+        <DialogContent className={`${hasQuestions ? "max-w-6xl" : "max-w-3xl"} h-[90vh] !flex !flex-col`}>
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>
               {isEditing ? "Editar Template de Check-in" : "Novo Template de Check-in"}
@@ -241,133 +256,148 @@ export const CheckinTemplateFormDialog = ({
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 min-h-0 pr-4">
-            <div className="space-y-6">
-              {/* Basic data */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nome">Nome do Template *</Label>
-                  <Input
-                    id="nome"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                    placeholder="Ex: Check-in Semanal de Treino"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="descricao">Descrição</Label>
-                  <Textarea
-                    id="descricao"
-                    value={descricao}
-                    onChange={(e) => setDescricao(e.target.value)}
-                    placeholder="Descreva o objetivo deste check-in..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Ativo</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Templates inativos não podem ser enviados
-                    </p>
+          <div className={`flex-1 min-h-0 ${hasQuestions ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : ""}`}>
+            {/* Form Column */}
+            <ScrollArea className="flex-1 min-h-0 pr-4">
+              <div className="space-y-6">
+                {/* Basic data */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome do Template *</Label>
+                    <Input
+                      id="nome"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Ex: Check-in Semanal de Treino"
+                    />
                   </div>
-                  <Switch checked={ativo} onCheckedChange={setAtivo} />
-                </div>
-              </div>
 
-              {/* Questions - only when editing */}
-              {isEditing && (
-                <>
-                  <Separator />
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold">Perguntas</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {perguntas?.length || 0} perguntas no template • Arraste para reordenar
-                        </p>
-                      </div>
-                      <Button onClick={handleAddPergunta} size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Adicionar Pergunta
-                      </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="descricao">Descrição</Label>
+                    <Textarea
+                      id="descricao"
+                      value={descricao}
+                      onChange={(e) => setDescricao(e.target.value)}
+                      placeholder="Descreva o objetivo deste check-in..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Ativo</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Templates inativos não podem ser enviados
+                      </p>
                     </div>
+                    <Switch checked={ativo} onCheckedChange={setAtivo} />
+                  </div>
+                </div>
 
-                    {Object.keys(perguntasPorSecao).length === 0 ? (
-                      <Card className="border-dashed">
-                        <CardContent className="flex flex-col items-center justify-center py-8">
-                          <p className="text-muted-foreground text-center mb-4">
-                            Nenhuma pergunta adicionada ainda
+                {/* Questions - only when editing */}
+                {isEditing && (
+                  <>
+                    <Separator />
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">Perguntas</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {perguntas?.length || 0} perguntas no template • Arraste para reordenar
                           </p>
-                          <Button onClick={handleAddPergunta} variant="outline" size="sm">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Adicionar primeira pergunta
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <SortableContext
-                          items={allPerguntasIds}
-                          strategy={verticalListSortingStrategy}
+                        </div>
+                        <Button onClick={handleAddPergunta} size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Adicionar Pergunta
+                        </Button>
+                      </div>
+
+                      {Object.keys(perguntasPorSecao).length === 0 ? (
+                        <Card className="border-dashed">
+                          <CardContent className="flex flex-col items-center justify-center py-8">
+                            <p className="text-muted-foreground text-center mb-4">
+                              Nenhuma pergunta adicionada ainda
+                            </p>
+                            <Button onClick={handleAddPergunta} variant="outline" size="sm">
+                              <Plus className="h-4 w-4 mr-2" />
+                              Adicionar primeira pergunta
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleDragEnd}
                         >
-                          {Object.entries(perguntasPorSecao).map(([secao, secaoPerguntas]) => (
-                            <div key={secao} className="space-y-2 group/secao">
-                              <div className="flex items-center justify-between">
-                                <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
-                                  {secaoPerguntas[0]?.secao_icone && <span>{secaoPerguntas[0].secao_icone}</span>}
-                                  {secao}
-                                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                                    {secaoPerguntas.length}
-                                  </span>
-                                </h4>
-                                <div className="flex items-center gap-1 opacity-0 group-hover/secao:opacity-100 transition-opacity">
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-6 w-6"
-                                    onClick={() => handleEditSecao(secao, secaoPerguntas[0]?.secao_icone)}
-                                  >
-                                    <Pencil className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-6 w-6 text-destructive hover:text-destructive"
-                                    onClick={() => handleDeleteSecao(secao, secaoPerguntas[0]?.secao_icone)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
+                          <SortableContext
+                            items={allPerguntasIds}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {Object.entries(perguntasPorSecao).map(([secao, secaoPerguntas]) => (
+                              <div key={secao} className="space-y-2 group/secao">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                                    {secaoPerguntas[0]?.secao_icone && <span>{secaoPerguntas[0].secao_icone}</span>}
+                                    {secao}
+                                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                                      {secaoPerguntas.length}
+                                    </span>
+                                  </h4>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover/secao:opacity-100 transition-opacity">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-6 w-6"
+                                      onClick={() => handleEditSecao(secao, secaoPerguntas[0]?.secao_icone)}
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-6 w-6 text-destructive hover:text-destructive"
+                                      onClick={() => handleDeleteSecao(secao, secaoPerguntas[0]?.secao_icone)}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  {secaoPerguntas.map((pergunta) => (
+                                    <SortableCheckinPergunta
+                                      key={pergunta.id}
+                                      pergunta={pergunta}
+                                      onEdit={handleEditPergunta}
+                                      onDelete={handleDeletePergunta}
+                                      getTipoLabel={getTipoLabel}
+                                    />
+                                  ))}
                                 </div>
                               </div>
-                              <div className="space-y-2">
-                                {secaoPerguntas.map((pergunta) => (
-                                  <SortableCheckinPergunta
-                                    key={pergunta.id}
-                                    pergunta={pergunta}
-                                    onEdit={handleEditPergunta}
-                                    onDelete={handleDeletePergunta}
-                                    getTipoLabel={getTipoLabel}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </SortableContext>
-                      </DndContext>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </ScrollArea>
+                            ))}
+                          </SortableContext>
+                        </DndContext>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </ScrollArea>
+
+            {/* Preview Column - Only show when editing with questions */}
+            {hasQuestions && (
+              <div className="hidden lg:block border-l pl-4">
+                <ClientPagePreview
+                  tipo="checkin"
+                  templateNome={nome}
+                  templateDescricao={descricao}
+                  perguntas={previewPerguntas}
+                />
+              </div>
+            )}
+          </div>
 
           <DialogFooter className="flex-shrink-0 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
