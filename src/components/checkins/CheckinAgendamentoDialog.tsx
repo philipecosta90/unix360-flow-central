@@ -42,6 +42,13 @@ const startOfDay = (date: Date): Date => {
   return newDate;
 };
 
+// Horários disponíveis alinhados com execução do cron (a cada 15 minutos)
+const HORARIOS_ENVIO = Array.from({ length: 96 }, (_, i) => {
+  const hours = Math.floor(i / 4);
+  const minutes = (i % 4) * 15;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+});
+
 interface CheckinAgendamentoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -222,11 +229,21 @@ export const CheckinAgendamentoDialog = ({
           {/* Horário */}
           <div className="space-y-2">
             <Label>Horário de Envio</Label>
-            <Input
-              type="time"
-              value={horaEnvio}
-              onChange={(e) => setHoraEnvio(e.target.value)}
-            />
+            <Select value={horaEnvio} onValueChange={setHoraEnvio}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o horário" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {HORARIOS_ENVIO.map((hora) => (
+                  <SelectItem key={hora} value={hora}>
+                    {hora}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Check-ins são processados a cada 15 minutos
+            </p>
           </div>
         </div>
 
