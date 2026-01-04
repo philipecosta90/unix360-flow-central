@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDown, ChevronRight, CheckCircle2, Clock, Filter } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, Clock, Filter, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -21,6 +21,16 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
 
 interface ClientCheckinHistoryProps {
   clientId: string;
@@ -98,6 +108,154 @@ const getScoreBadgeColor = (percent: number) => {
   if (percent >= 70) return 'bg-green-500 text-white';
   if (percent >= 40) return 'bg-yellow-500 text-white';
   return 'bg-red-500 text-white';
+};
+
+// Componente de gráfico de evolução
+const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
+  const chartData = useMemo(() => {
+    // Ordenar por data crescente para o gráfico
+    return [...historico]
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+      .map(item => ({
+        data: format(new Date(item.data), 'dd/MM', { locale: ptBR }),
+        dataCompleta: format(new Date(item.data), "dd 'de' MMMM", { locale: ptBR }),
+        score: item.scorePercent,
+        scoreTotal: item.score,
+        scoreMax: item.scoreMax,
+      }));
+  }, [historico]);
+
+  // Calcular tendência (média dos últimos 3 vs média dos primeiros 3)
+  const tendencia = useMemo(() => {
+    if (chartData.length < 2) return { tipo: 'neutro' as const, valor: 0 };
+    
+    const ultimosTres = chartData.slice(-3);
+    const primeirosTres = chartData.slice(0, 3);
+    
+    const mediaUltimos = ultimosTres.reduce((acc, curr) => acc + curr.score, 0) / ultimosTres.length;
+    const mediaPrimeiros = primeirosTres.reduce((acc, curr) => acc + curr.score, 0) / primeirosTres.length;
+    
+    const diferenca = mediaUltimos - mediaPrimeiros;
+    
+    if (diferenca > 5) return { tipo: 'subindo' as const, valor: Math.round(diferenca) };
+    if (diferenca < -5) return { tipo: 'descendo' as const, valor: Math.round(Math.abs(diferenca)) };
+    return { tipo: 'neutro' as const, valor: Math.round(Math.abs(diferenca)) };
+  }, [chartData]);
+
+  const mediaGeral = useMemo(() => {
+    if (chartData.length === 0) return 0;
+    return Math.round(chartData.reduce((acc, curr) => acc + curr.score, 0) / chartData.length);
+  }, [chartData]);
+
+  if (chartData.length < 2) {
+    return (
+      <div className="text-center py-6 text-muted-foreground text-sm border rounded-lg bg-muted/20">
+        <p>Precisa de pelo menos 2 check-ins para mostrar o gráfico de evolução.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header com métricas */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Tendência:</span>
+          {tendencia.tipo === 'subindo' && (
+            <Badge className="bg-green-500 text-white">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              +{tendencia.valor}%
+            </Badge>
+          )}
+          {tendencia.tipo === 'descendo' && (
+            <Badge className="bg-red-500 text-white">
+              <TrendingDown className="h-3 w-3 mr-1" />
+              -{tendencia.valor}%
+            </Badge>
+          )}
+          {tendencia.tipo === 'neutro' && (
+            <Badge variant="secondary">
+              <Minus className="h-3 w-3 mr-1" />
+              Estável
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Média geral:</span>
+          <Badge className={getScoreBadgeColor(mediaGeral)}>
+            {mediaGeral}%
+          </Badge>
+        </div>
+      </div>
+
+      {/* Gráfico */}
+      <div className="h-[200px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <XAxis 
+              dataKey="data" 
+              tick={{ fontSize: 12 }} 
+              className="text-muted-foreground"
+              tickLine={false}
+            />
+            <YAxis 
+              domain={[0, 100]} 
+              tick={{ fontSize: 12 }} 
+              className="text-muted-foreground"
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip 
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload;
+                  return (
+                    <div className="bg-popover border rounded-lg shadow-lg p-3 text-sm">
+                      <p className="font-medium">{data.dataCompleta}</p>
+                      <p className="text-muted-foreground">
+                        Score: <span className="font-semibold text-foreground">{data.score}%</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        ({data.scoreTotal}/{data.scoreMax} pts)
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <ReferenceLine y={70} stroke="hsl(var(--success))" strokeDasharray="5 5" strokeOpacity={0.5} />
+            <ReferenceLine y={40} stroke="hsl(var(--warning))" strokeDasharray="5 5" strokeOpacity={0.5} />
+            <Line
+              type="monotone"
+              dataKey="score"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+              activeDot={{ r: 6, fill: "hsl(var(--primary))" }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Legenda */}
+      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground justify-center">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-0.5 bg-green-500"></div>
+          <span>Bom (≥70%)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-0.5 bg-yellow-500"></div>
+          <span>Atenção (40-69%)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-0.5 bg-red-500"></div>
+          <span>Crítico (&lt;40%)</span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) => {
@@ -304,7 +462,11 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
             <p>Nenhum check-in respondido encontrado.</p>
           </div>
         ) : (
-          <ScrollArea className="w-full">
+          <>
+            {/* Gráfico de Evolução */}
+            <EvolutionChart historico={historico} />
+            
+            <ScrollArea className="w-full mt-6">
             <div className="min-w-[600px]">
               {/* Header da tabela */}
               <div className="grid grid-cols-[40px_100px_repeat(auto-fill,minmax(80px,1fr))_80px_100px] gap-2 p-3 bg-muted/50 rounded-t-lg font-medium text-sm border-b">
@@ -460,6 +622,7 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
+          </>
         )}
       </CardContent>
     </Card>
