@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDown, ChevronRight, CheckCircle2, Clock, Filter, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, Clock, Filter, TrendingUp, TrendingDown, Minus, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -31,6 +31,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
+import { CheckinRespostasDialog } from "@/components/checkins/CheckinRespostasDialog";
 
 interface ClientCheckinHistoryProps {
   clientId: string;
@@ -83,6 +84,7 @@ interface CheckinHistorico {
   scorePercent: number;
   revisado: boolean;
   anotacoes: string | null;
+  peso: string | null;
   secoes: SecaoIndicador[];
   respostas: CheckinResposta[];
 }
@@ -124,7 +126,7 @@ const SECTION_COLORS = [
 
 // Componente de gráfico de evolução
 const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
-  const [viewMode, setViewMode] = useState<'geral' | 'secoes'>('geral');
+  const [viewMode, setViewMode] = useState<'geral' | 'secoes' | 'peso'>('geral');
   const [activeSecoes, setActiveSecoes] = useState<Set<string>>(new Set());
 
   // Coletar todas as seções únicas
@@ -140,6 +142,11 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
     return Array.from(secoesMap.entries()).map(([nome, icone]) => ({ nome, icone }));
   }, [historico]);
 
+  // Verificar se há dados de peso
+  const temDadosPeso = useMemo(() => {
+    return historico.some(h => h.peso !== null && h.peso !== '');
+  }, [historico]);
+
   // Inicializar seções ativas
   useEffect(() => {
     if (secoesUnicas.length > 0 && activeSecoes.size === 0) {
@@ -152,12 +159,15 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
     return [...historico]
       .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
       .map(item => {
+        const pesoNum = item.peso ? parseFloat(item.peso.replace(',', '.')) : null;
         const dataPoint: Record<string, any> = {
           data: format(new Date(item.data), 'dd/MM', { locale: ptBR }),
           dataCompleta: format(new Date(item.data), "dd 'de' MMMM", { locale: ptBR }),
           score: item.scorePercent,
           scoreTotal: item.score,
           scoreMax: item.scoreMax,
+          peso: pesoNum,
+          pesoOriginal: item.peso,
         };
         
         // Adicionar score por seção
@@ -172,6 +182,15 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
         return dataPoint;
       });
   }, [historico]);
+
+  // Calcular range de peso para eixo Y
+  const pesoRange = useMemo(() => {
+    const pesos = chartData.filter(d => d.peso !== null).map(d => d.peso as number);
+    if (pesos.length === 0) return { min: 50, max: 100 };
+    const min = Math.floor(Math.min(...pesos) - 2);
+    const max = Math.ceil(Math.max(...pesos) + 2);
+    return { min, max };
+  }, [chartData]);
 
   // Calcular tendência (média dos últimos 3 vs média dos primeiros 3)
   const tendencia = useMemo(() => {
@@ -267,6 +286,16 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
           >
             Por Seção
           </Button>
+          {temDadosPeso && (
+            <Button
+              variant={viewMode === 'peso' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setViewMode('peso')}
+            >
+              ⚖️ Peso
+            </Button>
+          )}
         </div>
       </div>
 
@@ -308,11 +337,12 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
               tickLine={false}
             />
             <YAxis 
-              domain={[0, 100]} 
+              domain={viewMode === 'peso' ? [pesoRange.min, pesoRange.max] : [0, 100]} 
               tick={{ fontSize: 12 }} 
               className="text-muted-foreground"
               tickLine={false}
               axisLine={false}
+              tickFormatter={viewMode === 'peso' ? (value) => `${value}kg` : undefined}
             />
             <Tooltip 
               content={({ active, payload }) => {
@@ -330,6 +360,10 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
                             ({data.scoreTotal}/{data.scoreMax} pts)
                           </p>
                         </>
+                      ) : viewMode === 'peso' ? (
+                        <p className="text-muted-foreground">
+                          Peso: <span className="font-semibold text-foreground">{data.pesoOriginal || '-'} kg</span>
+                        </p>
                       ) : (
                         <div className="space-y-1">
                           {secoesUnicas.map((secao, index) => (
@@ -354,8 +388,12 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
                 return null;
               }}
             />
-            <ReferenceLine y={70} stroke="hsl(142, 76%, 36%)" strokeDasharray="5 5" strokeOpacity={0.4} />
-            <ReferenceLine y={40} stroke="hsl(38, 92%, 50%)" strokeDasharray="5 5" strokeOpacity={0.4} />
+            {viewMode !== 'peso' && (
+              <>
+                <ReferenceLine y={70} stroke="hsl(142, 76%, 36%)" strokeDasharray="5 5" strokeOpacity={0.4} />
+                <ReferenceLine y={40} stroke="hsl(38, 92%, 50%)" strokeDasharray="5 5" strokeOpacity={0.4} />
+              </>
+            )}
             
             {viewMode === 'geral' ? (
               <Line
@@ -365,6 +403,16 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
                 strokeWidth={2}
                 dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6, fill: "hsl(var(--primary))" }}
+              />
+            ) : viewMode === 'peso' ? (
+              <Line
+                type="monotone"
+                dataKey="peso"
+                stroke="hsl(280, 65%, 60%)"
+                strokeWidth={2}
+                dot={{ fill: "hsl(280, 65%, 60%)", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, fill: "hsl(280, 65%, 60%)" }}
+                connectNulls
               />
             ) : (
               secoesUnicas.map((secao, index) => (
@@ -411,7 +459,7 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [filtro, setFiltro] = useState<string>('todos');
   const [secoesUnicas, setSecoesUnicas] = useState<{ nome: string; icone: string }[]>([]);
-
+  const [dialogEnvio, setDialogEnvio] = useState<any>(null);
   const fetchHistorico = async () => {
     if (!userProfile?.empresa_id) return;
 
@@ -503,6 +551,14 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
           ? Math.round((envio.pontuacao_total || 0) / envio.pontuacao_maxima * 100)
           : 0;
 
+        // Buscar peso nas respostas (pergunta que contenha "peso" no texto)
+        let peso: string | null = null;
+        respostasEnvio.forEach((r: any) => {
+          if (r.pergunta?.pergunta && r.pergunta.pergunta.toLowerCase().includes('peso') && r.resposta) {
+            peso = r.resposta;
+          }
+        });
+
         return {
           id: envio.id,
           data: envio.respondido_em || envio.enviado_em,
@@ -511,6 +567,7 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
           scorePercent,
           revisado: envio.revisado || false,
           anotacoes: envio.anotacoes_profissional,
+          peso,
           secoes: secoesArray,
           respostas: respostasEnvio as CheckinResposta[]
         };
@@ -615,23 +672,29 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
             <ScrollArea className="w-full mt-6">
             <div className="min-w-[600px]">
               {/* Header da tabela */}
-              <div className="grid grid-cols-[40px_100px_repeat(auto-fill,minmax(80px,1fr))_80px_100px] gap-2 p-3 bg-muted/50 rounded-t-lg font-medium text-sm border-b">
+              <div className="grid grid-cols-[40px_90px_60px_repeat(auto-fill,minmax(70px,1fr))_70px_90px_70px] gap-2 p-3 bg-muted/50 rounded-t-lg font-medium text-sm border-b">
                 <div></div>
                 <div>Data</div>
+                <div className="text-center">
+                  <span className="text-lg">⚖️</span>
+                  <span className="block text-[10px] text-muted-foreground">Peso</span>
+                </div>
                 {secoesUnicas.map(secao => (
-                  <div key={secao.nome} className="text-center" title={secao.nome}>
+                  <div key={secao.nome} className="text-center flex flex-col items-center gap-0.5">
                     <span className="text-lg">{secao.icone}</span>
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[60px]">{secao.nome}</span>
                   </div>
                 ))}
                 <div className="text-center">Score</div>
                 <div className="text-center">Status</div>
+                <div className="text-center">Ações</div>
               </div>
 
               {/* Linhas da tabela */}
               <div className="divide-y">
                 {historico.map((item) => (
                   <Collapsible key={item.id} open={expandedRows.has(item.id)}>
-                    <div className="grid grid-cols-[40px_100px_repeat(auto-fill,minmax(80px,1fr))_80px_100px] gap-2 p-3 items-center hover:bg-muted/30 transition-colors">
+                    <div className="grid grid-cols-[40px_90px_60px_repeat(auto-fill,minmax(70px,1fr))_70px_90px_70px] gap-2 p-3 items-center hover:bg-muted/30 transition-colors">
                       <CollapsibleTrigger asChild>
                         <Button
                           variant="ghost"
@@ -649,6 +712,15 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
                       
                       <div className="text-sm font-medium">
                         {format(new Date(item.data), 'dd/MM/yy', { locale: ptBR })}
+                      </div>
+
+                      {/* Peso */}
+                      <div className="text-center text-sm">
+                        {item.peso ? (
+                          <span className="font-medium">{item.peso}kg</span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </div>
 
                       {secoesUnicas.map(secaoUnica => {
@@ -672,14 +744,14 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
                       })}
 
                       <div className="text-center">
-                        <Badge className={getScoreBadgeColor(item.scorePercent)}>
+                        <Badge className={`${getScoreBadgeColor(item.scorePercent)} text-xs`}>
                           {item.scorePercent}%
                         </Badge>
                       </div>
 
                       <div className="text-center">
                         {item.revisado ? (
-                          <Badge variant="outline" className="text-green-600 border-green-600">
+                          <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
                             <CheckCircle2 className="h-3 w-3 mr-1" />
                             Revisado
                           </Badge>
@@ -687,13 +759,33 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-xs text-muted-foreground hover:text-primary"
+                            className="text-xs text-muted-foreground hover:text-primary h-7 px-2"
                             onClick={() => handleMarcarRevisado(item.id)}
                           >
                             <Clock className="h-3 w-3 mr-1" />
                             Pendente
                           </Button>
                         )}
+                      </div>
+
+                      {/* Botão Ver Respostas */}
+                      <div className="text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => setDialogEnvio({
+                            id: item.id,
+                            pontuacao_total: item.score,
+                            pontuacao_maxima: item.scoreMax,
+                            revisado: item.revisado,
+                            anotacoes_profissional: item.anotacoes,
+                            respondido_em: item.data,
+                          })}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          Ver
+                        </Button>
                       </div>
                     </div>
 
@@ -771,6 +863,13 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
           </>
         )}
       </CardContent>
+
+      {/* Dialog de Respostas */}
+      <CheckinRespostasDialog
+        open={!!dialogEnvio}
+        onOpenChange={(open) => !open && setDialogEnvio(null)}
+        envio={dialogEnvio}
+      />
     </Card>
   );
 };
