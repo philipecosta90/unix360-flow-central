@@ -1063,11 +1063,15 @@ export type Database = {
           ativa: boolean
           cnpj: string | null
           configuracoes_nicho: Json | null
+          cor_primaria: string | null
+          cor_secundaria: string | null
           created_at: string
           email: string | null
           endereco: string | null
           id: string
+          logo_url: string | null
           nome: string
+          nome_exibicao: string | null
           plano: string | null
           telefone: string | null
           updated_at: string
@@ -1076,11 +1080,15 @@ export type Database = {
           ativa?: boolean
           cnpj?: string | null
           configuracoes_nicho?: Json | null
+          cor_primaria?: string | null
+          cor_secundaria?: string | null
           created_at?: string
           email?: string | null
           endereco?: string | null
           id?: string
+          logo_url?: string | null
           nome: string
+          nome_exibicao?: string | null
           plano?: string | null
           telefone?: string | null
           updated_at?: string
@@ -1089,11 +1097,15 @@ export type Database = {
           ativa?: boolean
           cnpj?: string | null
           configuracoes_nicho?: Json | null
+          cor_primaria?: string | null
+          cor_secundaria?: string | null
           created_at?: string
           email?: string | null
           endereco?: string | null
           id?: string
+          logo_url?: string | null
           nome?: string
+          nome_exibicao?: string | null
           plano?: string | null
           telefone?: string | null
           updated_at?: string
@@ -1756,6 +1768,16 @@ export type Database = {
         }[]
       }
       get_cliente_nome: { Args: { p_cliente_id: string }; Returns: string }
+      get_empresa_by_envio: {
+        Args: { p_empresa_id: string }
+        Returns: {
+          cor_primaria: string
+          cor_secundaria: string
+          logo_url: string
+          nome: string
+          nome_exibicao: string
+        }[]
+      }
       get_security_report: {
         Args: never
         Returns: {

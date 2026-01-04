@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -20,6 +21,13 @@ interface Pergunta {
   opcoes: Json;
   obrigatoria: boolean;
   placeholder: string | null;
+}
+
+interface EmpresaData {
+  nome: string;
+  logo_url: string | null;
+  cor_primaria: string;
+  cor_secundaria: string;
 }
 
 interface EnvioData {
@@ -37,6 +45,7 @@ export const AnamnesePublicPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [envio, setEnvio] = useState<EnvioData | null>(null);
+  const [empresa, setEmpresa] = useState<EmpresaData | null>(null);
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +79,16 @@ export const AnamnesePublicPage = () => {
           expira_em: formData.envio.expira_em,
           template: formData.template,
         });
+
+        // Dados da empresa para personalização
+        if (formData.empresa) {
+          setEmpresa({
+            nome: formData.empresa.nome,
+            logo_url: formData.empresa.logo_url,
+            cor_primaria: formData.empresa.cor_primaria || "#43B26D",
+            cor_secundaria: formData.empresa.cor_secundaria || "#37A05B",
+          });
+        }
 
         setPerguntas(formData.perguntas.map((p: any) => ({
           id: p.id,
@@ -127,10 +146,16 @@ export const AnamnesePublicPage = () => {
     return acc;
   }, {} as Record<string, { icone: string | null; perguntas: Pergunta[] }>);
 
+  // Cores da empresa ou padrão
+  const corPrimaria = empresa?.cor_primaria || "#43B26D";
+  const corSecundaria = empresa?.cor_secundaria || "#37A05B";
+  const empresaNome = empresa?.nome || "Empresa";
+  const initials = empresaNome.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase();
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-8 w-8 animate-spin text-[#43B26D]" />
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: corPrimaria }} />
       </div>
     );
   }
@@ -151,10 +176,13 @@ export const AnamnesePublicPage = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div 
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{ background: `linear-gradient(135deg, ${corPrimaria}10, ${corSecundaria}10)` }}
+      >
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-8 pb-8">
-            <CheckCircle2 className="h-16 w-16 text-[#43B26D] mx-auto mb-4" />
+            <CheckCircle2 className="h-16 w-16 mx-auto mb-4" style={{ color: corPrimaria }} />
             <h2 className="text-xl font-semibold mb-2">Respostas Enviadas!</h2>
             <p className="text-muted-foreground">
               Obrigado por preencher o questionário. Suas respostas foram recebidas com sucesso.
@@ -166,14 +194,35 @@ export const AnamnesePublicPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div 
+      className="min-h-screen py-8 px-4"
+      style={{ background: `linear-gradient(135deg, ${corPrimaria}08, ${corSecundaria}08)` }}
+    >
       <div className="max-w-2xl mx-auto">
-        <Card className="mb-6">
-          <CardHeader className="bg-gradient-to-r from-[#43B26D] to-[#37A05B] text-white rounded-t-lg">
+        {/* Header com branding da empresa */}
+        <Card className="mb-6 overflow-hidden">
+          <div 
+            className="pt-6 pb-4 text-center"
+            style={{ background: `linear-gradient(135deg, ${corPrimaria}, ${corSecundaria})` }}
+          >
+            <div className="flex justify-center mb-3">
+              <Avatar className="h-16 w-16 ring-4 ring-white/30 shadow-lg">
+                <AvatarImage src={empresa?.logo_url || undefined} alt={empresaNome} />
+                <AvatarFallback 
+                  className="text-lg font-semibold text-white"
+                  style={{ backgroundColor: corSecundaria }}
+                >
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            <h2 className="text-white font-medium text-sm opacity-90">{empresaNome}</h2>
+          </div>
+          <CardHeader className="text-center pt-4 pb-2">
             <h1 className="text-2xl font-bold">{envio?.template?.nome}</h1>
           </CardHeader>
           {envio?.template?.descricao && (
-            <CardContent className="pt-4">
+            <CardContent className="pt-0">
               <p className="whitespace-pre-line text-sm text-muted-foreground">
                 {envio.template.descricao}
               </p>
@@ -235,8 +284,9 @@ export const AnamnesePublicPage = () => {
 
           <Button
             type="submit"
-            className="w-full bg-[#43B26D] hover:bg-[#37A05B] py-6 text-lg"
+            className="w-full py-6 text-lg text-white"
             disabled={submitting}
+            style={{ background: `linear-gradient(135deg, ${corPrimaria}, ${corSecundaria})` }}
           >
             {submitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
             Enviar Respostas

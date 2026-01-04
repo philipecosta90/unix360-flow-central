@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, CheckCircle, AlertCircle, Clock, FileText, Upload } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, CheckCircle, AlertCircle, Clock, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface Pergunta {
@@ -21,6 +22,13 @@ interface Pergunta {
   placeholder?: string;
   pontos_maximo?: number;
   opcoes_pontuacao?: Record<string, number>;
+}
+
+interface EmpresaData {
+  nome: string;
+  logo_url: string | null;
+  cor_primaria: string;
+  cor_secundaria: string;
 }
 
 interface EnvioData {
@@ -44,6 +52,7 @@ export const CheckinPublicPage = () => {
   const [success, setSuccess] = useState(false);
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
   const [envio, setEnvio] = useState<EnvioData | null>(null);
+  const [empresa, setEmpresa] = useState<EmpresaData | null>(null);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -75,6 +84,16 @@ export const CheckinPublicPage = () => {
           template: formData.template,
           cliente: formData.cliente,
         });
+
+        // Dados da empresa para personalização
+        if (formData.empresa) {
+          setEmpresa({
+            nome: formData.empresa.nome,
+            logo_url: formData.empresa.logo_url,
+            cor_primaria: formData.empresa.cor_primaria || "#43B26D",
+            cor_secundaria: formData.empresa.cor_secundaria || "#37A05B",
+          });
+        }
 
         setPerguntas(formData.perguntas.map((p: any) => ({
           id: p.id,
@@ -174,12 +193,21 @@ export const CheckinPublicPage = () => {
     return acc;
   }, {} as Record<string, Pergunta[]>);
 
+  // Cores da empresa ou padrão
+  const corPrimaria = empresa?.cor_primaria || "#43B26D";
+  const corSecundaria = empresa?.cor_secundaria || "#37A05B";
+  const empresaNome = empresa?.nome || "Empresa";
+  const initials = empresaNome.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase();
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+      <div 
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: `linear-gradient(135deg, ${corPrimaria}10, ${corSecundaria}10)` }}
+      >
         <Card className="w-full max-w-md mx-4">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin mb-4" style={{ color: corPrimaria }} />
             <p className="text-muted-foreground">Carregando check-in...</p>
           </CardContent>
         </Card>
@@ -203,10 +231,13 @@ export const CheckinPublicPage = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+      <div 
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: `linear-gradient(135deg, ${corPrimaria}10, ${corSecundaria}10)` }}
+      >
         <Card className="w-full max-w-md mx-4">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <CheckCircle className="h-16 w-16 text-primary mb-4" />
+            <CheckCircle className="h-16 w-16 mb-4" style={{ color: corPrimaria }} />
             <h2 className="text-2xl font-bold mb-2">Check-in Enviado!</h2>
             <p className="text-muted-foreground text-center">
               Obrigado por preencher seu check-in, {envio?.cliente?.nome}!
@@ -242,14 +273,12 @@ export const CheckinPublicPage = () => {
                 />
                 <Label
                   htmlFor={`${pergunta.id}-${num}`}
-                  className={`
-                    w-12 h-12 rounded-full flex items-center justify-center cursor-pointer 
-                    border-2 transition-all text-lg font-medium
-                    ${value === num.toString()
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-muted-foreground/30 hover:border-primary/50"
-                    }
-                  `}
+                  className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer border-2 transition-all text-lg font-medium"
+                  style={{
+                    backgroundColor: value === num.toString() ? corPrimaria : "transparent",
+                    color: value === num.toString() ? "white" : "inherit",
+                    borderColor: value === num.toString() ? corPrimaria : "hsl(var(--muted-foreground) / 0.3)",
+                  }}
                 >
                   {num}
                 </Label>
@@ -378,16 +407,26 @@ export const CheckinPublicPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary/10 py-8 px-4">
+    <div 
+      className="min-h-screen py-8 px-4"
+      style={{ background: `linear-gradient(135deg, ${corPrimaria}08, ${corSecundaria}08)` }}
+    >
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
+        {/* Header com branding da empresa */}
         <Card className="mb-6">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileText className="h-8 w-8 text-primary" />
-              </div>
+              <Avatar className="h-16 w-16 ring-4 ring-white shadow-lg">
+                <AvatarImage src={empresa?.logo_url || undefined} alt={empresaNome} />
+                <AvatarFallback 
+                  className="text-lg font-semibold text-white"
+                  style={{ backgroundColor: corPrimaria }}
+                >
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
             </div>
+            <p className="text-sm text-muted-foreground mb-2">{empresaNome}</p>
             <CardTitle className="text-2xl">{envio?.template?.nome}</CardTitle>
             {envio?.template?.descricao && (
               <CardDescription className="text-base mt-2">
@@ -436,7 +475,8 @@ export const CheckinPublicPage = () => {
             size="lg"
             onClick={handleSubmit}
             disabled={submitting}
-            className="min-w-[200px]"
+            className="min-w-[200px] text-white"
+            style={{ background: `linear-gradient(135deg, ${corPrimaria}, ${corSecundaria})` }}
           >
             {submitting ? (
               <>
