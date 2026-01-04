@@ -7,13 +7,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, GripVertical, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, GripVertical, Pencil, Eye } from "lucide-react";
 import { useAnamnese, AnamneseTemplate, AnamnesePergunta } from "@/hooks/useAnamnese";
 import { AnamnesePerguntaFormDialog } from "./AnamnesePerguntaFormDialog";
 import { ClientPagePreview } from "@/components/common/ClientPagePreview";
@@ -65,6 +72,9 @@ export function AnamneseTemplateFormDialog({
   // Dialog de confirmação de exclusão
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [perguntaToDelete, setPerguntaToDelete] = useState<AnamnesePergunta | null>(null);
+
+  // Mobile preview toggle
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   const isEditing = !!template;
 
@@ -348,6 +358,16 @@ export function AnamneseTemplateFormDialog({
             )}
           </div>
 
+          {/* Mobile preview floating button */}
+          {hasQuestions && (
+            <Button
+              className="lg:hidden fixed bottom-24 right-4 z-50 rounded-full h-12 w-12 shadow-lg"
+              onClick={() => setShowMobilePreview(true)}
+            >
+              <Eye className="h-5 w-5" />
+            </Button>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               {templateId ? "Fechar" : "Cancelar"}
@@ -395,6 +415,26 @@ export function AnamneseTemplateFormDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Mobile Preview Sheet */}
+      <Sheet open={showMobilePreview} onOpenChange={setShowMobilePreview}>
+        <SheetContent side="bottom" className="h-[85vh] flex flex-col">
+          <SheetHeader className="flex-shrink-0">
+            <SheetTitle>Pré-visualização</SheetTitle>
+            <SheetDescription>
+              Como o cliente verá a página de anamnese
+            </SheetDescription>
+          </SheetHeader>
+          <ScrollArea className="flex-1 py-4">
+            <ClientPagePreview
+              tipo="anamnese"
+              templateNome={nome}
+              templateDescricao={descricao}
+              perguntas={previewPerguntas}
+            />
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
