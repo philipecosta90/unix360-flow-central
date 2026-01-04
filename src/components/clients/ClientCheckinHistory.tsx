@@ -672,7 +672,7 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
             <ScrollArea className="w-full mt-6">
             <div className="min-w-[600px]">
               {/* Header da tabela */}
-              <div className="grid grid-cols-[40px_90px_60px_repeat(auto-fill,minmax(70px,1fr))_70px_90px_70px] gap-2 p-3 bg-muted/50 rounded-t-lg font-medium text-sm border-b">
+              <div className="grid grid-cols-[40px_90px_60px_repeat(auto-fill,minmax(70px,1fr))_70px_110px_80px] gap-3 p-3 bg-muted/50 rounded-t-lg font-medium text-sm border-b">
                 <div></div>
                 <div>Data</div>
                 <div className="text-center">
@@ -694,7 +694,7 @@ export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) =>
               <div className="divide-y">
                 {historico.map((item) => (
                   <Collapsible key={item.id} open={expandedRows.has(item.id)}>
-                    <div className="grid grid-cols-[40px_90px_60px_repeat(auto-fill,minmax(70px,1fr))_70px_90px_70px] gap-2 p-3 items-center hover:bg-muted/30 transition-colors">
+                    <div className="grid grid-cols-[40px_90px_60px_repeat(auto-fill,minmax(70px,1fr))_70px_110px_80px] gap-3 p-3 items-center hover:bg-muted/30 transition-colors">
                       <CollapsibleTrigger asChild>
                         <Button
                           variant="ghost"
