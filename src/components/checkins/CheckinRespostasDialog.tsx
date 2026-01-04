@@ -151,8 +151,8 @@ export const CheckinRespostasDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -162,7 +162,7 @@ export const CheckinRespostasDialog = ({
         </DialogHeader>
 
         {/* Info do paciente e pontuação geral */}
-        <div className="bg-muted/50 rounded-lg p-4 mb-4">
+        <div className="flex-shrink-0 bg-muted/50 rounded-lg p-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <p className="font-medium text-lg">{envio.cliente?.nome}</p>
@@ -201,7 +201,8 @@ export const CheckinRespostasDialog = ({
           </div>
         </div>
 
-        <ScrollArea className="flex-1 min-h-0 pr-4">
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full pr-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -255,7 +256,8 @@ export const CheckinRespostasDialog = ({
               )}
             </div>
           )}
-        </ScrollArea>
+          </ScrollArea>
+        </div>
 
         {/* Anotações do profissional */}
         <Separator className="my-2" />
