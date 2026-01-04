@@ -21,6 +21,12 @@ interface AnamneseFormResponse {
       nome: string;
       descricao: string | null;
     };
+    empresa: {
+      nome: string;
+      logo_url: string | null;
+      cor_primaria: string;
+      cor_secundaria: string;
+    };
     perguntas: Array<{
       id: string;
       pergunta: string;
@@ -88,6 +94,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     const template = templateData?.[0] || { nome: 'Anamnese', descricao: null };
 
+    // Buscar dados da empresa para personalização
+    const { data: empresaData } = await supabase
+      .rpc('get_empresa_by_envio', { p_empresa_id: validatedEnvio.empresa_id });
+
+    const empresa = empresaData?.[0] || { 
+      nome: 'Empresa', 
+      nome_exibicao: null,
+      logo_url: null, 
+      cor_primaria: '#43B26D', 
+      cor_secundaria: '#37A05B' 
+    };
+
     // Buscar perguntas usando função security definer
     const { data: perguntasData } = await supabase
       .rpc('get_anamnese_perguntas_by_template', { p_template_id: validatedEnvio.template_id });
@@ -105,6 +123,12 @@ const handler = async (req: Request): Promise<Response> => {
         template: {
           nome: template.nome,
           descricao: template.descricao,
+        },
+        empresa: {
+          nome: empresa.nome_exibicao || empresa.nome,
+          logo_url: empresa.logo_url,
+          cor_primaria: empresa.cor_primaria || '#43B26D',
+          cor_secundaria: empresa.cor_secundaria || '#37A05B',
         },
         perguntas: perguntas.map((p: any) => ({
           id: p.id,

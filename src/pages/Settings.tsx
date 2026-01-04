@@ -1,25 +1,25 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 import { NPSSettings } from "@/components/settings/NPSSettings";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { DocumentExporter } from "@/components/export/DocumentExporter";
+import { ClientAreaSettings } from "@/components/settings/ClientAreaSettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Download, Users, Lock, Star, User } from "lucide-react";
+import { Settings as SettingsIcon, Download, Users, Lock, Star, User, Palette } from "lucide-react";
 
 export default function Settings() {
   return (
     <div className="container mx-auto space-y-4 sm:space-y-6 px-0">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Configurações</h1>
-          <p className="text-gray-600 mt-2">Personalize seu sistema para seu negócio</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Configurações</h1>
+          <p className="text-muted-foreground mt-2">Personalize seu sistema para seu negócio</p>
         </div>
-        <SettingsIcon className="w-6 h-6 sm:w-8 sm:h-8 text-[#43B26D]" />
+        <SettingsIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
           <TabsTrigger value="profile" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <User className="w-4 h-4" />
             <span>Perfil</span>
@@ -27,6 +27,11 @@ export default function Settings() {
           <TabsTrigger value="password" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Lock className="w-4 h-4" />
             <span>Senha</span>
+          </TabsTrigger>
+          <TabsTrigger value="client-area" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
+            <Palette className="w-4 h-4" />
+            <span className="hidden sm:inline">Área do Cliente</span>
+            <span className="sm:hidden">Cliente</span>
           </TabsTrigger>
           <TabsTrigger value="nps" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
             <Star className="w-4 h-4" />
@@ -51,11 +56,15 @@ export default function Settings() {
           <ChangePasswordForm />
         </TabsContent>
 
+        <TabsContent value="client-area">
+          <ClientAreaSettings />
+        </TabsContent>
+
         <TabsContent value="nps">
           <div className="space-y-4 sm:space-y-6">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Feedback do Sistema</h2>
-              <p className="text-gray-600">Ajude-nos a melhorar o sistema com sua avaliação</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Feedback do Sistema</h2>
+              <p className="text-muted-foreground">Ajude-nos a melhorar o sistema com sua avaliação</p>
             </div>
             <NPSSettings />
           </div>
@@ -64,8 +73,8 @@ export default function Settings() {
         <TabsContent value="export">
           <div className="space-y-4 sm:space-y-6">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Exportação de Dados</h2>
-              <p className="text-gray-600">Exporte seus dados em diferentes formatos</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Exportação de Dados</h2>
+              <p className="text-muted-foreground">Exporte seus dados em diferentes formatos</p>
             </div>
             <DocumentExporter />
           </div>
@@ -77,7 +86,7 @@ export default function Settings() {
               <CardTitle className="text-lg sm:text-xl">Gerenciamento de Equipe</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Funcionalidade em desenvolvimento. Aqui você poderá gerenciar permissões e acessos da sua equipe.
               </p>
             </CardContent>
