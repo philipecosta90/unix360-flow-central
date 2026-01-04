@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye, Edit, Trash2, CheckCircle2, ClipboardList, RefreshCw } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye, Edit, Trash2, CheckCircle2, ClipboardList, RefreshCw, BarChart3 } from "lucide-react";
+import { ClientCheckinHistory } from "./ClientCheckinHistory";
 import { AnamneseClienteTab } from "@/components/anamnese/AnamneseClienteTab";
 import { RenewalTimeline } from "./RenewalTimeline";
 import { InteractionDialog } from "./InteractionDialog";
@@ -437,7 +438,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
       {/* Client Tabs */}
       <Tabs defaultValue="informacoes" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 h-auto">
           <TabsTrigger value="informacoes" className="text-xs sm:text-sm py-2">
             <span className="hidden xs:inline">Informações</span>
             <span className="xs:hidden">Info</span>
@@ -445,6 +446,10 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
           <TabsTrigger value="renovacoes" className="text-xs sm:text-sm py-2">
             <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 inline" />
             <span className="hidden sm:inline">Plano</span>
+          </TabsTrigger>
+          <TabsTrigger value="checkins" className="text-xs sm:text-sm py-2">
+            <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 inline" />
+            <span className="hidden sm:inline">Check-ins</span>
           </TabsTrigger>
           <TabsTrigger value="interacoes" className="text-xs sm:text-sm py-2">
             <span className="hidden xs:inline">Histórico</span>
@@ -538,6 +543,10 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
         <TabsContent value="renovacoes">
           <RenewalTimeline clientId={client.id} />
+        </TabsContent>
+
+        <TabsContent value="checkins">
+          <ClientCheckinHistory clientId={client.id} />
         </TabsContent>
 
         <TabsContent value="interacoes">
