@@ -524,10 +524,38 @@ export const useCheckinEnvios = (clienteId?: string) => {
     },
   });
 
+  const deleteEnvio = useMutation({
+    mutationFn: async (envioId: string) => {
+      // 1. Deletar respostas associadas
+      const { error: respostasError } = await supabase
+        .from('checkin_respostas')
+        .delete()
+        .eq('envio_id', envioId);
+
+      if (respostasError) throw respostasError;
+
+      // 2. Deletar o envio
+      const { error } = await supabase
+        .from('checkin_envios')
+        .delete()
+        .eq('id', envioId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checkin-envios'] });
+      toast.success('Check-in excluído com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao excluir: ${error.message}`);
+    },
+  });
+
   return {
     envios,
     isLoading,
     createEnvio,
+    deleteEnvio,
   };
 };
 

@@ -17,6 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Send, 
   Clock, 
@@ -24,7 +34,9 @@ import {
   AlertCircle,
   XCircle,
   BarChart3,
-  Eye
+  Eye,
+  Trash2,
+  Loader2
 } from "lucide-react";
 import { useCheckinEnvios, getIndicadorVisual, CheckinEnvio } from "@/hooks/useCheckins";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,9 +45,26 @@ import { ptBR } from "date-fns/locale";
 import { CheckinRespostasDialog } from "./CheckinRespostasDialog";
 
 export const CheckinRelatorio = () => {
-  const { envios, isLoading } = useCheckinEnvios();
+  const { envios, isLoading, deleteEnvio } = useCheckinEnvios();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [selectedEnvio, setSelectedEnvio] = useState<CheckinEnvio | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [envioToDelete, setEnvioToDelete] = useState<CheckinEnvio | null>(null);
+
+  const handleDeleteClick = (envio: CheckinEnvio) => {
+    setEnvioToDelete(envio);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!envioToDelete) return;
+    deleteEnvio.mutate(envioToDelete.id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        setEnvioToDelete(null);
+      }
+    });
+  };
 
   const enviosFiltrados = envios?.filter((e) => 
     statusFilter === "todos" || e.status === statusFilter
@@ -246,16 +275,27 @@ export const CheckinRelatorio = () => {
                           : "—"}
                       </TableCell>
                       <TableCell>
-                        {(envio.status === "respondido" || envio.status === "completo") && (
+                        <div className="flex items-center gap-1">
+                          {(envio.status === "respondido" || envio.status === "completo") && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setSelectedEnvio(envio)}
+                              title="Ver respostas"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setSelectedEnvio(envio)}
-                            title="Ver respostas"
+                            onClick={() => handleDeleteClick(envio)}
+                            title="Excluir check-in"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -272,6 +312,31 @@ export const CheckinRelatorio = () => {
         onOpenChange={(open) => !open && setSelectedEnvio(null)}
         envio={selectedEnvio}
       />
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir check-in?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O check-in enviado para{" "}
+              <strong>{envioToDelete?.cliente?.nome}</strong> será removido permanentemente
+              {(envioToDelete?.status === "respondido" || envioToDelete?.status === "completo") && 
+               ", incluindo todas as respostas"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteEnvio.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleteEnvio.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteEnvio.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
