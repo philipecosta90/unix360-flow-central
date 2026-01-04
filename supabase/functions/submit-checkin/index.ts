@@ -7,6 +7,7 @@ interface SubmitCheckinRequest {
   respostas: Array<{
     pergunta_id: string;
     resposta: string;
+    resposta_arquivo: string | null;
     pontuacao: number | null;
     indicador_visual: string | null;
   }>;
@@ -102,6 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
       envio_id: envio.id,
       pergunta_id: r.pergunta_id,
       resposta: r.resposta,
+      resposta_arquivo: r.resposta_arquivo,
       pontuacao: r.pontuacao,
       indicador_visual: r.indicador_visual,
     }));

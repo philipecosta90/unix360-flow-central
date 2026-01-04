@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, CheckCircle, AlertCircle, Clock, Upload } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Clock, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface Pergunta {
@@ -54,6 +54,8 @@ export const CheckinPublicPage = () => {
   const [envio, setEnvio] = useState<EnvioData | null>(null);
   const [empresa, setEmpresa] = useState<EmpresaData | null>(null);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
+  const [arquivos, setArquivos] = useState<Record<string, File[]>>({});
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -117,12 +119,52 @@ export const CheckinPublicPage = () => {
     fetchData();
   }, [token]);
 
+  const handleFileSelect = (perguntaId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    setArquivos(prev => ({
+      ...prev,
+      [perguntaId]: [...(prev[perguntaId] || []), ...fileArray]
+    }));
+  };
+
+  const removeFile = (perguntaId: string, index: number) => {
+    setArquivos(prev => ({
+      ...prev,
+      [perguntaId]: prev[perguntaId].filter((_, i) => i !== index)
+    }));
+  };
+
+  const uploadFiles = async (perguntaId: string, files: File[]): Promise<string[]> => {
+    const urls: string[] = [];
+    
+    for (const file of files) {
+      const fileName = `${envio?.id}/${perguntaId}/${Date.now()}-${file.name}`;
+      
+      const { error } = await supabase.storage
+        .from('checkin-uploads')
+        .upload(fileName, file);
+      
+      if (error) throw error;
+      
+      const { data: urlData } = supabase.storage
+        .from('checkin-uploads')
+        .getPublicUrl(fileName);
+      
+      urls.push(urlData.publicUrl);
+    }
+    
+    return urls;
+  };
+
   const handleSubmit = async () => {
-    // Validar campos obrigatórios
+    // Validar campos obrigatórios (considera arquivos como resposta válida)
     const perguntasObrigatorias = perguntas.filter(p => p.obrigatoria);
-    const naoRespondidas = perguntasObrigatorias.filter(
-      p => !respostas[p.id] || respostas[p.id].trim() === ""
-    );
+    const naoRespondidas = perguntasObrigatorias.filter(p => {
+      const temResposta = respostas[p.id] && respostas[p.id].trim() !== "";
+      const temArquivo = arquivos[p.id] && arquivos[p.id].length > 0;
+      return !temResposta && !temArquivo;
+    });
 
     if (naoRespondidas.length > 0) {
       toast.error(`Por favor, responda todas as perguntas obrigatórias (${naoRespondidas.length} faltando)`);
@@ -130,8 +172,21 @@ export const CheckinPublicPage = () => {
     }
 
     setSubmitting(true);
+    setUploadingFiles(true);
 
     try {
+      // Upload de arquivos primeiro
+      const arquivosUrls: Record<string, string> = {};
+      
+      for (const [perguntaId, files] of Object.entries(arquivos)) {
+        if (files.length > 0) {
+          const urls = await uploadFiles(perguntaId, files);
+          arquivosUrls[perguntaId] = urls.join('|||');
+        }
+      }
+      
+      setUploadingFiles(false);
+
       // Preparar respostas com pontuação
       const respostasArray = perguntas.map(p => {
         const resposta = respostas[p.id] || "";
@@ -160,6 +215,7 @@ export const CheckinPublicPage = () => {
         return {
           pergunta_id: p.id,
           resposta,
+          resposta_arquivo: arquivosUrls[p.id] || null,
           pontuacao,
           indicador_visual
         };
@@ -180,6 +236,7 @@ export const CheckinPublicPage = () => {
       toast.error(err.message || "Erro ao enviar check-in. Tente novamente.");
     } finally {
       setSubmitting(false);
+      setUploadingFiles(false);
     }
   };
 
@@ -384,15 +441,63 @@ export const CheckinPublicPage = () => {
         );
 
       case "foto":
-      case "arquivo":
+      case "arquivo": {
+        const files = arquivos[pergunta.id] || [];
+        const tipoAceito = pergunta.tipo === "foto" ? "image/*" : "*/*";
+        
         return (
-          <div className="mt-2">
-            <div className="flex items-center gap-2 p-4 border-2 border-dashed rounded-lg text-muted-foreground">
-              <Upload className="h-5 w-5" />
-              <span className="text-sm">Upload de {pergunta.tipo === "foto" ? "foto" : "arquivo"} em breve...</span>
-            </div>
+          <div className="mt-2 space-y-3">
+            <input
+              type="file"
+              accept={tipoAceito}
+              multiple={pergunta.tipo === "foto"}
+              className="hidden"
+              id={`file-${pergunta.id}`}
+              onChange={(e) => handleFileSelect(pergunta.id, e.target.files)}
+            />
+            <label
+              htmlFor={`file-${pergunta.id}`}
+              className="flex flex-col items-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors"
+              style={{ borderColor: files.length > 0 ? corPrimaria : undefined }}
+            >
+              <Upload className="h-8 w-8 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Clique para selecionar {pergunta.tipo === "foto" ? "fotos" : "arquivo"}
+              </span>
+            </label>
+            
+            {/* Preview das fotos/arquivos selecionados */}
+            {files.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {files.map((file, idx) => (
+                  <div key={idx} className="relative aspect-square group">
+                    {file.type.startsWith('image/') ? (
+                      <img 
+                        src={URL.createObjectURL(file)} 
+                        alt={file.name}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
+                        <span className="text-xs text-muted-foreground text-center px-2 truncate">
+                          {file.name}
+                        </span>
+                      </div>
+                    )}
+                    <button 
+                      type="button"
+                      onClick={() => removeFile(pergunta.id, idx)}
+                      className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 opacity-80 hover:opacity-100"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         );
+      }
 
       default:
         return (
