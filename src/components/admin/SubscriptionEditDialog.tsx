@@ -81,7 +81,28 @@ export const SubscriptionEditDialog = ({
         updateData.data_de_assinatura_ativa = null;
         updateData.data_de_expiracao_da_assinatura_ativa = null;
       } else if (formData.subscription_status === 'active') {
-        updateData.data_de_assinatura_ativa = new Date().toISOString().split('T')[0];
+        // Preservar data de início existente se já era ativo, senão usar hoje
+        const dataInicio = subscription.subscription_status === 'active' && subscription.data_de_assinatura_ativa
+          ? subscription.data_de_assinatura_ativa
+          : new Date().toISOString().split('T')[0];
+        
+        // Validar que expiração é posterior ao início
+        if (formData.data_de_expiracao_da_assinatura_ativa) {
+          const dataInicioDate = new Date(dataInicio);
+          const dataExpiracaoDate = new Date(formData.data_de_expiracao_da_assinatura_ativa);
+          
+          if (dataExpiracaoDate <= dataInicioDate) {
+            toast({
+              title: "Erro de validação",
+              description: "A data de expiração deve ser posterior à data de início da assinatura",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+        }
+        
+        updateData.data_de_assinatura_ativa = dataInicio;
         updateData.data_de_expiracao_da_assinatura_ativa = formData.data_de_expiracao_da_assinatura_ativa || null;
       } else {
         // Para status expired ou canceled, manter as datas existentes
