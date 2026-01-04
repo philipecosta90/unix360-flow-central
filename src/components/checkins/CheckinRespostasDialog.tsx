@@ -151,7 +151,7 @@ export const CheckinRespostasDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
@@ -201,7 +201,7 @@ export const CheckinRespostasDialog = ({
           </div>
         </div>
 
-        <ScrollArea className="h-[45vh] pr-4">
+        <ScrollArea className="flex-1 min-h-0 pr-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -259,7 +259,7 @@ export const CheckinRespostasDialog = ({
 
         {/* Anotações do profissional */}
         <Separator className="my-2" />
-        <div className="space-y-3">
+        <div className="space-y-3 flex-shrink-0">
           <Label htmlFor="anotacoes" className="text-sm font-medium">
             Anotações do Profissional
           </Label>
