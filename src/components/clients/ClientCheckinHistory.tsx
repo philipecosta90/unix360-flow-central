@@ -110,19 +110,67 @@ const getScoreBadgeColor = (percent: number) => {
   return 'bg-red-500 text-white';
 };
 
+// Cores para as seções do gráfico comparativo
+const SECTION_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(142, 76%, 36%)', // green
+  'hsl(38, 92%, 50%)',  // amber
+  'hsl(280, 65%, 60%)', // purple
+  'hsl(199, 89%, 48%)', // blue
+  'hsl(346, 77%, 50%)', // pink
+  'hsl(24, 95%, 53%)',  // orange
+  'hsl(173, 80%, 40%)', // teal
+];
+
 // Componente de gráfico de evolução
 const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
+  const [viewMode, setViewMode] = useState<'geral' | 'secoes'>('geral');
+  const [activeSecoes, setActiveSecoes] = useState<Set<string>>(new Set());
+
+  // Coletar todas as seções únicas
+  const secoesUnicas = useMemo(() => {
+    const secoesMap = new Map<string, string>();
+    historico.forEach(h => {
+      h.secoes.forEach(s => {
+        if (!secoesMap.has(s.nome)) {
+          secoesMap.set(s.nome, s.icone);
+        }
+      });
+    });
+    return Array.from(secoesMap.entries()).map(([nome, icone]) => ({ nome, icone }));
+  }, [historico]);
+
+  // Inicializar seções ativas
+  useEffect(() => {
+    if (secoesUnicas.length > 0 && activeSecoes.size === 0) {
+      setActiveSecoes(new Set(secoesUnicas.map(s => s.nome)));
+    }
+  }, [secoesUnicas]);
+
   const chartData = useMemo(() => {
     // Ordenar por data crescente para o gráfico
     return [...historico]
       .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
-      .map(item => ({
-        data: format(new Date(item.data), 'dd/MM', { locale: ptBR }),
-        dataCompleta: format(new Date(item.data), "dd 'de' MMMM", { locale: ptBR }),
-        score: item.scorePercent,
-        scoreTotal: item.score,
-        scoreMax: item.scoreMax,
-      }));
+      .map(item => {
+        const dataPoint: Record<string, any> = {
+          data: format(new Date(item.data), 'dd/MM', { locale: ptBR }),
+          dataCompleta: format(new Date(item.data), "dd 'de' MMMM", { locale: ptBR }),
+          score: item.scorePercent,
+          scoreTotal: item.score,
+          scoreMax: item.scoreMax,
+        };
+        
+        // Adicionar score por seção
+        item.secoes.forEach(secao => {
+          const percent = secao.pontuacaoMax > 0 
+            ? Math.round((secao.pontuacao / secao.pontuacaoMax) * 100) 
+            : 0;
+          dataPoint[secao.nome] = percent;
+          dataPoint[`${secao.nome}_pts`] = `${secao.pontuacao}/${secao.pontuacaoMax}`;
+        });
+        
+        return dataPoint;
+      });
   }, [historico]);
 
   // Calcular tendência (média dos últimos 3 vs média dos primeiros 3)
@@ -147,6 +195,18 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
     return Math.round(chartData.reduce((acc, curr) => acc + curr.score, 0) / chartData.length);
   }, [chartData]);
 
+  const toggleSecao = (nome: string) => {
+    const newActive = new Set(activeSecoes);
+    if (newActive.has(nome)) {
+      if (newActive.size > 1) { // Manter pelo menos uma seção ativa
+        newActive.delete(nome);
+      }
+    } else {
+      newActive.add(nome);
+    }
+    setActiveSecoes(newActive);
+  };
+
   if (chartData.length < 2) {
     return (
       <div className="text-center py-6 text-muted-foreground text-sm border rounded-lg bg-muted/20">
@@ -157,39 +217,87 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
 
   return (
     <div className="space-y-4">
-      {/* Header com métricas */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Tendência:</span>
-          {tendencia.tipo === 'subindo' && (
-            <Badge className="bg-green-500 text-white">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              +{tendencia.valor}%
+      {/* Header com métricas e toggle de visualização */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Tendência:</span>
+            {tendencia.tipo === 'subindo' && (
+              <Badge className="bg-green-500 text-white">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                +{tendencia.valor}%
+              </Badge>
+            )}
+            {tendencia.tipo === 'descendo' && (
+              <Badge className="bg-red-500 text-white">
+                <TrendingDown className="h-3 w-3 mr-1" />
+                -{tendencia.valor}%
+              </Badge>
+            )}
+            {tendencia.tipo === 'neutro' && (
+              <Badge variant="secondary">
+                <Minus className="h-3 w-3 mr-1" />
+                Estável
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Média geral:</span>
+            <Badge className={getScoreBadgeColor(mediaGeral)}>
+              {mediaGeral}%
             </Badge>
-          )}
-          {tendencia.tipo === 'descendo' && (
-            <Badge className="bg-red-500 text-white">
-              <TrendingDown className="h-3 w-3 mr-1" />
-              -{tendencia.valor}%
-            </Badge>
-          )}
-          {tendencia.tipo === 'neutro' && (
-            <Badge variant="secondary">
-              <Minus className="h-3 w-3 mr-1" />
-              Estável
-            </Badge>
-          )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Média geral:</span>
-          <Badge className={getScoreBadgeColor(mediaGeral)}>
-            {mediaGeral}%
-          </Badge>
+        
+        {/* Toggle de visualização */}
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+          <Button
+            variant={viewMode === 'geral' ? 'secondary' : 'ghost'}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setViewMode('geral')}
+          >
+            Score Geral
+          </Button>
+          <Button
+            variant={viewMode === 'secoes' ? 'secondary' : 'ghost'}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setViewMode('secoes')}
+          >
+            Por Seção
+          </Button>
         </div>
       </div>
 
+      {/* Filtro de seções (quando modo seções) */}
+      {viewMode === 'secoes' && (
+        <div className="flex flex-wrap gap-2">
+          {secoesUnicas.map((secao, index) => (
+            <button
+              key={secao.nome}
+              onClick={() => toggleSecao(secao.nome)}
+              className={`
+                flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all
+                ${activeSecoes.has(secao.nome) 
+                  ? 'bg-primary/10 text-primary border border-primary/30' 
+                  : 'bg-muted text-muted-foreground border border-transparent hover:bg-muted/80'
+                }
+              `}
+            >
+              <div 
+                className="w-2 h-2 rounded-full" 
+                style={{ backgroundColor: SECTION_COLORS[index % SECTION_COLORS.length] }}
+              />
+              <span>{secao.icone}</span>
+              <span>{secao.nome}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Gráfico */}
-      <div className="h-[200px] w-full">
+      <div className="h-[220px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -211,30 +319,69 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
                   return (
-                    <div className="bg-popover border rounded-lg shadow-lg p-3 text-sm">
-                      <p className="font-medium">{data.dataCompleta}</p>
-                      <p className="text-muted-foreground">
-                        Score: <span className="font-semibold text-foreground">{data.score}%</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        ({data.scoreTotal}/{data.scoreMax} pts)
-                      </p>
+                    <div className="bg-popover border rounded-lg shadow-lg p-3 text-sm min-w-[140px]">
+                      <p className="font-medium mb-2">{data.dataCompleta}</p>
+                      {viewMode === 'geral' ? (
+                        <>
+                          <p className="text-muted-foreground">
+                            Score: <span className="font-semibold text-foreground">{data.score}%</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ({data.scoreTotal}/{data.scoreMax} pts)
+                          </p>
+                        </>
+                      ) : (
+                        <div className="space-y-1">
+                          {secoesUnicas.map((secao, index) => (
+                            activeSecoes.has(secao.nome) && data[secao.nome] !== undefined && (
+                              <div key={secao.nome} className="flex items-center justify-between gap-3">
+                                <span className="flex items-center gap-1.5">
+                                  <div 
+                                    className="w-2 h-2 rounded-full" 
+                                    style={{ backgroundColor: SECTION_COLORS[index % SECTION_COLORS.length] }}
+                                  />
+                                  <span className="text-xs">{secao.icone} {secao.nome}</span>
+                                </span>
+                                <span className="font-semibold text-xs">{data[secao.nome]}%</span>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 }
                 return null;
               }}
             />
-            <ReferenceLine y={70} stroke="hsl(var(--success))" strokeDasharray="5 5" strokeOpacity={0.5} />
-            <ReferenceLine y={40} stroke="hsl(var(--warning))" strokeDasharray="5 5" strokeOpacity={0.5} />
-            <Line
-              type="monotone"
-              dataKey="score"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, fill: "hsl(var(--primary))" }}
-            />
+            <ReferenceLine y={70} stroke="hsl(142, 76%, 36%)" strokeDasharray="5 5" strokeOpacity={0.4} />
+            <ReferenceLine y={40} stroke="hsl(38, 92%, 50%)" strokeDasharray="5 5" strokeOpacity={0.4} />
+            
+            {viewMode === 'geral' ? (
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, fill: "hsl(var(--primary))" }}
+              />
+            ) : (
+              secoesUnicas.map((secao, index) => (
+                activeSecoes.has(secao.nome) && (
+                  <Line
+                    key={secao.nome}
+                    type="monotone"
+                    dataKey={secao.nome}
+                    name={secao.nome}
+                    stroke={SECTION_COLORS[index % SECTION_COLORS.length]}
+                    strokeWidth={2}
+                    dot={{ fill: SECTION_COLORS[index % SECTION_COLORS.length], strokeWidth: 2, r: 3 }}
+                    activeDot={{ r: 5, fill: SECTION_COLORS[index % SECTION_COLORS.length] }}
+                  />
+                )
+              ))
+            )}
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -257,7 +404,6 @@ const EvolutionChart = ({ historico }: { historico: CheckinHistorico[] }) => {
     </div>
   );
 };
-
 export const ClientCheckinHistory = ({ clientId }: ClientCheckinHistoryProps) => {
   const { userProfile } = useAuth();
   const [historico, setHistorico] = useState<CheckinHistorico[]>([]);
