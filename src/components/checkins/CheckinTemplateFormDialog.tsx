@@ -23,6 +23,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -40,7 +47,7 @@ import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Save, Pencil, Trash2 } from "lucide-react";
+import { Plus, Save, Pencil, Trash2, Eye } from "lucide-react";
 import {
   useCheckinTemplates,
   useCheckinPerguntas,
@@ -79,6 +86,9 @@ export const CheckinTemplateFormDialog = ({
   const [secaoEditDialogOpen, setSecaoEditDialogOpen] = useState(false);
   const [secaoDeleteDialogOpen, setSecaoDeleteDialogOpen] = useState(false);
   const [selectedSecao, setSelectedSecao] = useState<{ nome: string; icone: string | null } | null>(null);
+
+  // Mobile preview toggle
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   // Sensors for drag and drop
   const sensors = useSensors(
@@ -399,6 +409,16 @@ export const CheckinTemplateFormDialog = ({
             )}
           </div>
 
+          {/* Mobile preview floating button */}
+          {hasQuestions && (
+            <Button
+              className="lg:hidden fixed bottom-24 right-4 z-50 rounded-full h-12 w-12 shadow-lg"
+              onClick={() => setShowMobilePreview(true)}
+            >
+              <Eye className="h-5 w-5" />
+            </Button>
+          )}
+
           <DialogFooter className="flex-shrink-0 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               {isEditing ? "Fechar" : "Cancelar"}
@@ -456,6 +476,26 @@ export const CheckinTemplateFormDialog = ({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          {/* Mobile Preview Sheet */}
+          <Sheet open={showMobilePreview} onOpenChange={setShowMobilePreview}>
+            <SheetContent side="bottom" className="h-[85vh] flex flex-col">
+              <SheetHeader className="flex-shrink-0">
+                <SheetTitle>Pré-visualização</SheetTitle>
+                <SheetDescription>
+                  Como o cliente verá a página de check-in
+                </SheetDescription>
+              </SheetHeader>
+              <ScrollArea className="flex-1 py-4">
+                <ClientPagePreview
+                  tipo="checkin"
+                  templateNome={nome}
+                  templateDescricao={descricao}
+                  perguntas={previewPerguntas}
+                />
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
         </>
       )}
     </>
