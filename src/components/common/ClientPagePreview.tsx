@@ -95,7 +95,7 @@ export function ClientPagePreview({
               {iconLabel} {templateNome || "Nome do Template"}
             </h3>
             {templateDescricao && (
-              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line line-clamp-3">
+              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
                 {templateDescricao}
               </p>
             )}
