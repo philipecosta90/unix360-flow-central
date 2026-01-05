@@ -9,101 +9,75 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, CreditCard, X } from 'lucide-react';
+import { AlertTriangle, CreditCard, RefreshCw } from 'lucide-react';
 
 export const SubscriptionExpiredDialog = () => {
   const { userProfile } = useAuth();
-  const { subscriptionStatus } = useSubscription();
+  const { subscriptionStatus, refreshSubscriptionStatus, loading } = useSubscription();
   const [isOpen, setIsOpen] = useState(false);
-  const [lastShownTime, setLastShownTime] = useState<number>(0);
+  const [isChecking, setIsChecking] = useState(false);
 
-  // Verificar se deve mostrar o pop-up
-  const shouldShowDialog = () => {
-    if (!userProfile || !subscriptionStatus) return false;
-    
-    // Mostrar apenas quando a assinatura NÃO está ativa
-    return subscriptionStatus.status !== 'active';
-  };
+  // Verificar se o plano está expirado
+  const isExpired = subscriptionStatus?.status === 'expired' || 
+    (subscriptionStatus && !subscriptionStatus.hasActiveSubscription && subscriptionStatus.status !== 'trial');
 
-  // Verificar se já passou o tempo mínimo desde a última exibição (30 minutos)
-  const canShowAgain = () => {
-    const now = Date.now();
-    return (now - lastShownTime) > (30 * 60 * 1000); // 30 minutos
-  };
-
+  // Abrir dialog automaticamente quando plano expirar
   useEffect(() => {
-    if (shouldShowDialog() && canShowAgain() && !isOpen) {
+    if (userProfile && !loading && isExpired) {
       setIsOpen(true);
-      setLastShownTime(Date.now());
+    } else if (!isExpired) {
+      setIsOpen(false);
     }
-  }, [userProfile, subscriptionStatus, isOpen, lastShownTime]);
-
-  // Mostrar automaticamente quando o usuário faz login
-  useEffect(() => {
-    if (userProfile && shouldShowDialog()) {
-      const timer = setTimeout(() => {
-        if (canShowAgain()) {
-          setIsOpen(true);
-          setLastShownTime(Date.now());
-        }
-      }, 2000); // 2 segundos após login
-      
-      return () => clearTimeout(timer);
-    }
-  }, [userProfile]);
-
-  const handleClose = () => {
-    setIsOpen(false);
-    setLastShownTime(Date.now());
-  };
+  }, [userProfile, isExpired, loading]);
 
   const handleRenew = () => {
     window.open('https://pay.cakto.com.br/chho9do_565429', '_blank');
-    handleClose();
   };
 
-  if (!shouldShowDialog()) {
+  const handleCheckRenewal = async () => {
+    setIsChecking(true);
+    await refreshSubscriptionStatus();
+    // Aguardar um pouco para dar feedback visual
+    setTimeout(() => {
+      setIsChecking(false);
+    }, 2000);
+  };
+
+  // Não renderizar se não estiver expirado
+  if (!isExpired || !userProfile) {
     return null;
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} modal={true}>
+      <DialogContent 
+        className="sm:max-w-md [&>button]:hidden"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-              <AlertTriangle className="h-6 w-6 text-orange-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="h-6 w-6 text-destructive" />
             </div>
             <div className="flex-1">
-              <DialogTitle className="text-lg font-semibold text-gray-900">
-                Plano Vencido
+              <DialogTitle className="text-lg font-semibold">
+                Acesso Bloqueado
               </DialogTitle>
-              <DialogDescription className="text-sm text-gray-600">
-                Seu acesso está limitado
+              <DialogDescription className="text-sm text-muted-foreground">
+                Seu plano expirou
               </DialogDescription>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="h-6 w-6 rounded-full"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </DialogHeader>
         
         <div className="space-y-4">
           <div className="text-center space-y-3">
-            <p className="text-gray-700">
-              {subscriptionStatus?.status === 'trial' 
-                ? 'Seu período de teste expirou'
-                : 'Sua assinatura encontra-se vencida'
-              }
+            <p className="text-foreground">
+              Sua assinatura expirou e o acesso à plataforma está temporariamente bloqueado.
             </p>
-            <p className="text-sm text-gray-600">
-              Para continuar aproveitando todos os benefícios da plataforma, 
-              renove sua assinatura agora mesmo.
+            <p className="text-sm text-muted-foreground">
+              Para continuar utilizando todos os recursos, renove sua assinatura agora.
             </p>
           </div>
           
@@ -111,22 +85,25 @@ export const SubscriptionExpiredDialog = () => {
             <Button 
               onClick={handleRenew}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              size="lg"
             >
               <CreditCard className="h-4 w-4 mr-2" />
-              Renove sua assinatura agora
+              Renovar Assinatura
             </Button>
             
             <Button 
               variant="outline" 
-              onClick={handleClose}
+              onClick={handleCheckRenewal}
+              disabled={isChecking}
               className="w-full"
             >
-              Lembrar mais tarde
+              <RefreshCw className={`h-4 w-4 mr-2 ${isChecking ? 'animate-spin' : ''}`} />
+              {isChecking ? "Verificando..." : "Já Renovei - Verificar"}
             </Button>
           </div>
           
-          <div className="text-xs text-gray-500 text-center">
-            Este aviso aparecerá periodicamente até a renovação
+          <div className="text-xs text-muted-foreground text-center bg-muted/50 p-3 rounded-md">
+            Após realizar o pagamento, clique em "Já Renovei - Verificar" para liberar seu acesso.
           </div>
         </div>
       </DialogContent>
