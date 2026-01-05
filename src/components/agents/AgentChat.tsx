@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Message } from '@/hooks/useAIAgent';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
 
 interface AgentChatProps {
   messages: Message[];
@@ -79,7 +80,9 @@ export const AgentChat = ({ messages, isLoading, error, onClearError }: AgentCha
                   : 'bg-muted'
               }`}
             >
-              <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+              <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-p:my-1.5 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-strong:text-inherit">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </div>
               
               {message.role === 'assistant' && message.content && (
                 <Button
