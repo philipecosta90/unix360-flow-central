@@ -1,10 +1,8 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Bot, User, Loader2, AlertCircle, Copy, Check } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Message } from '@/hooks/useAIAgent';
-import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface AgentChatProps {
@@ -37,7 +35,7 @@ export const AgentChat = ({ messages, isLoading, error, onClearError }: AgentCha
 
   if (messages.length === 0 && !isLoading && !error) {
     return (
-      <div className="flex-1 flex items-center justify-center text-muted-foreground">
+      <div className="h-full flex items-center justify-center text-muted-foreground">
         <div className="text-center space-y-2">
           <Bot className="h-12 w-12 mx-auto opacity-50" />
           <p>Envie uma mensagem para iniciar a conversa</p>
@@ -47,7 +45,7 @@ export const AgentChat = ({ messages, isLoading, error, onClearError }: AgentCha
   }
 
   return (
-    <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
+    <div ref={scrollRef} className="h-full overflow-y-auto pr-4">
       <div className="space-y-4 pb-4">
         {error && (
           <Alert variant="destructive">
@@ -124,6 +122,6 @@ export const AgentChat = ({ messages, isLoading, error, onClearError }: AgentCha
           </div>
         )}
       </div>
-    </ScrollArea>
+    </div>
   );
 };

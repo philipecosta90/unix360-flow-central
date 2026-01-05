@@ -144,8 +144,8 @@ export const CheckinAnalyzerAgent = () => {
         )}
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <AgentChat 
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <AgentChat
           messages={messages} 
           isLoading={isLoading || loadingCheckin} 
           error={error}

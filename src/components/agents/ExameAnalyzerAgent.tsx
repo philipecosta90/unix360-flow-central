@@ -28,8 +28,8 @@ export const ExameAnalyzerAgent = () => {
         </AlertDescription>
       </Alert>
 
-      <div className="flex-1 overflow-hidden">
-        <AgentChat 
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <AgentChat
           messages={messages} 
           isLoading={isLoading} 
           error={error}
