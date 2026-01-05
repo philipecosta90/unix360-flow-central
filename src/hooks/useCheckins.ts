@@ -219,6 +219,73 @@ export const useCheckinTemplates = () => {
     },
   });
 
+  const duplicateTemplate = useMutation({
+    mutationFn: async (templateId: string) => {
+      // 1. Buscar o template original
+      const { data: originalTemplate, error: templateError } = await supabase
+        .from('checkin_templates')
+        .select('*')
+        .eq('id', templateId)
+        .single();
+
+      if (templateError) throw templateError;
+
+      // 2. Buscar as perguntas do template original
+      const { data: originalPerguntas, error: perguntasError } = await supabase
+        .from('checkin_perguntas')
+        .select('*')
+        .eq('template_id', templateId)
+        .order('ordem', { ascending: true });
+
+      if (perguntasError) throw perguntasError;
+
+      // 3. Criar o novo template com nome modificado
+      const { data: newTemplate, error: newTemplateError } = await supabase
+        .from('checkin_templates')
+        .insert({
+          nome: `${originalTemplate.nome} (Cópia)`,
+          descricao: originalTemplate.descricao,
+          ativo: originalTemplate.ativo,
+          empresa_id: userProfile!.empresa_id,
+        })
+        .select()
+        .single();
+
+      if (newTemplateError) throw newTemplateError;
+
+      // 4. Duplicar as perguntas para o novo template
+      if (originalPerguntas && originalPerguntas.length > 0) {
+        const novasPerguntas = originalPerguntas.map(p => ({
+          template_id: newTemplate.id,
+          secao: p.secao,
+          secao_icone: p.secao_icone,
+          ordem: p.ordem,
+          pergunta: p.pergunta,
+          tipo: p.tipo,
+          pontos_maximo: p.pontos_maximo,
+          opcoes_pontuacao: p.opcoes_pontuacao,
+          obrigatoria: p.obrigatoria,
+          placeholder: p.placeholder,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('checkin_perguntas')
+          .insert(novasPerguntas);
+
+        if (insertError) throw insertError;
+      }
+
+      return newTemplate;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checkin-templates'] });
+      toast.success('Template duplicado com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao duplicar template: ${error.message}`);
+    },
+  });
+
   return {
     templates,
     isLoading,
@@ -227,6 +294,7 @@ export const useCheckinTemplates = () => {
     updateTemplate,
     deleteTemplate,
     createDefaultTemplate,
+    duplicateTemplate,
   };
 };
 

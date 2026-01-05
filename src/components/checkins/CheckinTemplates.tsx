@@ -35,7 +35,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export const CheckinTemplates = () => {
-  const { templates, isLoading, deleteTemplate, createDefaultTemplate } = useCheckinTemplates();
+  const { templates, isLoading, deleteTemplate, createDefaultTemplate, duplicateTemplate } = useCheckinTemplates();
   const [formOpen, setFormOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<CheckinTemplate | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -43,6 +43,10 @@ export const CheckinTemplates = () => {
 
   const handleCreateDefault = () => {
     createDefaultTemplate.mutate();
+  };
+
+  const handleDuplicate = (templateId: string) => {
+    duplicateTemplate.mutate(templateId);
   };
 
   const handleEdit = (template: CheckinTemplate) => {
@@ -158,9 +162,12 @@ export const CheckinTemplates = () => {
                         <Eye className="h-4 w-4 mr-2" />
                         Visualizar
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem 
+                        onClick={(e) => { e.stopPropagation(); handleDuplicate(template.id); }}
+                        disabled={duplicateTemplate.isPending}
+                      >
                         <Copy className="h-4 w-4 mr-2" />
-                        Duplicar
+                        {duplicateTemplate.isPending ? "Duplicando..." : "Duplicar"}
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         className="text-destructive"
