@@ -1,6 +1,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useUserValidation } from "@/hooks/useUserValidation";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useLocation } from "react-router-dom";
 import { logger } from "@/utils/logger";
 import { AuthPage } from "@/components/auth/AuthPage";
@@ -17,6 +18,7 @@ import { AnamneseModule } from "@/components/anamnese/AnamneseModule";
 import { WhatsAppModule } from "@/components/whatsapp/WhatsAppModule";
 import { MessagesModule } from "@/components/messages/MessagesModule";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { SubscriptionExpiredDialog } from "@/components/subscription/SubscriptionExpiredDialog";
 import Settings from "./Settings";
 import Admin from "./Admin";
 import { 
@@ -40,10 +42,15 @@ import { AgentsModule } from "@/components/agents/AgentsModule";
 
 const Index = () => {
   const { user, userProfile, loading, signOut } = useAuth();
+  const { subscriptionStatus } = useSubscription();
   const location = useLocation();
   
   // Ativar validação periódica de usuário ativo
   useUserValidation();
+
+  // Verificar se o plano está expirado
+  const isExpired = subscriptionStatus?.status === 'expired' || 
+    (subscriptionStatus && !subscriptionStatus.hasActiveSubscription && subscriptionStatus.status !== 'trial');
 
   logger.debug('Index component render', {
     user: user ? 'Present' : 'Null',
@@ -123,6 +130,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row w-full">
+      {/* Overlay de bloqueio quando plano expirado */}
+      {isExpired && (
+        <div className="fixed inset-0 bg-black/50 z-40 pointer-events-none" />
+      )}
+      
+      {/* Dialog de renovação obrigatória */}
+      <SubscriptionExpiredDialog />
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
         <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-sidebar border-r border-sidebar-border">
