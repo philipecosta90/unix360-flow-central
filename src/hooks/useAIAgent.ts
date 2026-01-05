@@ -2,16 +2,22 @@ import { useState, useCallback } from 'react';
 
 export type AgentType = 'exame' | 'anamnese' | 'checkin' | 'feedback' | 'dieta' | 'treino';
 
+export interface MessageImage {
+  url: string;
+  type: 'base64' | 'url';
+}
+
 export interface Message {
   role: 'user' | 'assistant';
   content: string;
+  images?: MessageImage[];
 }
 
 interface UseAIAgentReturn {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
-  sendMessage: (agentType: AgentType, context: string, previousMessages?: Message[]) => Promise<void>;
+  sendMessage: (agentType: AgentType, context: string, images?: MessageImage[], previousMessages?: Message[]) => Promise<void>;
   clearMessages: () => void;
   clearError: () => void;
 }
@@ -35,13 +41,18 @@ export const useAIAgent = (): UseAIAgentReturn => {
   const sendMessage = useCallback(async (
     agentType: AgentType,
     context: string,
+    images?: MessageImage[],
     previousMessages?: Message[]
   ) => {
     setIsLoading(true);
     setError(null);
 
-    // Add user message
-    const userMessage: Message = { role: 'user', content: context };
+    // Add user message with images if any
+    const userMessage: Message = { 
+      role: 'user', 
+      content: context,
+      images: images && images.length > 0 ? images : undefined
+    };
     setMessages(prev => [...prev, userMessage]);
 
     let assistantContent = '';
@@ -56,6 +67,7 @@ export const useAIAgent = (): UseAIAgentReturn => {
         body: JSON.stringify({
           agentType,
           context,
+          images: images?.map(img => img.url),
           messages: previousMessages || messages,
         }),
       });

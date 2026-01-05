@@ -5,14 +5,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { AgentChat } from './AgentChat';
-import { useAIAgent } from '@/hooks/useAIAgent';
+import { AgentChat, ImageUploadInput } from './AgentChat';
+import { useAIAgent, MessageImage } from '@/hooks/useAIAgent';
 import { useClients } from '@/hooks/useClients';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const CheckinAnalyzerAgent = () => {
   const [input, setInput] = useState('');
+  const [images, setImages] = useState<MessageImage[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [checkinData, setCheckinData] = useState<string>('');
   const [loadingCheckin, setLoadingCheckin] = useState(false);
@@ -97,21 +98,31 @@ export const CheckinAnalyzerAgent = () => {
     e.preventDefault();
     if (isLoading) return;
 
+    const hasContent = input.trim() || checkinData || images.length > 0;
+    if (!hasContent) return;
+
     const contextToSend = checkinData 
       ? `${checkinData}\n\n---\nPergunta do profissional: ${input || 'Analise a evolução deste cliente baseado nos check-ins e destaque tendências e pontos de atenção.'}`
-      : input;
-
-    if (!contextToSend.trim()) return;
+      : input || 'Analise estas fotos de evolução';
 
     setInput('');
-    await sendMessage('checkin', contextToSend);
+    const imagesToSend = images.length > 0 ? images : undefined;
+    setImages([]);
+    await sendMessage('checkin', contextToSend, imagesToSend);
+  };
+
+  const handleClear = () => {
+    clearMessages();
+    setSelectedClientId('');
+    setCheckinData('');
+    setImages([]);
   };
 
   return (
     <div className="h-full flex flex-col gap-4">
       <Alert>
         <AlertDescription>
-          Selecione um cliente para carregar seu histórico de check-ins e analisar a evolução.
+          Selecione um cliente para carregar seu histórico de check-ins, ou envie fotos de evolução para análise visual.
         </AlertDescription>
       </Alert>
 
@@ -154,10 +165,16 @@ export const CheckinAnalyzerAgent = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="flex-shrink-0 space-y-3">
+        <ImageUploadInput 
+          images={images} 
+          onImagesChange={setImages} 
+          disabled={isLoading || loadingCheckin}
+        />
+        
         <Textarea
           placeholder={checkinData 
             ? "Faça uma pergunta específica ou deixe em branco para análise de evolução..." 
-            : "Cole os dados dos check-ins ou descreva o que deseja analisar..."
+            : "Cole os dados dos check-ins, envie fotos de evolução ou descreva o que deseja analisar..."
           }
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -169,19 +186,15 @@ export const CheckinAnalyzerAgent = () => {
           <Button 
             type="button" 
             variant="outline" 
-            onClick={() => {
-              clearMessages();
-              setSelectedClientId('');
-              setCheckinData('');
-            }}
-            disabled={messages.length === 0 || isLoading}
+            onClick={handleClear}
+            disabled={(messages.length === 0 && images.length === 0) || isLoading}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Limpar
           </Button>
           <Button 
             type="submit" 
-            disabled={((!input.trim() && !checkinData) || isLoading || loadingCheckin)}
+            disabled={((!input.trim() && !checkinData && images.length === 0) || isLoading || loadingCheckin)}
           >
             <Send className="h-4 w-4 mr-2" />
             Analisar
