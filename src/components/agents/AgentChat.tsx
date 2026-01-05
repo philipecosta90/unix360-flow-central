@@ -5,6 +5,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Message } from '@/hooks/useAIAgent';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface AgentChatProps {
   messages: Message[];
@@ -81,7 +83,31 @@ export const AgentChat = ({ messages, isLoading, error, onClearError }: AgentCha
               }`}
             >
               <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-headings:font-semibold prose-p:my-1.5 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-strong:text-inherit">
-                <ReactMarkdown>{message.content}</ReactMarkdown>
+                <ReactMarkdown
+                  components={{
+                    code({ node, className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || '');
+                      const isInline = !match && !String(children).includes('\n');
+                      return !isInline && match ? (
+                        <SyntaxHighlighter
+                          style={oneDark}
+                          language={match[1]}
+                          PreTag="div"
+                          className="rounded-md my-2 text-sm"
+                          {...(props as any)}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code className="bg-muted-foreground/20 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
               </div>
               
               {message.role === 'assistant' && message.content && (
