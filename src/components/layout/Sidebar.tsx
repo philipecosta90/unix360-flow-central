@@ -31,7 +31,8 @@ import {
   Settings,
   Shield,
   ClipboardList,
-  MessageCircle
+  MessageCircle,
+  Bot
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -49,6 +50,7 @@ export const Sidebar = () => {
     { icon: FileText, label: "Contratos", path: "/contratos" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
     { icon: MessageCircle, label: "Conectar WhatsApp", path: "/whatsapp" },
+    { icon: Bot, label: "Agentes (teste)", path: "/agentes" },
     { icon: Settings, label: "Configurações", path: "/configuracoes" },
   ];
 

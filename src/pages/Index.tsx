@@ -30,11 +30,13 @@ import {
   Shield,
   ClipboardList,
   MessageCircle,
-  MessageSquare
+  MessageSquare,
+  Bot
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MainLogo } from "@/components/layout/MainLogo";
 import { BuildVersion } from "@/components/layout/BuildVersion";
+import { AgentsModule } from "@/components/agents/AgentsModule";
 
 const Index = () => {
   const { user, userProfile, loading, signOut } = useAuth();
@@ -75,6 +77,7 @@ const Index = () => {
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
     { icon: MessageCircle, label: "Conectar WhatsApp", path: "/whatsapp" },
     { icon: MessageSquare, label: "Mensagens", path: "/mensagens" },
+    { icon: Bot, label: "Agentes (teste)", path: "/agentes" },
     { icon: SettingsIcon, label: "Configurações", path: "/configuracoes" },
   ];
 
@@ -105,6 +108,8 @@ const Index = () => {
         return <WhatsAppModule />;
       case '/mensagens':
         return <MessagesModule />;
+      case '/agentes':
+        return <AgentsModule />;
       case '/admin':
         return <Admin />;
       case '/configuracoes':

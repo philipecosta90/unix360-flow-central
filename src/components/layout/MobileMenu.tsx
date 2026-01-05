@@ -18,7 +18,8 @@ import {
   Shield,
   Menu,
   CreditCard,
-  MessageCircle
+  MessageCircle,
+  Bot
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -45,6 +46,7 @@ export const MobileMenu = ({ isOpen, onOpenChange }: MobileMenuProps) => {
     { icon: FileText, label: "Contratos", path: "/contratos" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
     { icon: MessageCircle, label: "Conectar WhatsApp", path: "/whatsapp" },
+    { icon: Bot, label: "Agentes (teste)", path: "/agentes" },
     { icon: SettingsIcon, label: "Configurações", path: "/configuracoes" },
   ];
 

@@ -65,6 +65,7 @@ const App = () => {
                 <Route path="/whatsapp" element={<Index />} />
                 <Route path="/mensagens" element={<Index />} />
                 <Route path="/configuracoes" element={<Index />} />
+                <Route path="/agentes" element={<Index />} />
                 <Route path="/admin" element={<Index />} />
                 
                 {/* Fallback */}
