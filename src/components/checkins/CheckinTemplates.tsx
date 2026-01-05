@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useCheckinTemplates, CheckinTemplate } from "@/hooks/useCheckins";
 import { CheckinTemplateFormDialog } from "./CheckinTemplateFormDialog";
+import { CheckinTemplatePreviewDialog } from "./CheckinTemplatePreviewDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,6 +38,7 @@ import { ptBR } from "date-fns/locale";
 export const CheckinTemplates = () => {
   const { templates, isLoading, deleteTemplate, createDefaultTemplate, duplicateTemplate } = useCheckinTemplates();
   const [formOpen, setFormOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<CheckinTemplate | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
@@ -52,6 +54,11 @@ export const CheckinTemplates = () => {
   const handleEdit = (template: CheckinTemplate) => {
     setSelectedTemplate(template);
     setFormOpen(true);
+  };
+
+  const handlePreview = (template: CheckinTemplate) => {
+    setSelectedTemplate(template);
+    setPreviewOpen(true);
   };
 
   const handleNew = () => {
@@ -158,7 +165,7 @@ export const CheckinTemplates = () => {
                         <Edit className="h-4 w-4 mr-2" />
                         Editar
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePreview(template); }}>
                         <Eye className="h-4 w-4 mr-2" />
                         Visualizar
                       </DropdownMenuItem>
@@ -196,6 +203,12 @@ export const CheckinTemplates = () => {
       <CheckinTemplateFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
+        template={selectedTemplate}
+      />
+
+      <CheckinTemplatePreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
         template={selectedTemplate}
       />
 
