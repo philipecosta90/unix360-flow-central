@@ -9,7 +9,8 @@ import {
   FileText, 
   MoreVertical,
   Copy,
-  Eye
+  Eye,
+  Sparkles
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -34,11 +35,15 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export const CheckinTemplates = () => {
-  const { templates, isLoading, deleteTemplate } = useCheckinTemplates();
+  const { templates, isLoading, deleteTemplate, createDefaultTemplate } = useCheckinTemplates();
   const [formOpen, setFormOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<CheckinTemplate | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
+
+  const handleCreateDefault = () => {
+    createDefaultTemplate.mutate();
+  };
 
   const handleEdit = (template: CheckinTemplate) => {
     setSelectedTemplate(template);
@@ -98,13 +103,22 @@ export const CheckinTemplates = () => {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhum template criado</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Crie seu primeiro template de check-in para acompanhar seus pacientes
+            <p className="text-muted-foreground text-center mb-4 max-w-md">
+              Comece usando nosso modelo padrão ou crie seu próprio template personalizado
             </p>
-            <Button onClick={handleNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Template
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                onClick={handleCreateDefault} 
+                disabled={createDefaultTemplate.isPending}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {createDefaultTemplate.isPending ? "Criando..." : "Usar Template Padrão"}
+              </Button>
+              <Button variant="outline" onClick={handleNew}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar do Zero
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-
+import { DEFAULT_CHECKIN_TEMPLATE, DEFAULT_CHECKIN_PERGUNTAS } from "@/constants/defaultCheckinTemplate";
 // Types
 export interface CheckinTemplate {
   id: string;
@@ -182,6 +182,43 @@ export const useCheckinTemplates = () => {
     },
   });
 
+  const createDefaultTemplate = useMutation({
+    mutationFn: async () => {
+      // 1. Criar o template
+      const { data: template, error: templateError } = await supabase
+        .from('checkin_templates')
+        .insert({
+          ...DEFAULT_CHECKIN_TEMPLATE,
+          empresa_id: userProfile!.empresa_id,
+        })
+        .select()
+        .single();
+
+      if (templateError) throw templateError;
+
+      // 2. Inserir as perguntas padrão
+      const perguntasComTemplateId = DEFAULT_CHECKIN_PERGUNTAS.map(p => ({
+        ...p,
+        template_id: template.id,
+      }));
+
+      const { error: perguntasError } = await supabase
+        .from('checkin_perguntas')
+        .insert(perguntasComTemplateId);
+
+      if (perguntasError) throw perguntasError;
+
+      return template;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checkin-templates'] });
+      toast.success('Template padrão criado com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao criar template padrão: ${error.message}`);
+    },
+  });
+
   return {
     templates,
     isLoading,
@@ -189,6 +226,7 @@ export const useCheckinTemplates = () => {
     createTemplate,
     updateTemplate,
     deleteTemplate,
+    createDefaultTemplate,
   };
 };
 
