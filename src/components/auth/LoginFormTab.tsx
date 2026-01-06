@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { validateAndSanitize, loginSchema, sanitizeInput } from "@/utils/inputValidation";
-import { Mail, RefreshCw, Trash2, Wand2, ArrowLeft } from "lucide-react";
+import { Mail, RefreshCw, Trash2, Wand2, ArrowLeft, KeyRound } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface LoginFormTabProps {
@@ -30,8 +30,6 @@ export const LoginFormTab = ({
 }: LoginFormTabProps) => {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [showMagicLink, setShowMagicLink] = useState(false);
-  const [magicLinkEmail, setMagicLinkEmail] = useState("");
   const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
@@ -226,9 +224,7 @@ export const LoginFormTab = ({
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleForgotPassword = async () => {
     if (!resetEmail.trim()) {
       toast({
         title: "Email obrigatório",
@@ -288,35 +284,11 @@ export const LoginFormTab = ({
     }
   };
 
-  const handleClearCacheAndRetry = async () => {
-    try {
-      // Limpar storage local relacionado a auth
-      localStorage.removeItem('sb-hfqzbljiwkrksmjyfdiy-auth-token');
-      sessionStorage.clear();
-      
-      // Fazer signOut forçado
-      await supabase.auth.signOut();
-      
-      toast({
-        title: "Cache limpo!",
-        description: "Tente fazer login novamente com suas credenciais.",
-      });
-      
-      // Recarregar a página para limpar qualquer estado
-      window.location.reload();
-    } catch (error) {
-      console.error('Clear cache error:', error);
-      window.location.reload();
-    }
-  };
-
-  const handleMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!magicLinkEmail.trim()) {
+  const handleMagicLinkFromRecovery = async () => {
+    if (!resetEmail.trim()) {
       toast({
         title: "Email obrigatório",
-        description: "Por favor, insira seu email para receber o link de acesso.",
+        description: "Por favor, insira seu email.",
         variant: "destructive",
       });
       return;
@@ -326,7 +298,7 @@ export const LoginFormTab = ({
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email: sanitizeInput(magicLinkEmail),
+        email: sanitizeInput(resetEmail),
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
@@ -349,8 +321,8 @@ export const LoginFormTab = ({
           title: "Link enviado!",
           description: "Se este email estiver cadastrado, você receberá um link de acesso. Verifique também a pasta de spam.",
         });
-        setShowMagicLink(false);
-        setMagicLinkEmail("");
+        setShowForgotPassword(false);
+        setResetEmail("");
         return;
       }
 
@@ -359,8 +331,8 @@ export const LoginFormTab = ({
         description: "Verifique sua caixa de entrada e clique no link para entrar. O link expira em 60 minutos.",
       });
       
-      setShowMagicLink(false);
-      setMagicLinkEmail("");
+      setShowForgotPassword(false);
+      setResetEmail("");
     } catch (error) {
       console.error('Magic link error:', error);
       toast({
@@ -373,40 +345,105 @@ export const LoginFormTab = ({
     }
   };
 
-  // Magic Link form
-  if (showMagicLink) {
+  const handleClearCacheAndRetry = async () => {
+    try {
+      // Limpar storage local relacionado a auth
+      localStorage.removeItem('sb-hfqzbljiwkrksmjyfdiy-auth-token');
+      sessionStorage.clear();
+      
+      // Fazer signOut forçado
+      await supabase.auth.signOut();
+      
+      toast({
+        title: "Cache limpo!",
+        description: "Tente fazer login novamente com suas credenciais.",
+      });
+      
+      // Recarregar a página para limpar qualquer estado
+      window.location.reload();
+    } catch (error) {
+      console.error('Clear cache error:', error);
+      window.location.reload();
+    }
+  };
+
+  // Forgot Password / Recovery form
+  if (showForgotPassword) {
     return (
       <div className="space-y-4">
         <div className="text-center mb-4">
           <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-            <Wand2 className="h-6 w-6 text-primary" />
+            <KeyRound className="h-6 w-6 text-primary" />
           </div>
-          <h3 className="text-lg font-medium">Login sem Senha</h3>
+          <h3 className="text-lg font-medium">Recuperar Acesso</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Receba um link mágico no seu email para entrar sem digitar senha
+            Digite seu email para recuperar o acesso à sua conta
           </p>
         </div>
         
-        <form onSubmit={handleMagicLink} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="magic-email">Email</Label>
-            <Input
-              id="magic-email"
-              type="email"
-              placeholder="seu@email.com"
-              value={magicLinkEmail}
-              onChange={(e) => setMagicLinkEmail(sanitizeInput(e.target.value))}
-              disabled={isSendingMagicLink}
-              maxLength={255}
-              required
-            />
-          </div>
-          
-          <div className="flex flex-col gap-2">
+        <div className="space-y-2">
+          <Label htmlFor="reset-email">Email</Label>
+          <Input
+            id="reset-email"
+            type="email"
+            placeholder="seu@email.com"
+            value={resetEmail}
+            onChange={(e) => setResetEmail(sanitizeInput(e.target.value))}
+            disabled={isResettingPassword || isSendingMagicLink}
+            maxLength={255}
+            required
+          />
+        </div>
+
+        {/* Duas opções de recuperação */}
+        <div className="space-y-3 pt-2">
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <p className="text-sm font-medium flex items-center gap-2">
+              <KeyRound className="h-4 w-4" />
+              Opção 1: Redefinir Senha
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Receba um link para criar uma nova senha
+            </p>
             <Button
-              type="submit"
-              disabled={isSendingMagicLink}
-              className="w-full bg-primary hover:bg-primary/90"
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={isResettingPassword || isSendingMagicLink || !resetEmail.trim()}
+              className="w-full"
+              variant="default"
+            >
+              {isResettingPassword ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                "Enviar Link de Recuperação"
+              )}
+            </Button>
+          </div>
+
+          <div className="relative">
+            <Separator />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+              ou
+            </span>
+          </div>
+
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <p className="text-sm font-medium flex items-center gap-2">
+              <Wand2 className="h-4 w-4" />
+              Opção 2: Acesso Direto (sem senha)
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Receba um link que faz login automático. Depois, altere sua senha nas configurações
+            </p>
+            <Button
+              type="button"
+              onClick={handleMagicLinkFromRecovery}
+              disabled={isResettingPassword || isSendingMagicLink || !resetEmail.trim()}
+              className="w-full"
+              variant="outline"
             >
               {isSendingMagicLink ? (
                 <>
@@ -414,78 +451,25 @@ export const LoginFormTab = ({
                   Enviando...
                 </>
               ) : (
-                <>
-                  <Mail className="h-4 w-4 mr-2" />
-                  Enviar Link de Acesso
-                </>
+                "Enviar Link de Acesso Direto"
               )}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setShowMagicLink(false);
-                setMagicLinkEmail("");
-              }}
-              disabled={isSendingMagicLink}
-              className="w-full"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar para Login com Senha
-            </Button>
           </div>
-        </form>
-      </div>
-    );
-  }
-
-  if (showForgotPassword) {
-    return (
-      <div className="space-y-4">
-        <div className="text-center mb-4">
-          <h3 className="text-lg font-medium">Recuperar Senha</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Digite seu email para receber as instruções de recuperação
-          </p>
         </div>
-        
-        <form onSubmit={handleForgotPassword} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="reset-email">Email</Label>
-            <Input
-              id="reset-email"
-              type="email"
-              placeholder="seu@email.com"
-              value={resetEmail}
-              onChange={(e) => setResetEmail(sanitizeInput(e.target.value))}
-              disabled={isResettingPassword}
-              maxLength={255}
-              required
-            />
-          </div>
-          
-          <div className="flex flex-col xs:flex-row gap-2 xs:gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setShowForgotPassword(false);
-                setResetEmail("");
-              }}
-              disabled={isResettingPassword}
-              className="w-full xs:w-auto"
-            >
-              Voltar
-            </Button>
-            <Button
-              type="submit"
-              disabled={isResettingPassword}
-              className="w-full xs:flex-1 bg-primary hover:bg-primary/90"
-            >
-              {isResettingPassword ? "Enviando..." : "Enviar Email"}
-            </Button>
-          </div>
-        </form>
+
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            setShowForgotPassword(false);
+            setResetEmail("");
+          }}
+          disabled={isResettingPassword || isSendingMagicLink}
+          className="w-full"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar para Login
+        </Button>
       </div>
     );
   }
@@ -640,17 +624,6 @@ export const LoginFormTab = ({
           )}
         </Button>
       </div>
-
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={() => setShowMagicLink(true)}
-        disabled={isLockedOut || isLoading || isLoadingOAuth !== null}
-        className="w-full text-muted-foreground hover:text-foreground"
-      >
-        <Wand2 className="h-4 w-4 mr-2" />
-        Entrar com Link Mágico (sem senha)
-      </Button>
 
       {/* Botão de limpar cache para problemas persistentes */}
       <button
