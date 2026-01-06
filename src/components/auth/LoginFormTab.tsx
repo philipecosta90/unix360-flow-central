@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { validateAndSanitize, loginSchema, sanitizeInput } from "@/utils/inputValidation";
-import { Mail, RefreshCw, Trash2 } from "lucide-react";
+import { Mail, RefreshCw, Trash2, Wand2, ArrowLeft } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface LoginFormTabProps {
   isLoading: boolean;
@@ -29,6 +30,9 @@ export const LoginFormTab = ({
 }: LoginFormTabProps) => {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showMagicLink, setShowMagicLink] = useState(false);
+  const [magicLinkEmail, setMagicLinkEmail] = useState("");
+  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showEmailNotConfirmed, setShowEmailNotConfirmed] = useState(false);
@@ -274,6 +278,135 @@ export const LoginFormTab = ({
     }
   };
 
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!magicLinkEmail.trim()) {
+      toast({
+        title: "Email obrigatório",
+        description: "Por favor, insira seu email para receber o link de acesso.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingMagicLink(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: sanitizeInput(magicLinkEmail),
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) {
+        console.error('Magic link error:', error);
+        
+        if (error.message.includes('rate_limit') || error.message.includes('For security purposes') || error.status === 429) {
+          toast({
+            title: "Muitas tentativas",
+            description: "Por segurança, aguarde 60 segundos antes de solicitar um novo link.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Por segurança, não revelamos se o email existe
+        toast({
+          title: "Link enviado!",
+          description: "Se este email estiver cadastrado, você receberá um link de acesso. Verifique também a pasta de spam.",
+        });
+        setShowMagicLink(false);
+        setMagicLinkEmail("");
+        return;
+      }
+
+      toast({
+        title: "Link de acesso enviado!",
+        description: "Verifique sua caixa de entrada e clique no link para entrar. O link expira em 60 minutos.",
+      });
+      
+      setShowMagicLink(false);
+      setMagicLinkEmail("");
+    } catch (error) {
+      console.error('Magic link error:', error);
+      toast({
+        title: "Erro de conexão",
+        description: "Verifique sua internet e tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingMagicLink(false);
+    }
+  };
+
+  // Magic Link form
+  if (showMagicLink) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center mb-4">
+          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+            <Wand2 className="h-6 w-6 text-primary" />
+          </div>
+          <h3 className="text-lg font-medium">Login sem Senha</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Receba um link mágico no seu email para entrar sem digitar senha
+          </p>
+        </div>
+        
+        <form onSubmit={handleMagicLink} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="magic-email">Email</Label>
+            <Input
+              id="magic-email"
+              type="email"
+              placeholder="seu@email.com"
+              value={magicLinkEmail}
+              onChange={(e) => setMagicLinkEmail(sanitizeInput(e.target.value))}
+              disabled={isSendingMagicLink}
+              maxLength={255}
+              required
+            />
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <Button
+              type="submit"
+              disabled={isSendingMagicLink}
+              className="w-full bg-primary hover:bg-primary/90"
+            >
+              {isSendingMagicLink ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Enviar Link de Acesso
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowMagicLink(false);
+                setMagicLinkEmail("");
+              }}
+              disabled={isSendingMagicLink}
+              className="w-full"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar para Login com Senha
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   if (showForgotPassword) {
     return (
       <div className="space-y-4">
@@ -411,6 +544,24 @@ export const LoginFormTab = ({
         disabled={isLoading || isLockedOut}
       >
         {isLoading ? "Entrando..." : "Entrar"}
+      </Button>
+
+      <div className="relative my-4">
+        <Separator />
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+          ou
+        </span>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setShowMagicLink(true)}
+        disabled={isLockedOut || isLoading}
+        className="w-full"
+      >
+        <Wand2 className="h-4 w-4 mr-2" />
+        Entrar com Link Mágico (sem senha)
       </Button>
 
       {/* Botão de limpar cache para problemas persistentes */}
