@@ -17,6 +17,7 @@ export const SubscriptionExpiredDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Verificar se o plano está expirado
   const isExpired = subscriptionStatus?.status === 'expired' || 
@@ -119,20 +120,46 @@ export const SubscriptionExpiredDialog = () => {
             Após realizar o pagamento, clique em "Já Renovei - Verificar" para liberar seu acesso.
           </div>
 
-          <div className="border-t pt-4">
-            <Button 
-              variant="ghost" 
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-              className="w-full text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className={`h-4 w-4 mr-2 ${isSigningOut ? 'animate-spin' : ''}`} />
-              {isSigningOut ? "Saindo..." : "Sair da conta"}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              Quer entrar com outra conta? Use "Sair da conta"
-            </p>
-          </div>
+          {!showLogoutConfirm ? (
+            <div className="border-t pt-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-full text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair da conta
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Quer entrar com outra conta? Use "Sair da conta"
+              </p>
+            </div>
+          ) : (
+            <div className="border-t pt-4 space-y-3">
+              <p className="text-sm text-center text-muted-foreground">
+                Tem certeza que deseja sair?
+              </p>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowLogoutConfirm(false)}
+                  disabled={isSigningOut}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="flex-1"
+                >
+                  <LogOut className={`h-4 w-4 mr-2 ${isSigningOut ? 'animate-spin' : ''}`} />
+                  {isSigningOut ? "Saindo..." : "Confirmar"}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
