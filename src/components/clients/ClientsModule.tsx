@@ -518,43 +518,43 @@ export const ClientsModule = () => {
                            </div>
                          )}
 
-                         <div className="flex items-center justify-between pt-2 border-t">
-                           <span className="text-sm text-gray-600">
-                             Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '-'}
-                           </span>
-                           <div className="flex gap-1">
-                            <RenewPlanButton
-                              clientId={client.id}
-                              clientName={client.nome}
-                              onSuccess={fetchClients}
-                            />
-                            {getEffectiveStatus(client) === 'vencido' && (
-                              <SetInactiveButton
+                          <div className="pt-2 border-t space-y-2">
+                            <span className="text-sm text-muted-foreground block">
+                              Criado em: {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '-'}
+                            </span>
+                            <div className="flex flex-wrap gap-1 justify-end">
+                              <RenewPlanButton
                                 clientId={client.id}
                                 clientName={client.nome}
                                 onSuccess={fetchClients}
                               />
-                            )}
-                            <Button variant="ghost" size="sm" onClick={e => {
-                      e.stopPropagation();
-                      setEditingClient(client);
-                    }}>
-                              Editar
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={e => {
-                      e.stopPropagation();
-                      handleViewDetails(client);
-                    }}>
-                              Detalhes
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={async e => {
-                      e.stopPropagation();
-                      await handleDeleteClient(client.id, client.nome);
-                    }} className="text-red-600 hover:text-red-800 hover:bg-red-50">
-                              Excluir
-                            </Button>
+                              {getEffectiveStatus(client) === 'vencido' && (
+                                <SetInactiveButton
+                                  clientId={client.id}
+                                  clientName={client.nome}
+                                  onSuccess={fetchClients}
+                                />
+                              )}
+                              <Button variant="ghost" size="sm" onClick={e => {
+                                e.stopPropagation();
+                                setEditingClient(client);
+                              }}>
+                                Editar
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={e => {
+                                e.stopPropagation();
+                                handleViewDetails(client);
+                              }}>
+                                Detalhes
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={async e => {
+                                e.stopPropagation();
+                                await handleDeleteClient(client.id, client.nome);
+                              }} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                Excluir
+                              </Button>
+                            </div>
                           </div>
-                        </div>
                       </div>
                     </CardContent>
                   </Card>;
