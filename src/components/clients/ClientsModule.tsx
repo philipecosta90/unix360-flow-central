@@ -10,6 +10,7 @@ import { ClientDetail } from "./ClientDetail";
 import { AddClientDrawer } from "./AddClientDrawer";
 import { EditClientDrawer } from "./EditClientDrawer";
 import { RenewPlanButton } from "./RenewPlanButton";
+import { SetInactiveButton } from "./SetInactiveButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -95,22 +96,52 @@ export const ClientsModule = () => {
     }).length;
   }, [clients]);
 
+  // Função para calcular status efetivo (considera vencimento do plano)
+  const getEffectiveStatus = (client: Cliente): string => {
+    // Se status já é inativo, manter
+    if (client.status === 'inativo') return 'inativo';
+    
+    // Se não tem data de fim de plano, usar status original
+    if (!client.data_fim_plano) return client.status;
+    
+    // Verificar se plano venceu
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(client.data_fim_plano);
+    endDate.setHours(0, 0, 0, 0);
+    
+    if (endDate < today) {
+      return 'vencido'; // Status visual, não salvo no banco
+    }
+    
+    return client.status;
+  };
+
   const filteredClients = clients.filter(client => {
     if (!client) return false;
     const matchesSearch = client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || client.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Para filtro "vencido", usar status efetivo
+    if (statusFilter === "vencido") {
+      return matchesSearch && getEffectiveStatus(client) === 'vencido';
+    }
+    
     const matchesStatus = statusFilter === "todos" || client.status === statusFilter;
     return matchesSearch && matchesStatus;
   }).sort((a, b) => {
     // Definir prioridade de status (menor número = maior prioridade)
     const statusPriority: Record<string, number> = {
+      'vencido': 0, // Vencido tem maior prioridade (mais urgente)
       'ativo': 1,
       'lead': 2,
       'prospecto': 3,
       'inativo': 4
     };
     
-    const priorityA = statusPriority[a.status] || 99;
-    const priorityB = statusPriority[b.status] || 99;
+    const effectiveStatusA = getEffectiveStatus(a);
+    const effectiveStatusB = getEffectiveStatus(b);
+    const priorityA = statusPriority[effectiveStatusA] || 99;
+    const priorityB = statusPriority[effectiveStatusB] || 99;
     
     // Primeiro ordenar por prioridade de status
     if (priorityA !== priorityB) {
@@ -124,6 +155,8 @@ export const ClientsModule = () => {
     switch (status) {
       case "ativo":
         return "bg-green-100 text-green-800";
+      case "vencido":
+        return "bg-red-100 text-red-800";
       case "lead":
         return "bg-blue-100 text-blue-800";
       case "prospecto":
@@ -138,6 +171,8 @@ export const ClientsModule = () => {
     switch (status) {
       case "ativo":
         return "Ativo";
+      case "vencido":
+        return "Vencido";
       case "lead":
         return "Lead";
       case "prospecto":
@@ -396,6 +431,7 @@ export const ClientsModule = () => {
               <SelectContent>
                 <SelectItem value="todos">Todos os status</SelectItem>
                 <SelectItem value="ativo">Ativo</SelectItem>
+                <SelectItem value="vencido">Vencido</SelectItem>
                 <SelectItem value="lead">Lead</SelectItem>
                 <SelectItem value="prospecto">Prospecto</SelectItem>
                 <SelectItem value="inativo">Inativo</SelectItem>
@@ -441,8 +477,8 @@ export const ClientsModule = () => {
                     <CardContent>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <Badge className={getStatusColor(client.status)}>
-                            {getStatusLabel(client.status)}
+                          <Badge className={getStatusColor(getEffectiveStatus(client))}>
+                            {getStatusLabel(getEffectiveStatus(client))}
                           </Badge>
                           {client.plano_contratado && <span className="text-sm text-gray-600">{client.plano_contratado}</span>}
                         </div>
@@ -463,7 +499,14 @@ export const ClientsModule = () => {
                                const today = new Date();
                                const endDate = new Date(client.data_fim_plano);
                                const diffDays = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                               if (diffDays <= 30 && diffDays >= 0) {
+                               if (diffDays < 0) {
+                                 // Plano já venceu
+                                 return (
+                                   <Badge variant="destructive" className="ml-2">
+                                     {Math.abs(diffDays)} dias atrás
+                                   </Badge>
+                                 );
+                               } else if (diffDays <= 30) {
                                  return (
                                    <Badge variant={diffDays <= 7 ? "destructive" : "secondary"} className="ml-2">
                                      {diffDays === 0 ? "Vence hoje" : `${diffDays} dias`}
@@ -485,6 +528,13 @@ export const ClientsModule = () => {
                               clientName={client.nome}
                               onSuccess={fetchClients}
                             />
+                            {getEffectiveStatus(client) === 'vencido' && (
+                              <SetInactiveButton
+                                clientId={client.id}
+                                clientName={client.nome}
+                                onSuccess={fetchClients}
+                              />
+                            )}
                             <Button variant="ghost" size="sm" onClick={e => {
                       e.stopPropagation();
                       setEditingClient(client);
