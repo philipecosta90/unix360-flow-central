@@ -21,19 +21,32 @@ export const ResetPasswordPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for error parameters in URL
-    const params = new URLSearchParams(window.location.hash.substring(1));
-    const error = params.get('error');
-    const errorCode = params.get('error_code');
+    // Check for error parameters in URL (both hash and search params)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const searchParams = new URLSearchParams(window.location.search);
+    
+    const error = hashParams.get('error') || searchParams.get('error');
+    const errorCode = hashParams.get('error_code') || searchParams.get('error_code');
+    const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
 
     if (error || errorCode) {
       setHasError(true);
-      if (errorCode === 'otp_expired') {
-        setErrorMessage('O link de recuperação expirou. Por favor, solicite um novo link.');
-      } else if (error === 'access_denied') {
-        setErrorMessage('Link inválido ou expirado. Solicite um novo link de recuperação.');
+      
+      if (errorCode === 'otp_expired' || errorDescription?.includes('expired')) {
+        setErrorMessage(
+          'O link de recuperação expirou (válido por apenas 60 minutos). ' +
+          'Solicite um novo link e clique nele IMEDIATAMENTE após receber o email.'
+        );
+      } else if (error === 'access_denied' || errorCode === 'access_denied') {
+        setErrorMessage(
+          'Link inválido. Isso pode acontecer se você já usou este link, ' +
+          'se ele foi gerado há muito tempo, ou se você está acessando de um navegador diferente. ' +
+          'Solicite um novo link.'
+        );
       } else {
-        setErrorMessage('Ocorreu um erro. Por favor, solicite um novo link de recuperação.');
+        setErrorMessage(
+          'Ocorreu um erro ao processar o link. Por favor, solicite um novo link de recuperação.'
+        );
       }
     }
   }, []);
@@ -141,14 +154,23 @@ export const ResetPasswordPage = () => {
               <AlertCircle className="w-6 h-6 text-destructive" />
             </div>
             <CardTitle>Link Expirado ou Inválido</CardTitle>
-            <CardDescription>{errorMessage}</CardDescription>
+            <CardDescription className="text-left mt-2">
+              {errorMessage}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Dica:</strong> Após solicitar um novo link, clique nele imediatamente quando receber o email. 
+                Links expiram em 60 minutos e só funcionam uma vez.
+              </AlertDescription>
+            </Alert>
             <Button 
               onClick={handleRequestNewLink} 
               className="w-full"
             >
-              Solicitar Novo Link
+              Voltar e Solicitar Novo Link
             </Button>
           </CardContent>
         </Card>

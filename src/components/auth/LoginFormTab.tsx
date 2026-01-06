@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { validateAndSanitize, loginSchema, sanitizeInput } from "@/utils/inputValidation";
-import { Mail, RefreshCw } from "lucide-react";
+import { Mail, RefreshCw, Trash2 } from "lucide-react";
 
 interface LoginFormTabProps {
   isLoading: boolean;
@@ -210,27 +210,32 @@ export const LoginFormTab = ({
       });
 
       if (error) {
-        // Tratar erros específicos
-        if (error.message.includes('rate_limit')) {
+        console.error('Password reset error:', error);
+        
+        // Tratamento mais específico de erros
+        if (error.message.includes('rate_limit') || error.message.includes('For security purposes') || error.status === 429) {
           toast({
             title: "Muitas tentativas",
-            description: "Aguarde alguns minutos antes de solicitar um novo link.",
+            description: "Por segurança, aguarde 60 segundos antes de solicitar um novo link.",
             variant: "destructive",
           });
           return;
         }
         
+        // Por segurança, não revelamos se o email existe ou não
+        // Mas informamos que enviamos (mesmo que o email não exista)
         toast({
-          title: "Erro ao enviar email",
-          description: "Não foi possível enviar o email de recuperação. Verifique o endereço informado.",
-          variant: "destructive",
+          title: "Email enviado!",
+          description: "Se este email estiver cadastrado, você receberá as instruções em breve. Verifique também a pasta de spam.",
         });
+        setShowForgotPassword(false);
+        setResetEmail("");
         return;
       }
 
       toast({
         title: "Email enviado com sucesso!",
-        description: "Verifique sua caixa de entrada. O link expira em 60 minutos.",
+        description: "Verifique sua caixa de entrada e spam. O link expira em 60 minutos. Clique no link IMEDIATAMENTE após receber.",
       });
       
       setShowForgotPassword(false);
@@ -238,12 +243,34 @@ export const LoginFormTab = ({
     } catch (error) {
       console.error('Password reset error:', error);
       toast({
-        title: "Erro inesperado",
-        description: "Tente novamente mais tarde.",
+        title: "Erro de conexão",
+        description: "Verifique sua internet e tente novamente.",
         variant: "destructive",
       });
     } finally {
       setIsResettingPassword(false);
+    }
+  };
+
+  const handleClearCacheAndRetry = async () => {
+    try {
+      // Limpar storage local relacionado a auth
+      localStorage.removeItem('sb-hfqzbljiwkrksmjyfdiy-auth-token');
+      sessionStorage.clear();
+      
+      // Fazer signOut forçado
+      await supabase.auth.signOut();
+      
+      toast({
+        title: "Cache limpo!",
+        description: "Tente fazer login novamente com suas credenciais.",
+      });
+      
+      // Recarregar a página para limpar qualquer estado
+      window.location.reload();
+    } catch (error) {
+      console.error('Clear cache error:', error);
+      window.location.reload();
     }
   };
 
@@ -385,6 +412,16 @@ export const LoginFormTab = ({
       >
         {isLoading ? "Entrando..." : "Entrar"}
       </Button>
+
+      {/* Botão de limpar cache para problemas persistentes */}
+      <button
+        type="button"
+        onClick={handleClearCacheAndRetry}
+        className="w-full text-xs text-muted-foreground hover:text-foreground hover:underline mt-3 flex items-center justify-center gap-1"
+      >
+        <Trash2 className="h-3 w-3" />
+        Problemas para entrar? Limpar cache
+      </button>
     </form>
   );
 };
