@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import {
@@ -9,13 +10,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, CreditCard, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CreditCard, RefreshCw, LogOut } from 'lucide-react';
 
 export const SubscriptionExpiredDialog = () => {
-  const { userProfile } = useAuth();
+  const navigate = useNavigate();
+  const { userProfile, signOut } = useAuth();
   const { subscriptionStatus, refreshSubscriptionStatus, loading } = useSubscription();
   const [isOpen, setIsOpen] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   // Verificar se o plano está expirado
   const isExpired = subscriptionStatus?.status === 'expired' || 
@@ -41,6 +44,18 @@ export const SubscriptionExpiredDialog = () => {
     setTimeout(() => {
       setIsChecking(false);
     }, 2000);
+  };
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOut();
+      setIsOpen(false);
+      navigate('/auth', { replace: true });
+    } catch (error) {
+      console.error('Erro ao sair:', error);
+      setIsSigningOut(false);
+    }
   };
 
   // Não renderizar se não estiver expirado
@@ -94,7 +109,7 @@ export const SubscriptionExpiredDialog = () => {
             <Button 
               variant="outline" 
               onClick={handleCheckRenewal}
-              disabled={isChecking}
+              disabled={isChecking || isSigningOut}
               className="w-full"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${isChecking ? 'animate-spin' : ''}`} />
@@ -104,6 +119,21 @@ export const SubscriptionExpiredDialog = () => {
           
           <div className="text-xs text-muted-foreground text-center bg-muted/50 p-3 rounded-md">
             Após realizar o pagamento, clique em "Já Renovei - Verificar" para liberar seu acesso.
+          </div>
+
+          <div className="border-t pt-4">
+            <Button 
+              variant="ghost" 
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="w-full text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className={`h-4 w-4 mr-2 ${isSigningOut ? 'animate-spin' : ''}`} />
+              {isSigningOut ? "Saindo..." : "Sair da conta"}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Quer entrar com outra conta? Use "Sair da conta"
+            </p>
           </div>
         </div>
       </DialogContent>
