@@ -48,12 +48,29 @@ interface Agendamento {
   };
 }
 
-// Formata data local para YYYY-MM-DD sem problemas de timezone
+// Converte para horário do Brasil (UTC-3)
+function toBrazilTime(date: Date = new Date()): Date {
+  // Usar offset fixo de UTC-3 (Brasil)
+  const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+  const brazilOffset = -3 * 60 * 60000; // UTC-3 em milissegundos
+  return new Date(utcTime + brazilOffset);
+}
+
+// Formata data para YYYY-MM-DD no horário do Brasil
 function toLocalISODate(date: Date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const brazilDate = toBrazilTime(date);
+  const year = brazilDate.getFullYear();
+  const month = String(brazilDate.getMonth() + 1).padStart(2, '0');
+  const day = String(brazilDate.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+// Retorna hora atual no Brasil no formato HH:MM
+function getCurrentBrazilTime(): string {
+  const brazilDate = toBrazilTime(new Date());
+  const hours = String(brazilDate.getHours()).padStart(2, '0');
+  const minutes = String(brazilDate.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
 }
 
 // Calcular próximo envio baseado na frequência
@@ -105,10 +122,10 @@ Deno.serve(async (req) => {
 
     // Buscar agendamentos que devem ser enviados agora
     const now = new Date();
-    const todayDate = toLocalISODate(now); // YYYY-MM-DD em timezone local
-    const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+    const todayDate = toLocalISODate(now); // YYYY-MM-DD no horário do Brasil
+    const currentTime = getCurrentBrazilTime(); // HH:MM no horário do Brasil
 
-    console.log(`[${startTime}] Buscando agendamentos para data: ${todayDate}, hora atual: ${currentTime}`);
+    console.log(`[${startTime}] Buscando agendamentos para data: ${todayDate}, hora Brasil: ${currentTime}`);
 
     // Buscar agendamentos ativos onde proximo_envio <= hoje
     const { data: agendamentos, error: agendamentosError } = await supabase
@@ -134,7 +151,7 @@ Deno.serve(async (req) => {
       throw agendamentosError;
     }
 
-    console.log(`[${startTime}] Encontrados ${agendamentos?.length || 0} agendamentos pendentes`);
+    console.log(`[${startTime}] Encontrados ${agendamentos?.length || 0} agendamentos com data pendente`);
 
     if (!agendamentos || agendamentos.length === 0) {
       return new Response(
@@ -148,12 +165,46 @@ Deno.serve(async (req) => {
       );
     }
 
+    // CORREÇÃO: Filtrar agendamentos que JÁ passaram do horário de envio
+    const agendamentosParaProcessar = (agendamentos as unknown as Agendamento[]).filter(ag => {
+      // Se proximo_envio é de um dia anterior, enviar imediatamente (agendamento atrasado)
+      if (ag.proximo_envio < todayDate) {
+        console.log(`[${startTime}] Agendamento ${ag.id} ATRASADO (${ag.proximo_envio} < ${todayDate}), enviando agora`);
+        return true;
+      }
+      
+      // Se é hoje, verificar se já passou do horário configurado
+      const horaAgendada = ag.hora_envio?.slice(0, 5) || "00:00";
+      if (currentTime >= horaAgendada) {
+        console.log(`[${startTime}] Agendamento ${ag.id}: hora_envio=${horaAgendada}, hora_atual=${currentTime} - PROCESSAR`);
+        return true;
+      }
+      
+      console.log(`[${startTime}] Agendamento ${ag.id}: hora_envio=${horaAgendada}, hora_atual=${currentTime} - AGUARDAR`);
+      return false;
+    });
+
+    console.log(`[${startTime}] ${agendamentosParaProcessar.length} de ${agendamentos.length} agendamentos prontos para envio`);
+
+    if (agendamentosParaProcessar.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Nenhum agendamento com horário atingido",
+          processed: 0,
+          total_pendentes: agendamentos.length,
+          timestamp: now.toISOString(),
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     let enviados = 0;
     let erros = 0;
     const resultados: Array<{ agendamentoId: string; status: string; message: string }> = [];
 
-    // Processar cada agendamento
-    for (const agendamento of agendamentos as unknown as Agendamento[]) {
+    // Processar cada agendamento que já passou do horário
+    for (const agendamento of agendamentosParaProcessar) {
       console.log(`[${startTime}] Processando agendamento ${agendamento.id}`);
 
       // Verificar se o cliente tem dados válidos
@@ -404,7 +455,12 @@ Equipe *${nomeEmpresa}*`;
     return new Response(
       JSON.stringify({
         success: true,
-        processed: agendamentos.length,
+        processed: agendamentosParaProcessar.length,
+        enviados,
+        erros,
+        resultados,
+        timestamp: endTime,
+      }),
         enviados,
         erros,
         resultados,
