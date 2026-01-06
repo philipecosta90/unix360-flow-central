@@ -10,6 +10,7 @@ import { CompanyLogo } from "@/components/layout/CompanyLogo";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { CRMModule } from "@/components/crm/CRMModule";
 import { FinancialModule } from "@/components/financial/FinancialModule";
+import { ServicosModule } from "@/components/servicos/ServicosModule";
 import { TasksModule } from "@/components/tasks/TasksModule";
 import { ClientsModule } from "@/components/clients/ClientsModule";
 import { ContractsModule } from "@/components/contracts/ContractsModule";
@@ -33,7 +34,8 @@ import {
   ClipboardList,
   MessageCircle,
   MessageSquare,
-  Bot
+  Bot,
+  Package
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MainLogo } from "@/components/layout/MainLogo";
@@ -77,6 +79,7 @@ const Index = () => {
     { icon: BarChart3, label: "Dashboard", path: "/dashboard" },
     { icon: Users, label: "CRM", path: "/crm" },
     { icon: DollarSign, label: "Financeiro", path: "/financeiro" },
+    { icon: Package, label: "Serviços", path: "/servicos" },
     { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
     { icon: Users, label: "Clientes", path: "/clientes" },
     { icon: ClipboardList, label: "Anamnese", path: "/anamnese" },
@@ -99,6 +102,8 @@ const Index = () => {
         return <CRMModule />;
       case '/financeiro':
         return <FinancialModule />;
+      case '/servicos':
+        return <ServicosModule />;
       case '/tarefas':
         return <TasksModule />;
       case '/clientes':

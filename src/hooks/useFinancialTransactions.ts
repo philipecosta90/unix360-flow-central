@@ -31,6 +31,7 @@ interface CreateTransactionData {
   a_receber?: boolean;
   recorrente?: boolean;
   cliente_id?: string;
+  servico_id?: string;
 }
 
 interface FinancialFilters {

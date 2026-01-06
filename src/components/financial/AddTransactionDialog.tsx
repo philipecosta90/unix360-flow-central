@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 import { useClients } from "@/hooks/useClients";
+import { useServicos } from "@/hooks/useServicos";
 import { toast } from "sonner";
 import { toLocalISODate } from "@/utils/dateUtils";
+import { Package } from "lucide-react";
 
 interface AddTransactionDialogProps {
   open: boolean;
@@ -25,10 +27,32 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
     a_receber: false,
     recorrente: false,
     cliente_id: 'none',
+    servico_id: 'none',
   });
 
   const { createTransaction } = useFinancialTransactions();
   const { data: clientes = [] } = useClients();
+  const { servicosAtivos } = useServicos();
+
+  const handleServicoChange = (servicoId: string) => {
+    if (servicoId === 'none') {
+      setFormData(prev => ({ ...prev, servico_id: 'none' }));
+      return;
+    }
+
+    const servico = servicosAtivos.find(s => s.id === servicoId);
+    if (servico) {
+      setFormData(prev => ({
+        ...prev,
+        servico_id: servicoId,
+        descricao: servico.nome,
+        valor: servico.valor.toString(),
+        categoria: servico.categoria,
+        tipo: 'entrada',
+        recorrente: servico.tipo !== 'avulso',
+      }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +72,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
         a_receber: formData.a_receber,
         recorrente: formData.recorrente,
         cliente_id: formData.cliente_id !== 'none' ? formData.cliente_id : undefined,
+        servico_id: formData.servico_id !== 'none' ? formData.servico_id : undefined,
       });
       
       toast.success("Transação criada com sucesso!");
@@ -61,6 +86,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
         a_receber: false,
         recorrente: false,
         cliente_id: 'none',
+        servico_id: 'none',
       });
     } catch (error) {
       console.error('Erro ao criar transação:', error);
@@ -75,6 +101,32 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
           <DialogTitle>Nova Transação</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Seleção de Serviço */}
+          {servicosAtivos.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="servico" className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Serviço (Opcional)
+              </Label>
+              <Select value={formData.servico_id} onValueChange={handleServicoChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um serviço" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (preenchimento manual)</SelectItem>
+                  {servicosAtivos.map((servico) => (
+                    <SelectItem key={servico.id} value={servico.id}>
+                      {servico.nome} - R$ {servico.valor.toFixed(2)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Ao selecionar um serviço, os campos serão preenchidos automaticamente
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="tipo">Tipo</Label>
             <Select value={formData.tipo} onValueChange={(value: 'entrada' | 'saida') => setFormData({...formData, tipo: value})}>
@@ -123,6 +175,8 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
                 <SelectItem value="Serviços">Serviços</SelectItem>
                 <SelectItem value="Produtos">Produtos</SelectItem>
                 <SelectItem value="Consultoria">Consultoria</SelectItem>
+                <SelectItem value="Aulas">Aulas</SelectItem>
+                <SelectItem value="Eventos">Eventos</SelectItem>
                 <SelectItem value="Marketing">Marketing</SelectItem>
                 <SelectItem value="Tecnologia">Tecnologia</SelectItem>
                 <SelectItem value="Administrativo">Administrativo</SelectItem>
