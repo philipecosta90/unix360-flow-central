@@ -40,7 +40,8 @@ export const usePlanExpirationAlerts = () => {
           const diffTime = endDate.getTime() - today.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-          if (diffDays >= 0 && diffDays <= 30) {
+          // Incluir planos vencidos (até -30 dias) e próximos ao vencimento (até +30 dias)
+          if (diffDays >= -30 && diffDays <= 30) {
             expirations.push({
               clientId: client.id,
               clientName: client.nome,
