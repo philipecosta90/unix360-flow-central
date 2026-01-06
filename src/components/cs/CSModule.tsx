@@ -42,12 +42,12 @@ export const CSModule = () => {
       )}
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="clientes">Clientes</TabsTrigger>
-          <TabsTrigger value="checkins">Check-ins</TabsTrigger>
-          <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
-          <TabsTrigger value="interacoes">Interações</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-5 w-full">
+          <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Dashboard</TabsTrigger>
+          <TabsTrigger value="clientes" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Clientes</TabsTrigger>
+          <TabsTrigger value="checkins" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Check-ins</TabsTrigger>
+          <TabsTrigger value="onboarding" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Onboarding</TabsTrigger>
+          <TabsTrigger value="interacoes" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Interações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">

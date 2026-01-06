@@ -329,20 +329,20 @@ export const ClientsModule = () => {
       setSelectedClient(null);
     }} />;
   }
-  return <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-green-500">Clientes</h1>
-          <p className="text-gray-600 mt-2">Gerencie sua base de clientes</p>
+  return <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex-shrink-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-green-500">Clientes</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Gerencie sua base de clientes</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowImportDialog(true)}>
-            <Upload className="w-4 h-4 mr-2" />
-            Importar
+        <div className="flex gap-2 flex-shrink-0">
+          <Button variant="outline" onClick={() => setShowImportDialog(true)} className="text-xs sm:text-sm px-2 sm:px-4">
+            <Upload className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Importar</span>
           </Button>
-          <Button onClick={() => setShowAddDrawer(true)} className="bg-[#43B26D] hover:bg-[#37A05B]">
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Cliente
+          <Button onClick={() => setShowAddDrawer(true)} className="bg-[#43B26D] hover:bg-[#37A05B] text-xs sm:text-sm px-2 sm:px-4">
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Novo Cliente</span>
           </Button>
         </div>
       </div>
@@ -418,14 +418,14 @@ export const ClientsModule = () => {
 
       {/* Filtros e Busca */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex gap-4">
+        <CardContent className="p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input placeholder="Buscar clientes..." value={searchTerm} onChange={e => setSearchTerm(e.target.value || "")} className="pl-10" />
+              <Input placeholder="Buscar clientes..." value={searchTerm} onChange={e => setSearchTerm(e.target.value || "")} className="pl-10 text-sm" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48 text-sm">
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent>
