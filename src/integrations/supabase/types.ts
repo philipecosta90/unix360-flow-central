@@ -1198,6 +1198,7 @@ export type Database = {
           empresa_id: string
           id: string
           recorrente: boolean | null
+          servico_id: string | null
           tipo: string
           updated_at: string | null
           valor: number
@@ -1213,6 +1214,7 @@ export type Database = {
           empresa_id: string
           id?: string
           recorrente?: boolean | null
+          servico_id?: string | null
           tipo: string
           updated_at?: string | null
           valor: number
@@ -1228,6 +1230,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           recorrente?: boolean | null
+          servico_id?: string | null
           tipo?: string
           updated_at?: string | null
           valor?: number
@@ -1252,6 +1255,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financeiro_lancamentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
             referencedColumns: ["id"]
           },
         ]
@@ -1540,6 +1550,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      servicos: {
+        Row: {
+          ativo: boolean | null
+          categoria: string | null
+          created_at: string | null
+          descricao: string | null
+          duracao_meses: number | null
+          empresa_id: string
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          duracao_meses?: number | null
+          empresa_id: string
+          id?: string
+          nome: string
+          tipo?: string
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          duracao_meses?: number | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

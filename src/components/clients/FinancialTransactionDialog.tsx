@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useServicos } from "@/hooks/useServicos";
 import { toLocalISODate } from "@/utils/dateUtils";
+import { Package } from "lucide-react";
 
 interface FinancialTransactionDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface FinancialTransactionDialogProps {
 export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTransactionAdded }: FinancialTransactionDialogProps) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
+  const { servicosAtivos } = useServicos();
   const [loading, setLoading] = useState(false);
   const [clientName, setClientName] = useState<string>("");
   const [formData, setFormData] = useState({
@@ -30,7 +32,8 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
     valor: "",
     data: toLocalISODate(),
     aReceber: false,
-    recorrente: false
+    recorrente: false,
+    servico_id: "none"
   });
 
   // Buscar nome do cliente quando o dialog abrir
@@ -57,6 +60,26 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
 
     fetchClientName();
   }, [open, clientId, userProfile?.empresa_id]);
+
+  const handleServicoChange = (servicoId: string) => {
+    if (servicoId === 'none') {
+      setFormData(prev => ({ ...prev, servico_id: 'none' }));
+      return;
+    }
+
+    const servico = servicosAtivos.find(s => s.id === servicoId);
+    if (servico) {
+      setFormData(prev => ({
+        ...prev,
+        servico_id: servicoId,
+        descricao: servico.nome,
+        valor: servico.valor.toString(),
+        categoria: servico.categoria.toLowerCase(),
+        tipo: 'receita',
+        recorrente: servico.tipo !== 'avulso',
+      }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +115,8 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
            a_receber: formData.aReceber,
            recorrente: formData.recorrente,
            created_by: userProfile.id,
-           cliente_id: clientId
+           cliente_id: clientId,
+           servico_id: formData.servico_id !== 'none' ? formData.servico_id : null
          }]);
 
       if (error) {
@@ -112,7 +136,8 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
         valor: "",
         data: toLocalISODate(),
         aReceber: false,
-        recorrente: false
+        recorrente: false,
+        servico_id: "none"
       });
       onOpenChange(false);
       onTransactionAdded();
@@ -135,6 +160,32 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
           <DialogTitle>Adicionar Movimentação Financeira</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Seleção de Serviço */}
+          {servicosAtivos.length > 0 && (
+            <div>
+              <Label htmlFor="servico" className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Serviço (Opcional)
+              </Label>
+              <Select value={formData.servico_id} onValueChange={handleServicoChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um serviço" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (preenchimento manual)</SelectItem>
+                  {servicosAtivos.map((servico) => (
+                    <SelectItem key={servico.id} value={servico.id}>
+                      {servico.nome} - R$ {servico.valor.toFixed(2)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Ao selecionar um serviço, os campos serão preenchidos automaticamente
+              </p>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="tipo">Tipo *</Label>
             <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
@@ -155,9 +206,11 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
                 <SelectValue placeholder="Selecione a categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="servicos">Serviços</SelectItem>
+                <SelectItem value="serviços">Serviços</SelectItem>
                 <SelectItem value="produtos">Produtos</SelectItem>
                 <SelectItem value="consultoria">Consultoria</SelectItem>
+                <SelectItem value="aulas">Aulas</SelectItem>
+                <SelectItem value="eventos">Eventos</SelectItem>
                 <SelectItem value="outros">Outros</SelectItem>
               </SelectContent>
             </Select>
@@ -225,7 +278,7 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading} className="bg-[#43B26D] hover:bg-[#37A05B]">
+            <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
               {loading ? "Registrando..." : "Registrar Movimentação"}
             </Button>
           </div>
