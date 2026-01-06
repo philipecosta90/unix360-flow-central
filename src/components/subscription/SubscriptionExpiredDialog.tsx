@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import {
@@ -13,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, CreditCard, RefreshCw, LogOut } from 'lucide-react';
 
 export const SubscriptionExpiredDialog = () => {
-  const navigate = useNavigate();
   const { userProfile, signOut } = useAuth();
   const { subscriptionStatus, refreshSubscriptionStatus, loading } = useSubscription();
   const [isOpen, setIsOpen] = useState(false);
@@ -51,7 +49,7 @@ export const SubscriptionExpiredDialog = () => {
     try {
       await signOut();
       setIsOpen(false);
-      navigate('/auth', { replace: true });
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Erro ao sair:', error);
       setIsSigningOut(false);
