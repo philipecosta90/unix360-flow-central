@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Servico {
   id: string;
@@ -33,43 +34,35 @@ export interface UpdateServicoData extends Partial<CreateServicoData> {
 export const useServicos = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { userProfile } = useAuth();
 
   const { data: servicos = [], isLoading } = useQuery({
-    queryKey: ['servicos'],
+    queryKey: ['servicos', userProfile?.empresa_id],
     queryFn: async () => {
-      const { data: profile } = await supabase
-        .from('perfis')
-        .select('empresa_id')
-        .single();
-
-      if (!profile?.empresa_id) return [];
+      if (!userProfile?.empresa_id) return [];
 
       const { data, error } = await supabase
         .from('servicos')
         .select('*')
-        .eq('empresa_id', profile.empresa_id)
+        .eq('empresa_id', userProfile.empresa_id)
         .order('nome', { ascending: true });
 
       if (error) throw error;
       return data as Servico[];
     },
+    enabled: !!userProfile?.empresa_id,
   });
 
   const createServico = useMutation({
     mutationFn: async (data: CreateServicoData) => {
-      const { data: profile } = await supabase
-        .from('perfis')
-        .select('empresa_id')
-        .single();
-
-      if (!profile?.empresa_id) {
+      if (!userProfile?.empresa_id) {
         throw new Error('Empresa não encontrada');
       }
 
       const { data: servico, error } = await supabase
         .from('servicos')
         .insert({
-          empresa_id: profile.empresa_id,
+          empresa_id: userProfile.empresa_id,
           nome: data.nome,
           descricao: data.descricao || null,
           valor: data.valor,
