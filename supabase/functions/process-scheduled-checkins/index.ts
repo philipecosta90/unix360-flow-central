@@ -461,11 +461,6 @@ Equipe *${nomeEmpresa}*`;
         resultados,
         timestamp: endTime,
       }),
-        enviados,
-        erros,
-        resultados,
-        timestamp: endTime,
-      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
