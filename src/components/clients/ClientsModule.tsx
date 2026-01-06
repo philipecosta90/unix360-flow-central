@@ -17,7 +17,8 @@ import { usePlanExpirationAlerts } from "@/hooks/usePlanExpirationAlerts";
 import { formatDateDisplay } from "@/utils/dateUtils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, Plus, Search, CalendarDays, AlertTriangle, ChevronDown, ChevronUp, Users, UserPlus } from "lucide-react";
+import { Loader2, Plus, Search, CalendarDays, AlertTriangle, ChevronDown, ChevronUp, Users, UserPlus, Upload } from "lucide-react";
+import { ImportClientsDialog } from "./ImportClientsDialog";
 interface Cliente {
   id: string;
   nome: string;
@@ -48,6 +49,7 @@ export const ClientsModule = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [showAllExpiringPlans, setShowAllExpiringPlans] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const fetchClients = async () => {
     if (!userProfile?.empresa_id) return;
     try {
@@ -298,10 +300,16 @@ export const ClientsModule = () => {
           <h1 className="text-3xl font-bold text-green-500">Clientes</h1>
           <p className="text-gray-600 mt-2">Gerencie sua base de clientes</p>
         </div>
-        <Button onClick={() => setShowAddDrawer(true)} className="bg-[#43B26D] hover:bg-[#37A05B]">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Cliente
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowImportDialog(true)}>
+            <Upload className="w-4 h-4 mr-2" />
+            Importar
+          </Button>
+          <Button onClick={() => setShowAddDrawer(true)} className="bg-[#43B26D] hover:bg-[#37A05B]">
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Cliente
+          </Button>
+        </div>
       </div>
 
       {/* Métricas de Clientes */}
@@ -504,9 +512,15 @@ export const ClientsModule = () => {
             </div>}
         </>}
 
-      {/* Drawers */}
+      {/* Drawers e Dialogs */}
       <AddClientDrawer open={showAddDrawer} onClose={() => setShowAddDrawer(false)} onSave={handleAddClient} />
 
       {editingClient && <EditClientDrawer open={!!editingClient} onClose={() => setEditingClient(null)} onSave={handleEditClient} client={editingClient} />}
+
+      <ImportClientsDialog 
+        open={showImportDialog} 
+        onOpenChange={setShowImportDialog} 
+        onSuccess={fetchClients} 
+      />
     </div>;
 };
