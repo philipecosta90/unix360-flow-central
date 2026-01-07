@@ -36,6 +36,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     tags: "",
     observacoes: "",
     data_nascimento: "",
+    cpf_cnpj: "",
     // Campos de endereço
     cep: "",
     logradouro: "",
@@ -165,6 +166,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         data_inicio_plano: dataInicioPlano || null,
         data_fim_plano: dataFimPlano || null,
         data_nascimento: formData.data_nascimento || null,
+        cpf_cnpj: formData.cpf_cnpj.trim() || null,
         // Campos de endereço
         cep: formData.cep.trim() || null,
         logradouro: formData.logradouro.trim() || null,
@@ -241,6 +243,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       tags: "",
       observacoes: "",
       data_nascimento: "",
+      cpf_cnpj: "",
       cep: "",
       logradouro: "",
       numero: "",
@@ -318,14 +321,31 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="data_nascimento">Data de Nascimento</Label>
-              <Input
-                id="data_nascimento"
-                type="date"
-                value={formData.data_nascimento}
-                onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="data_nascimento">Data de Nascimento</Label>
+                <Input
+                  id="data_nascimento"
+                  type="date"
+                  value={formData.data_nascimento}
+                  onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
+                <Input
+                  id="cpf_cnpj"
+                  value={formData.cpf_cnpj}
+                  onChange={(e) => {
+                    // Remove caracteres não numéricos
+                    const value = e.target.value.replace(/\D/g, '');
+                    setFormData({...formData, cpf_cnpj: value});
+                  }}
+                  placeholder="Somente números"
+                  maxLength={14}
+                />
+              </div>
             </div>
 
             {/* Endereço */}
