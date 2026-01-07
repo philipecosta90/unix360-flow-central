@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/utils/logger";
-import { X, MapPin } from "lucide-react";
+import { X, MapPin, CreditCard } from "lucide-react";
 import { parseISO } from "date-fns";
+import { useServicos } from "@/hooks/useServicos";
 
 interface Cliente {
   id: string;
@@ -42,6 +43,7 @@ interface EditClientDrawerProps {
 
 export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDrawerProps) => {
   const { toast } = useToast();
+  const { servicosAtivos } = useServicos();
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -64,6 +66,9 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
   const [dataFimPlano, setDataFimPlano] = useState<string>("");
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [servicoSelecionadoId, setServicoSelecionadoId] = useState<string>("");
+
+  const servicoSelecionado = servicosAtivos?.find(s => s.id === servicoSelecionadoId);
 
   // Log de montagem do componente
   useEffect(() => {
@@ -93,8 +98,16 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
       });
       setDataInicioPlano(client.data_inicio_plano || "");
       setDataFimPlano(client.data_fim_plano || "");
+      
+      // Encontrar serviço correspondente ao plano_contratado
+      if (client.plano_contratado && servicosAtivos) {
+        const servico = servicosAtivos.find(s => s.nome === client.plano_contratado);
+        setServicoSelecionadoId(servico?.id || "");
+      } else {
+        setServicoSelecionadoId("");
+      }
     }
-  }, [client]);
+  }, [client, servicosAtivos]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -371,14 +384,46 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                 </Select>
               </div>
 
+              {/* Serviço Contratado */}
               <div className="space-y-2">
-                <Label htmlFor="plano">Plano Contratado</Label>
-                <Input
-                  id="plano"
-                  value={formData.plano_contratado}
-                  onChange={(e) => setFormData({...formData, plano_contratado: e.target.value})}
-                  placeholder="Básico, Premium, VIP..."
-                />
+                <Label className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  Serviço Contratado
+                </Label>
+                <Select 
+                  value={servicoSelecionadoId} 
+                  onValueChange={(value) => {
+                    setServicoSelecionadoId(value);
+                    if (value === "none" || value === "") {
+                      setFormData(prev => ({ ...prev, plano_contratado: "" }));
+                    } else {
+                      const servico = servicosAtivos?.find(s => s.id === value);
+                      if (servico) {
+                        setFormData(prev => ({ ...prev, plano_contratado: servico.nome }));
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o serviço" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum serviço</SelectItem>
+                    {servicosAtivos?.map((servico) => (
+                      <SelectItem key={servico.id} value={servico.id}>
+                        {servico.nome} - R$ {servico.valor.toFixed(2)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {servicoSelecionado && (
+                  <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 mt-1">
+                    <span className="font-medium">{servicoSelecionado.tipo === 'recorrente' ? 'Recorrente' : 'Único'}</span>
+                    {servicoSelecionado.duracao_meses && (
+                      <span> • {servicoSelecionado.duracao_meses} {servicoSelecionado.duracao_meses === 1 ? 'mês' : 'meses'}</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
