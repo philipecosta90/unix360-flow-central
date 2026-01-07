@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 interface Pergunta {
@@ -37,6 +37,7 @@ interface EnvioData {
   template: {
     nome: string;
     descricao: string | null;
+    aviso_final: string | null;
   };
 }
 
@@ -281,6 +282,25 @@ export const AnamnesePublicPage = () => {
               </CardContent>
             </Card>
           ))}
+
+          {/* Card de Avisos Importantes */}
+          {envio?.template?.aviso_final && (
+            <Card className="bg-amber-50 border-amber-200">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold text-amber-800 text-sm mb-1">
+                      Avisos Importantes
+                    </h3>
+                    <p className="text-sm text-amber-700 whitespace-pre-line">
+                      {envio.template.aviso_final}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Button
             type="submit"
