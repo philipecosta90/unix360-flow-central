@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toLocalISODate } from "@/utils/dateUtils";
+import { toLocalISODate, parseLocalDate } from "@/utils/dateUtils";
 
 interface FinancialTransaction {
   id: string;
@@ -267,7 +267,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
   const monthlyRevenueData = allTransactions
     .filter(t => t.tipo === 'entrada' && !t.a_receber)
     .reduce((acc, transaction) => {
-      const date = new Date(transaction.data);
+      const date = parseLocalDate(transaction.data);
       const monthKey = date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }).toUpperCase().replace('.', '');
       const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
