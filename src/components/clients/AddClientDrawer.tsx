@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { parseISO } from "date-fns";
+import { parseISO, addMonths, format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -10,9 +10,11 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAnamnese } from "@/hooks/useAnamnese";
+import { useServicos } from "@/hooks/useServicos";
+import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
+
 import { logger } from "@/utils/logger";
-import { supabase } from "@/integrations/supabase/client";
-import { X, ClipboardList, MessageCircle } from "lucide-react";
+import { X, ClipboardList, MessageCircle, CreditCard } from "lucide-react";
 
 interface AddClientDrawerProps {
   open: boolean;
@@ -22,23 +24,38 @@ interface AddClientDrawerProps {
 
 export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps) => {
   const { toast } = useToast();
+  
   const { templates, fetchTemplates, sendAnamnese } = useAnamnese();
+  const { servicosAtivos, isLoading: loadingServicos } = useServicos();
+  const { createTransaction } = useFinancialTransactions({});
+  
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
     telefone: "",
-    status: "lead" as const,
-    plano_contratado: "",
     tags: "",
     observacoes: "",
     data_nascimento: "",
   });
-  const [dataInicioPlano, setDataInicioPlano] = useState<string>("");
+  
+  // Serviço e plano
+  const [servicoSelecionadoId, setServicoSelecionadoId] = useState<string>("");
+  const [dataInicioPlano, setDataInicioPlano] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [dataFimPlano, setDataFimPlano] = useState<string>("");
+  
+  // Pagamento
+  const [formaPagamento, setFormaPagamento] = useState<string>("pix");
+  const [statusPagamento, setStatusPagamento] = useState<string>("pago");
+  const [dataPagamento, setDataPagamento] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  
+  // Anamnese e boas-vindas
   const [enviarAnamnese, setEnviarAnamnese] = useState(false);
   const [enviarBoasVindas, setEnviarBoasVindas] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [loading, setLoading] = useState(false);
+
+  // Serviço selecionado
+  const servicoSelecionado = servicosAtivos?.find(s => s.id === servicoSelecionadoId);
 
   // Log de montagem do componente
   useEffect(() => {
@@ -58,6 +75,16 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     }
   }, [templates, selectedTemplateId]);
 
+  // Calcular data de término automaticamente quando serviço ou data de início mudar
+  useEffect(() => {
+    if (servicoSelecionado && dataInicioPlano) {
+      const duracaoMeses = servicoSelecionado.duracao_meses || 1;
+      const dataInicio = parseISO(dataInicioPlano);
+      const dataFim = addMonths(dataInicio, duracaoMeses);
+      setDataFimPlano(format(dataFim, "yyyy-MM-dd"));
+    }
+  }, [servicoSelecionado, dataInicioPlano]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -65,6 +92,15 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       toast({
         title: "Erro",
         description: "O nome do cliente é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!servicoSelecionadoId) {
+      toast({
+        title: "Erro",
+        description: "Selecione um serviço para o cliente.",
         variant: "destructive",
       });
       return;
@@ -79,20 +115,6 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       return;
     }
 
-    // Validar datas
-    if (dataInicioPlano && dataFimPlano) {
-      const inicio = parseISO(dataInicioPlano);
-      const fim = parseISO(dataFimPlano);
-      if (fim < inicio) {
-        toast({
-          title: "Erro",
-          description: "A data de fim do plano não pode ser anterior à data de início.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
     setLoading(true);
 
     try {
@@ -100,8 +122,8 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         nome: formData.nome.trim(),
         email: formData.email.trim() || null,
         telefone: formData.telefone.trim() || null,
-        status: formData.status,
-        plano_contratado: formData.plano_contratado.trim() || null,
+        status: "ativo" as const, // Sempre ativo ao cadastrar
+        plano_contratado: servicoSelecionado?.nome || null,
         observacoes: formData.observacoes.trim() || null,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
         data_inicio_plano: dataInicioPlano || null,
@@ -114,6 +136,21 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         enviarBoasVindas: enviarBoasVindas && !!formData.telefone 
       });
       
+      // Criar lançamento financeiro se cliente foi criado com sucesso
+      if (result && 'id' in result && servicoSelecionado) {
+        await createTransaction.mutateAsync({
+          tipo: "entrada",
+          descricao: `Contratação: ${servicoSelecionado.nome} - ${formData.nome.trim()}`,
+          valor: servicoSelecionado.valor,
+          categoria: servicoSelecionado.categoria || "Serviços",
+          data: dataPagamento,
+          a_receber: statusPagamento === "a_receber",
+          recorrente: servicoSelecionado.tipo === "recorrente",
+          cliente_id: result.id,
+          servico_id: servicoSelecionado.id,
+        });
+      }
+      
       // Se cliente foi criado e deve enviar anamnese
       if (enviarAnamnese && result && 'id' in result && selectedTemplateId && formData.email) {
         await sendAnamnese(
@@ -125,20 +162,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       }
       
       // Reset form
-      setFormData({
-        nome: "",
-        email: "",
-        telefone: "",
-        status: "lead",
-        plano_contratado: "",
-        tags: "",
-        observacoes: "",
-        data_nascimento: "",
-      });
-      setDataInicioPlano("");
-      setDataFimPlano("");
-      setEnviarAnamnese(false);
-      setEnviarBoasVindas(true);
+      resetForm();
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
     } finally {
@@ -146,21 +170,27 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     }
   };
 
-  const handleClose = () => {
+  const resetForm = () => {
     setFormData({
       nome: "",
       email: "",
       telefone: "",
-      status: "lead",
-      plano_contratado: "",
       tags: "",
       observacoes: "",
       data_nascimento: "",
     });
-    setDataInicioPlano("");
+    setServicoSelecionadoId("");
+    setDataInicioPlano(format(new Date(), "yyyy-MM-dd"));
     setDataFimPlano("");
+    setFormaPagamento("pix");
+    setStatusPagamento("pago");
+    setDataPagamento(format(new Date(), "yyyy-MM-dd"));
     setEnviarAnamnese(false);
     setEnviarBoasVindas(true);
+  };
+
+  const handleClose = () => {
+    resetForm();
     onClose();
   };
 
@@ -183,6 +213,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         
         <form id="add-client-form" onSubmit={handleSubmit} className="flex-1 overflow-auto px-6">
           <div className="space-y-4 pb-6">
+            {/* Dados Pessoais */}
             <div className="space-y-2">
               <Label htmlFor="nome">Nome completo *</Label>
               <Input
@@ -225,35 +256,137 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                 onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value: any) => setFormData({...formData, status: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lead">Lead</SelectItem>
-                    <SelectItem value="prospecto">Prospecto</SelectItem>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
+
+            {/* Serviço Contratado */}
+            <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                <Label className="font-medium">Serviço Contratado *</Label>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="plano">Plano Contratado</Label>
-                <Input
-                  id="plano"
-                  value={formData.plano_contratado}
-                  onChange={(e) => setFormData({...formData, plano_contratado: e.target.value})}
-                  placeholder="Básico, Premium, VIP..."
-                />
+                <Select 
+                  value={servicoSelecionadoId} 
+                  onValueChange={setServicoSelecionadoId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o serviço" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingServicos ? (
+                      <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                    ) : servicosAtivos && servicosAtivos.length > 0 ? (
+                      servicosAtivos.map((servico) => (
+                        <SelectItem key={servico.id} value={servico.id}>
+                          {servico.nome} - R$ {servico.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>Nenhum serviço cadastrado</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                {(!servicosAtivos || servicosAtivos.length === 0) && !loadingServicos && (
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum serviço cadastrado. Crie um no módulo Serviços.
+                  </p>
+                )}
               </div>
+
+              {servicoSelecionado && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Valor</Label>
+                      <p className="font-medium text-lg">
+                        R$ {servicoSelecionado.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Duração</Label>
+                      <p className="font-medium">
+                        {servicoSelecionado.duracao_meses || 1} {(servicoSelecionado.duracao_meses || 1) === 1 ? 'mês' : 'meses'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="data_inicio_plano">Data de Início</Label>
+                      <Input
+                        id="data_inicio_plano"
+                        type="date"
+                        value={dataInicioPlano}
+                        onChange={(e) => setDataInicioPlano(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="data_fim_plano">Data de Término</Label>
+                      <Input
+                        id="data_fim_plano"
+                        type="date"
+                        value={dataFimPlano}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
+
+            {/* Pagamento */}
+            {servicoSelecionado && (
+              <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-green-500" />
+                  <Label className="font-medium">Dados do Pagamento</Label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Forma de Pagamento</Label>
+                    <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pix">Pix</SelectItem>
+                        <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                        <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                        <SelectItem value="boleto">Boleto</SelectItem>
+                        <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                        <SelectItem value="transferencia">Transferência</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Status do Pagamento</Label>
+                    <Select value={statusPagamento} onValueChange={setStatusPagamento}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pago">Pago</SelectItem>
+                        <SelectItem value="a_receber">A Receber</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="data_pagamento">Data do Pagamento</Label>
+                    <Input
+                      id="data_pagamento"
+                      type="date"
+                      value={dataPagamento}
+                      onChange={(e) => setDataPagamento(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
@@ -265,29 +398,6 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="data_inicio_plano">Data de Início do Plano</Label>
-                <Input
-                  id="data_inicio_plano"
-                  type="date"
-                  value={dataInicioPlano}
-                  onChange={(e) => setDataInicioPlano(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="data_fim_plano">Data de Término do Plano</Label>
-                <Input
-                  id="data_fim_plano"
-                  type="date"
-                  value={dataFimPlano}
-                  min={dataInicioPlano || undefined}
-                  onChange={(e) => setDataFimPlano(e.target.value)}
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="observacoes">Observações</Label>
               <Textarea
@@ -295,7 +405,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                 value={formData.observacoes}
                 onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
                 placeholder="Informações adicionais sobre o cliente..."
-                rows={4}
+                rows={3}
               />
             </div>
 
