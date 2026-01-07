@@ -55,6 +55,9 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
+  // Serviço selecionado
+  const servicoSelecionado = servicosAtivos?.find(s => s.id === servicoSelecionadoId);
+
   // Calcular preview das parcelas
   const calcularParcelas = () => {
     if (!servicoSelecionado || formaPagamento !== "pix_parcelado") return [];
@@ -80,9 +83,6 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   };
 
   const parcelasPreview = calcularParcelas();
-
-  // Serviço selecionado
-  const servicoSelecionado = servicosAtivos?.find(s => s.id === servicoSelecionadoId);
 
   // Log de montagem do componente
   useEffect(() => {
