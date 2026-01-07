@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { format, subDays, startOfMonth } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Table, 
   TableBody, 
@@ -30,7 +32,8 @@ import {
   ShoppingCart, 
   Target,
   BarChart3,
-  PieChartIcon
+  PieChartIcon,
+  Calendar
 } from "lucide-react";
 import { useServicosReport } from "@/hooks/useServicosReport";
 
@@ -52,9 +55,57 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+type FiltroTipo = 'hoje' | '7_dias' | '15_dias' | '30_dias' | 'mes_atual' | 'sempre' | 'personalizado';
+
 export const ServicosReport = () => {
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const hoje = new Date();
+  const primeiroDiaMes = startOfMonth(hoje);
+
+  const [startDate, setStartDate] = useState<string>(format(primeiroDiaMes, 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState<string>(format(hoje, 'yyyy-MM-dd'));
+  const [filtroAtivo, setFiltroAtivo] = useState<FiltroTipo>('mes_atual');
+
+  const aplicarFiltroRapido = (tipo: FiltroTipo) => {
+    const agora = new Date();
+    setFiltroAtivo(tipo);
+    
+    switch(tipo) {
+      case 'hoje':
+        setStartDate(format(agora, 'yyyy-MM-dd'));
+        setEndDate(format(agora, 'yyyy-MM-dd'));
+        break;
+      case '7_dias':
+        setStartDate(format(subDays(agora, 7), 'yyyy-MM-dd'));
+        setEndDate(format(agora, 'yyyy-MM-dd'));
+        break;
+      case '15_dias':
+        setStartDate(format(subDays(agora, 15), 'yyyy-MM-dd'));
+        setEndDate(format(agora, 'yyyy-MM-dd'));
+        break;
+      case '30_dias':
+        setStartDate(format(subDays(agora, 30), 'yyyy-MM-dd'));
+        setEndDate(format(agora, 'yyyy-MM-dd'));
+        break;
+      case 'mes_atual':
+        setStartDate(format(startOfMonth(agora), 'yyyy-MM-dd'));
+        setEndDate(format(agora, 'yyyy-MM-dd'));
+        break;
+      case 'sempre':
+        setStartDate('');
+        setEndDate('');
+        break;
+    }
+  };
+
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    setFiltroAtivo('personalizado');
+  };
+
+  const handleEndDateChange = (value: string) => {
+    setEndDate(value);
+    setFiltroAtivo('personalizado');
+  };
 
   const { reportData, isLoading, totals } = useServicosReport({
     startDate: startDate || null,
@@ -91,11 +142,58 @@ export const ServicosReport = () => {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Target className="h-5 w-5" />
+            <Calendar className="h-5 w-5" />
             Filtrar por Período
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Filtros rápidos */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={filtroAtivo === 'hoje' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => aplicarFiltroRapido('hoje')}
+            >
+              Hoje
+            </Button>
+            <Button
+              variant={filtroAtivo === '7_dias' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => aplicarFiltroRapido('7_dias')}
+            >
+              Últimos 7 dias
+            </Button>
+            <Button
+              variant={filtroAtivo === '15_dias' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => aplicarFiltroRapido('15_dias')}
+            >
+              Últimos 15 dias
+            </Button>
+            <Button
+              variant={filtroAtivo === '30_dias' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => aplicarFiltroRapido('30_dias')}
+            >
+              Últimos 30 dias
+            </Button>
+            <Button
+              variant={filtroAtivo === 'mes_atual' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => aplicarFiltroRapido('mes_atual')}
+            >
+              Mês Atual
+            </Button>
+            <Button
+              variant={filtroAtivo === 'sempre' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => aplicarFiltroRapido('sempre')}
+            >
+              Sempre
+            </Button>
+          </div>
+
+          {/* Campos de data */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Label htmlFor="startDate">Data Inicial</Label>
@@ -103,7 +201,7 @@ export const ServicosReport = () => {
                 id="startDate"
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => handleStartDateChange(e.target.value)}
               />
             </div>
             <div className="flex-1">
@@ -112,13 +210,14 @@ export const ServicosReport = () => {
                 id="endDate"
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => handleEndDateChange(e.target.value)}
               />
             </div>
           </div>
-          {!startDate && !endDate && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Exibindo dados de todo o período. Selecione datas para filtrar.
+
+          {filtroAtivo === 'sempre' && (
+            <p className="text-sm text-muted-foreground">
+              Exibindo dados de todo o período.
             </p>
           )}
         </CardContent>
