@@ -47,12 +47,39 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   const [formaPagamento, setFormaPagamento] = useState<string>("pix");
   const [statusPagamento, setStatusPagamento] = useState<string>("pago");
   const [dataPagamento, setDataPagamento] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [numeroParcelas, setNumeroParcelas] = useState<number>(3);
   
   // Anamnese e boas-vindas
   const [enviarAnamnese, setEnviarAnamnese] = useState(false);
   const [enviarBoasVindas, setEnviarBoasVindas] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [loading, setLoading] = useState(false);
+
+  // Calcular preview das parcelas
+  const calcularParcelas = () => {
+    if (!servicoSelecionado || formaPagamento !== "pix_parcelado") return [];
+    
+    const valorTotal = servicoSelecionado.valor;
+    const valorParcela = Math.floor((valorTotal / numeroParcelas) * 100) / 100;
+    const valorUltimaParcela = Math.round((valorTotal - (valorParcela * (numeroParcelas - 1))) * 100) / 100;
+    
+    return Array.from({ length: numeroParcelas }, (_, i) => {
+      const dataParcela = addMonths(parseISO(dataPagamento), i);
+      const isPrimeiraParcela = i === 0;
+      const isUltimaParcela = i === numeroParcelas - 1;
+      
+      return {
+        numero: i + 1,
+        valor: isUltimaParcela ? valorUltimaParcela : valorParcela,
+        data: format(dataParcela, "dd/MM/yyyy"),
+        dataISO: format(dataParcela, "yyyy-MM-dd"),
+        status: isPrimeiraParcela ? (statusPagamento === "pago" ? "Pago" : "A Receber") : "A Receber",
+        aReceber: isPrimeiraParcela ? statusPagamento === "a_receber" : true,
+      };
+    });
+  };
+
+  const parcelasPreview = calcularParcelas();
 
   // Serviço selecionado
   const servicoSelecionado = servicosAtivos?.find(s => s.id === servicoSelecionadoId);
@@ -136,19 +163,38 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         enviarBoasVindas: enviarBoasVindas && !!formData.telefone 
       });
       
-      // Criar lançamento financeiro se cliente foi criado com sucesso
+      // Criar lançamento(s) financeiro(s) se cliente foi criado com sucesso
       if (result && 'id' in result && servicoSelecionado) {
-        await createTransaction.mutateAsync({
-          tipo: "entrada",
-          descricao: `Contratação: ${servicoSelecionado.nome} - ${formData.nome.trim()}`,
-          valor: servicoSelecionado.valor,
-          categoria: servicoSelecionado.categoria || "Serviços",
-          data: dataPagamento,
-          a_receber: statusPagamento === "a_receber",
-          recorrente: servicoSelecionado.tipo === "recorrente",
-          cliente_id: result.id,
-          servico_id: servicoSelecionado.id,
-        });
+        if (formaPagamento === "pix_parcelado") {
+          // Criar múltiplas parcelas
+          const parcelas = calcularParcelas();
+          for (const parcela of parcelas) {
+            await createTransaction.mutateAsync({
+              tipo: "entrada",
+              descricao: `Contratação: ${servicoSelecionado.nome} - ${formData.nome.trim()} (${parcela.numero}/${numeroParcelas})`,
+              valor: parcela.valor,
+              categoria: servicoSelecionado.categoria || "Serviços",
+              data: parcela.dataISO,
+              a_receber: parcela.aReceber,
+              recorrente: false,
+              cliente_id: result.id,
+              servico_id: servicoSelecionado.id,
+            });
+          }
+        } else {
+          // Criar apenas 1 lançamento
+          await createTransaction.mutateAsync({
+            tipo: "entrada",
+            descricao: `Contratação: ${servicoSelecionado.nome} - ${formData.nome.trim()}`,
+            valor: servicoSelecionado.valor,
+            categoria: servicoSelecionado.categoria || "Serviços",
+            data: dataPagamento,
+            a_receber: statusPagamento === "a_receber",
+            recorrente: servicoSelecionado.tipo === "recorrente",
+            cliente_id: result.id,
+            servico_id: servicoSelecionado.id,
+          });
+        }
       }
       
       // Se cliente foi criado e deve enviar anamnese
@@ -185,6 +231,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     setFormaPagamento("pix");
     setStatusPagamento("pago");
     setDataPagamento(format(new Date(), "yyyy-MM-dd"));
+    setNumeroParcelas(3);
     setEnviarAnamnese(false);
     setEnviarBoasVindas(true);
   };
@@ -353,6 +400,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pix">Pix</SelectItem>
+                        <SelectItem value="pix_parcelado">Pix Parcelado</SelectItem>
                         <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
                         <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
                         <SelectItem value="boleto">Boleto</SelectItem>
@@ -362,8 +410,26 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                     </Select>
                   </div>
 
+                  {formaPagamento === "pix_parcelado" && (
+                    <div className="space-y-2">
+                      <Label>Número de Parcelas</Label>
+                      <Select value={numeroParcelas.toString()} onValueChange={(v) => setNumeroParcelas(parseInt(v))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2">2x</SelectItem>
+                          <SelectItem value="3">3x</SelectItem>
+                          <SelectItem value="4">4x</SelectItem>
+                          <SelectItem value="5">5x</SelectItem>
+                          <SelectItem value="6">6x</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
-                    <Label>Status do Pagamento</Label>
+                    <Label>{formaPagamento === "pix_parcelado" ? "Status da 1ª Parcela" : "Status do Pagamento"}</Label>
                     <Select value={statusPagamento} onValueChange={setStatusPagamento}>
                       <SelectTrigger>
                         <SelectValue />
@@ -376,7 +442,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="data_pagamento">Data do Pagamento</Label>
+                    <Label htmlFor="data_pagamento">{formaPagamento === "pix_parcelado" ? "Data da 1ª Parcela" : "Data do Pagamento"}</Label>
                     <Input
                       id="data_pagamento"
                       type="date"
@@ -385,6 +451,23 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                     />
                   </div>
                 </div>
+
+                {/* Preview das parcelas */}
+                {formaPagamento === "pix_parcelado" && parcelasPreview.length > 0 && (
+                  <div className="mt-4 p-3 bg-background rounded-md border">
+                    <Label className="text-xs text-muted-foreground mb-2 block">Preview das parcelas:</Label>
+                    <div className="space-y-1">
+                      {parcelasPreview.map((parcela) => (
+                        <div key={parcela.numero} className="flex justify-between text-sm">
+                          <span>• {parcela.numero}ª parcela: R$ {parcela.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em {parcela.data}</span>
+                          <span className={parcela.status === "Pago" ? "text-green-600 font-medium" : "text-amber-600"}>
+                            ({parcela.status})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
