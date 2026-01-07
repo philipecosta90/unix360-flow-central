@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useServicos } from "@/hooks/useServicos";
 import { toLocalISODate } from "@/utils/dateUtils";
-import { Package } from "lucide-react";
+import { Package, CreditCard } from "lucide-react";
+import { addMonths, parseISO, format } from "date-fns";
 
 interface FinancialTransactionDialogProps {
   open: boolean;
@@ -25,6 +26,8 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
   const { servicosAtivos } = useServicos();
   const [loading, setLoading] = useState(false);
   const [clientName, setClientName] = useState<string>("");
+  const [formaPagamento, setFormaPagamento] = useState<string>("pix");
+  const [numeroParcelas, setNumeroParcelas] = useState<number>(3);
   const [formData, setFormData] = useState({
     tipo: "",
     categoria: "",
@@ -60,6 +63,31 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
 
     fetchClientName();
   }, [open, clientId, userProfile?.empresa_id]);
+
+  const calcularParcelas = useMemo(() => {
+    if (formaPagamento !== "pix_parcelado" || !formData.valor || !formData.data) return [];
+    
+    const valorTotal = parseFloat(formData.valor);
+    if (isNaN(valorTotal) || valorTotal <= 0) return [];
+    
+    const valorParcela = Math.floor((valorTotal / numeroParcelas) * 100) / 100;
+    const valorUltimaParcela = Math.round((valorTotal - (valorParcela * (numeroParcelas - 1))) * 100) / 100;
+    
+    return Array.from({ length: numeroParcelas }, (_, i) => {
+      const dataParcela = addMonths(parseISO(formData.data), i);
+      const isPrimeiraParcela = i === 0;
+      const isUltimaParcela = i === numeroParcelas - 1;
+      
+      return {
+        numero: i + 1,
+        valor: isUltimaParcela ? valorUltimaParcela : valorParcela,
+        data: format(dataParcela, "dd/MM/yyyy"),
+        dataISO: format(dataParcela, "yyyy-MM-dd"),
+        aReceber: isPrimeiraParcela ? formData.aReceber : true,
+        status: isPrimeiraParcela && !formData.aReceber ? "Pago" : "A Receber",
+      };
+    });
+  }, [formaPagamento, formData.valor, formData.data, formData.aReceber, numeroParcelas]);
 
   const handleServicoChange = (servicoId: string) => {
     if (servicoId === 'none') {
@@ -99,34 +127,63 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
       const tipoCorreto = formData.tipo === "receita" ? "entrada" : "saida";
       
       // Incluir o nome do cliente na descrição se disponível
-      const descricaoCompleta = clientName 
+      const descricaoBase = clientName 
         ? `${formData.descricao} - Cliente: ${clientName}`
         : formData.descricao;
-      
-       const { error } = await supabase
-         .from('financeiro_lancamentos')
-         .insert([{
-           empresa_id: userProfile.empresa_id,
-           tipo: tipoCorreto,
-           categoria: formData.categoria,
-           descricao: descricaoCompleta,
-           valor: parseFloat(formData.valor),
-           data: formData.data,
-           a_receber: formData.aReceber,
-           recorrente: formData.recorrente,
-           created_by: userProfile.id,
-           cliente_id: clientId,
-           servico_id: formData.servico_id !== 'none' ? formData.servico_id : null
-         }]);
 
-      if (error) {
-        console.error('Erro ao registrar movimentação:', error);
-        throw error;
+      if (formaPagamento === "pix_parcelado" && calcularParcelas.length > 0) {
+        // Criar múltiplas parcelas
+        for (const parcela of calcularParcelas) {
+          const { error } = await supabase
+            .from('financeiro_lancamentos')
+            .insert([{
+              empresa_id: userProfile.empresa_id,
+              tipo: tipoCorreto,
+              categoria: formData.categoria,
+              descricao: `${descricaoBase} (${parcela.numero}/${numeroParcelas})`,
+              valor: parcela.valor,
+              data: parcela.dataISO,
+              a_receber: parcela.aReceber,
+              recorrente: false,
+              created_by: userProfile.id,
+              cliente_id: clientId,
+              servico_id: formData.servico_id !== 'none' ? formData.servico_id : null
+            }]);
+
+          if (error) {
+            console.error('Erro ao registrar parcela:', error);
+            throw error;
+          }
+        }
+      } else {
+        // Criar apenas 1 lançamento
+        const { error } = await supabase
+          .from('financeiro_lancamentos')
+          .insert([{
+            empresa_id: userProfile.empresa_id,
+            tipo: tipoCorreto,
+            categoria: formData.categoria,
+            descricao: descricaoBase,
+            valor: parseFloat(formData.valor),
+            data: formData.data,
+            a_receber: formData.aReceber,
+            recorrente: formData.recorrente,
+            created_by: userProfile.id,
+            cliente_id: clientId,
+            servico_id: formData.servico_id !== 'none' ? formData.servico_id : null
+          }]);
+
+        if (error) {
+          console.error('Erro ao registrar movimentação:', error);
+          throw error;
+        }
       }
 
       toast({
         title: "Sucesso",
-        description: "Movimentação financeira registrada com sucesso!",
+        description: formaPagamento === "pix_parcelado" 
+          ? `${numeroParcelas} parcelas registradas com sucesso!`
+          : "Movimentação financeira registrada com sucesso!",
       });
 
       setFormData({
@@ -139,6 +196,8 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
         recorrente: false,
         servico_id: "none"
       });
+      setFormaPagamento("pix");
+      setNumeroParcelas(3);
       onOpenChange(false);
       onTransactionAdded();
     } catch (error) {
@@ -155,7 +214,7 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Adicionar Movimentação Financeira</DialogTitle>
         </DialogHeader>
@@ -249,29 +308,91 @@ export const FinancialTransactionDialog = ({ open, onOpenChange, clientId, onTra
               onChange={(e) => setFormData({ ...formData, data: e.target.value })}
             />
           </div>
+
+          {/* Forma de Pagamento */}
+          <div>
+            <Label htmlFor="forma-pagamento" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Forma de Pagamento
+            </Label>
+            <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pix">Pix</SelectItem>
+                <SelectItem value="pix_parcelado">Pix Parcelado</SelectItem>
+                <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                <SelectItem value="boleto">Boleto</SelectItem>
+                <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                <SelectItem value="transferencia">Transferência</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Número de Parcelas - só aparece com Pix Parcelado */}
+          {formaPagamento === "pix_parcelado" && (
+            <div>
+              <Label>Número de Parcelas</Label>
+              <Select value={numeroParcelas.toString()} onValueChange={(v) => setNumeroParcelas(parseInt(v))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2">2x</SelectItem>
+                  <SelectItem value="3">3x</SelectItem>
+                  <SelectItem value="4">4x</SelectItem>
+                  <SelectItem value="5">5x</SelectItem>
+                  <SelectItem value="6">6x</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Preview das Parcelas */}
+          {formaPagamento === "pix_parcelado" && calcularParcelas.length > 0 && (
+            <div className="p-3 bg-muted rounded-md border">
+              <Label className="text-xs text-muted-foreground mb-2 block">
+                Preview das parcelas:
+              </Label>
+              <div className="space-y-1">
+                {calcularParcelas.map((parcela) => (
+                  <div key={parcela.numero} className="flex justify-between text-sm">
+                    <span>• {parcela.numero}ª parcela: R$ {parcela.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em {parcela.data}</span>
+                    <span className={parcela.status === "Pago" ? "text-green-600 font-medium" : "text-amber-600"}>
+                      ({parcela.status})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="a-receber" className="text-sm font-medium">
-                A receber
+                {formaPagamento === "pix_parcelado" ? "1ª parcela paga" : "A receber"}
               </Label>
               <Switch
                 id="a-receber"
-                checked={formData.aReceber}
-                onCheckedChange={(checked) => setFormData({ ...formData, aReceber: checked })}
+                checked={formaPagamento === "pix_parcelado" ? !formData.aReceber : formData.aReceber}
+                onCheckedChange={(checked) => setFormData({ ...formData, aReceber: formaPagamento === "pix_parcelado" ? !checked : checked })}
               />
             </div>
             
-            <div className="flex items-center justify-between">
-              <Label htmlFor="recorrente" className="text-sm font-medium">
-                Recorrente mensal
-              </Label>
-              <Switch
-                id="recorrente"
-                checked={formData.recorrente}
-                onCheckedChange={(checked) => setFormData({ ...formData, recorrente: checked })}
-              />
-            </div>
+            {formaPagamento !== "pix_parcelado" && (
+              <div className="flex items-center justify-between">
+                <Label htmlFor="recorrente" className="text-sm font-medium">
+                  Recorrente mensal
+                </Label>
+                <Switch
+                  id="recorrente"
+                  checked={formData.recorrente}
+                  onCheckedChange={(checked) => setFormData({ ...formData, recorrente: checked })}
+                />
+              </div>
+            )}
           </div>
           
           <div className="flex gap-2 pt-4">

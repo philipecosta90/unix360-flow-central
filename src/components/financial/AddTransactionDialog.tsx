@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { useClients } from "@/hooks/useClients";
 import { useServicos } from "@/hooks/useServicos";
 import { toast } from "sonner";
 import { toLocalISODate } from "@/utils/dateUtils";
-import { Package } from "lucide-react";
+import { Package, CreditCard } from "lucide-react";
+import { addMonths, parseISO, format } from "date-fns";
 
 interface AddTransactionDialogProps {
   open: boolean;
@@ -18,6 +19,8 @@ interface AddTransactionDialogProps {
 }
 
 export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialogProps) => {
+  const [formaPagamento, setFormaPagamento] = useState<string>("pix");
+  const [numeroParcelas, setNumeroParcelas] = useState<number>(3);
   const [formData, setFormData] = useState({
     tipo: 'entrada' as 'entrada' | 'saida',
     descricao: '',
@@ -33,6 +36,31 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
   const { createTransaction } = useFinancialTransactions();
   const { data: clientes = [] } = useClients();
   const { servicosAtivos } = useServicos();
+
+  const calcularParcelas = useMemo(() => {
+    if (formaPagamento !== "pix_parcelado" || !formData.valor || !formData.data) return [];
+    
+    const valorTotal = parseFloat(formData.valor);
+    if (isNaN(valorTotal) || valorTotal <= 0) return [];
+    
+    const valorParcela = Math.floor((valorTotal / numeroParcelas) * 100) / 100;
+    const valorUltimaParcela = Math.round((valorTotal - (valorParcela * (numeroParcelas - 1))) * 100) / 100;
+    
+    return Array.from({ length: numeroParcelas }, (_, i) => {
+      const dataParcela = addMonths(parseISO(formData.data), i);
+      const isPrimeiraParcela = i === 0;
+      const isUltimaParcela = i === numeroParcelas - 1;
+      
+      return {
+        numero: i + 1,
+        valor: isUltimaParcela ? valorUltimaParcela : valorParcela,
+        data: format(dataParcela, "dd/MM/yyyy"),
+        dataISO: format(dataParcela, "yyyy-MM-dd"),
+        aReceber: isPrimeiraParcela ? formData.a_receber : true,
+        status: isPrimeiraParcela && !formData.a_receber ? "Pago" : "A Receber",
+      };
+    });
+  }, [formaPagamento, formData.valor, formData.data, formData.a_receber, numeroParcelas]);
 
   const handleServicoChange = (servicoId: string) => {
     if (servicoId === 'none') {
@@ -63,19 +91,38 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
     }
 
     try {
-      await createTransaction.mutateAsync({
-        tipo: formData.tipo,
-        descricao: formData.descricao,
-        valor: parseFloat(formData.valor),
-        categoria: formData.categoria,
-        data: formData.data,
-        a_receber: formData.a_receber,
-        recorrente: formData.recorrente,
-        cliente_id: formData.cliente_id !== 'none' ? formData.cliente_id : undefined,
-        servico_id: formData.servico_id !== 'none' ? formData.servico_id : undefined,
-      });
+      if (formaPagamento === "pix_parcelado" && calcularParcelas.length > 0) {
+        // Criar múltiplas parcelas
+        for (const parcela of calcularParcelas) {
+          await createTransaction.mutateAsync({
+            tipo: formData.tipo,
+            descricao: `${formData.descricao} (${parcela.numero}/${numeroParcelas})`,
+            valor: parcela.valor,
+            categoria: formData.categoria,
+            data: parcela.dataISO,
+            a_receber: parcela.aReceber,
+            recorrente: false,
+            cliente_id: formData.cliente_id !== 'none' ? formData.cliente_id : undefined,
+            servico_id: formData.servico_id !== 'none' ? formData.servico_id : undefined,
+          });
+        }
+        toast.success(`${numeroParcelas} parcelas criadas com sucesso!`);
+      } else {
+        // Criar apenas 1 lançamento
+        await createTransaction.mutateAsync({
+          tipo: formData.tipo,
+          descricao: formData.descricao,
+          valor: parseFloat(formData.valor),
+          categoria: formData.categoria,
+          data: formData.data,
+          a_receber: formData.a_receber,
+          recorrente: formData.recorrente,
+          cliente_id: formData.cliente_id !== 'none' ? formData.cliente_id : undefined,
+          servico_id: formData.servico_id !== 'none' ? formData.servico_id : undefined,
+        });
+        toast.success("Transação criada com sucesso!");
+      }
       
-      toast.success("Transação criada com sucesso!");
       onOpenChange(false);
       setFormData({
         tipo: 'entrada',
@@ -88,6 +135,8 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
         cliente_id: 'none',
         servico_id: 'none',
       });
+      setFormaPagamento("pix");
+      setNumeroParcelas(3);
     } catch (error) {
       console.error('Erro ao criar transação:', error);
       toast.error("Erro ao criar transação");
@@ -96,7 +145,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nova Transação</DialogTitle>
         </DialogHeader>
@@ -212,23 +261,87 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
             />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="a_receber"
-              checked={formData.a_receber}
-              onCheckedChange={(checked) => setFormData({...formData, a_receber: checked})}
-            />
-            <Label htmlFor="a_receber">A receber</Label>
+          {/* Forma de Pagamento */}
+          <div className="space-y-2">
+            <Label htmlFor="forma-pagamento" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Forma de Pagamento
+            </Label>
+            <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pix">Pix</SelectItem>
+                <SelectItem value="pix_parcelado">Pix Parcelado</SelectItem>
+                <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                <SelectItem value="boleto">Boleto</SelectItem>
+                <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                <SelectItem value="transferencia">Transferência</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {/* Número de Parcelas - só aparece com Pix Parcelado */}
+          {formaPagamento === "pix_parcelado" && (
+            <div className="space-y-2">
+              <Label>Número de Parcelas</Label>
+              <Select value={numeroParcelas.toString()} onValueChange={(v) => setNumeroParcelas(parseInt(v))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2">2x</SelectItem>
+                  <SelectItem value="3">3x</SelectItem>
+                  <SelectItem value="4">4x</SelectItem>
+                  <SelectItem value="5">5x</SelectItem>
+                  <SelectItem value="6">6x</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Preview das Parcelas */}
+          {formaPagamento === "pix_parcelado" && calcularParcelas.length > 0 && (
+            <div className="p-3 bg-muted rounded-md border">
+              <Label className="text-xs text-muted-foreground mb-2 block">
+                Preview das parcelas:
+              </Label>
+              <div className="space-y-1">
+                {calcularParcelas.map((parcela) => (
+                  <div key={parcela.numero} className="flex justify-between text-sm">
+                    <span>• {parcela.numero}ª parcela: R$ {parcela.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em {parcela.data}</span>
+                    <span className={parcela.status === "Pago" ? "text-green-600 font-medium" : "text-amber-600"}>
+                      ({parcela.status})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center space-x-2">
             <Switch
-              id="recorrente"
-              checked={formData.recorrente}
-              onCheckedChange={(checked) => setFormData({...formData, recorrente: checked})}
+              id="a_receber"
+              checked={formaPagamento === "pix_parcelado" ? !formData.a_receber : formData.a_receber}
+              onCheckedChange={(checked) => setFormData({...formData, a_receber: formaPagamento === "pix_parcelado" ? !checked : checked})}
             />
-            <Label htmlFor="recorrente">Recorrente mensal</Label>
+            <Label htmlFor="a_receber">
+              {formaPagamento === "pix_parcelado" ? "1ª parcela paga" : "A receber"}
+            </Label>
           </div>
+
+          {formaPagamento !== "pix_parcelado" && (
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="recorrente"
+                checked={formData.recorrente}
+                onCheckedChange={(checked) => setFormData({...formData, recorrente: checked})}
+              />
+              <Label htmlFor="recorrente">Recorrente mensal</Label>
+            </div>
+          )}
 
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
