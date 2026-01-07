@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,13 @@ import { toast } from "sonner";
 import { toLocalISODate } from "@/utils/dateUtils";
 import { Package, CreditCard } from "lucide-react";
 import { addMonths, parseISO, format } from "date-fns";
+
+interface ParcelaEditavel {
+  numero: number;
+  valor: string;
+  dataISO: string;
+  aReceber: boolean;
+}
 
 interface AddTransactionDialogProps {
   open: boolean;
@@ -37,30 +44,62 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
   const { data: clientes = [] } = useClients();
   const { servicosAtivos } = useServicos();
 
-  const calcularParcelas = useMemo(() => {
-    if (formaPagamento !== "pix_parcelado" || !formData.valor || !formData.data) return [];
+  const [parcelasEditaveis, setParcelasEditaveis] = useState<ParcelaEditavel[]>([]);
+
+  // Inicializar parcelas quando mudar forma de pagamento, valor, data ou número de parcelas
+  useEffect(() => {
+    if (formaPagamento !== "pix_parcelado" || !formData.valor || !formData.data) {
+      setParcelasEditaveis([]);
+      return;
+    }
     
     const valorTotal = parseFloat(formData.valor);
-    if (isNaN(valorTotal) || valorTotal <= 0) return [];
+    if (isNaN(valorTotal) || valorTotal <= 0) {
+      setParcelasEditaveis([]);
+      return;
+    }
     
     const valorParcela = Math.floor((valorTotal / numeroParcelas) * 100) / 100;
     const valorUltimaParcela = Math.round((valorTotal - (valorParcela * (numeroParcelas - 1))) * 100) / 100;
     
-    return Array.from({ length: numeroParcelas }, (_, i) => {
+    const novasParcelas = Array.from({ length: numeroParcelas }, (_, i) => {
       const dataParcela = addMonths(parseISO(formData.data), i);
       const isPrimeiraParcela = i === 0;
       const isUltimaParcela = i === numeroParcelas - 1;
       
       return {
         numero: i + 1,
-        valor: isUltimaParcela ? valorUltimaParcela : valorParcela,
-        data: format(dataParcela, "dd/MM/yyyy"),
+        valor: (isUltimaParcela ? valorUltimaParcela : valorParcela).toFixed(2),
         dataISO: format(dataParcela, "yyyy-MM-dd"),
         aReceber: isPrimeiraParcela ? formData.a_receber : true,
-        status: isPrimeiraParcela && !formData.a_receber ? "Pago" : "A Receber",
       };
     });
-  }, [formaPagamento, formData.valor, formData.data, formData.a_receber, numeroParcelas]);
+    
+    setParcelasEditaveis(novasParcelas);
+  }, [formaPagamento, formData.valor, formData.data, numeroParcelas]);
+
+  // Sincronizar status da 1ª parcela com o switch
+  useEffect(() => {
+    if (parcelasEditaveis.length > 0) {
+      setParcelasEditaveis(prev => 
+        prev.map((p, i) => i === 0 ? { ...p, aReceber: formData.a_receber } : p)
+      );
+    }
+  }, [formData.a_receber]);
+
+  const handleParcelaValorChange = (index: number, novoValor: string) => {
+    setParcelasEditaveis(prev => 
+      prev.map((p, i) => i === index ? { ...p, valor: novoValor } : p)
+    );
+  };
+
+  const handleParcelaDataChange = (index: number, novaData: string) => {
+    setParcelasEditaveis(prev => 
+      prev.map((p, i) => i === index ? { ...p, dataISO: novaData } : p)
+    );
+  };
+
+  const totalParcelas = parcelasEditaveis.reduce((acc, p) => acc + (parseFloat(p.valor) || 0), 0);
 
   const handleServicoChange = (servicoId: string) => {
     if (servicoId === 'none') {
@@ -91,13 +130,13 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
     }
 
     try {
-      if (formaPagamento === "pix_parcelado" && calcularParcelas.length > 0) {
-        // Criar múltiplas parcelas
-        for (const parcela of calcularParcelas) {
+      if (formaPagamento === "pix_parcelado" && parcelasEditaveis.length > 0) {
+        // Criar múltiplas parcelas com valores editados
+        for (const parcela of parcelasEditaveis) {
           await createTransaction.mutateAsync({
             tipo: formData.tipo,
             descricao: `${formData.descricao} (${parcela.numero}/${numeroParcelas})`,
-            valor: parcela.valor,
+            valor: parseFloat(parcela.valor),
             categoria: formData.categoria,
             data: parcela.dataISO,
             a_receber: parcela.aReceber,
@@ -137,6 +176,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
       });
       setFormaPagamento("pix");
       setNumeroParcelas(3);
+      setParcelasEditaveis([]);
     } catch (error) {
       console.error('Erro ao criar transação:', error);
       toast.error("Erro ao criar transação");
@@ -302,22 +342,47 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
             </div>
           )}
 
-          {/* Preview das Parcelas */}
-          {formaPagamento === "pix_parcelado" && calcularParcelas.length > 0 && (
-            <div className="p-3 bg-muted rounded-md border">
-              <Label className="text-xs text-muted-foreground mb-2 block">
-                Preview das parcelas:
-              </Label>
-              <div className="space-y-1">
-                {calcularParcelas.map((parcela) => (
-                  <div key={parcela.numero} className="flex justify-between text-sm">
-                    <span>• {parcela.numero}ª parcela: R$ {parcela.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em {parcela.data}</span>
-                    <span className={parcela.status === "Pago" ? "text-green-600 font-medium" : "text-amber-600"}>
-                      ({parcela.status})
-                    </span>
-                  </div>
-                ))}
+          {/* Parcelas Editáveis */}
+          {formaPagamento === "pix_parcelado" && parcelasEditaveis.length > 0 && (
+            <div className="p-3 bg-muted rounded-md border space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-muted-foreground">
+                  Parcelas (editáveis):
+                </Label>
+                <span className="text-xs font-medium">
+                  Total: R$ {totalParcelas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </span>
               </div>
+              
+              {parcelasEditaveis.map((parcela, index) => (
+                <div key={parcela.numero} className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 items-center">
+                  <span className="text-sm font-medium w-8">{parcela.numero}x</span>
+                  
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={parcela.valor}
+                      onChange={(e) => handleParcelaValorChange(index, e.target.value)}
+                      className="pl-8 h-9"
+                    />
+                  </div>
+                  
+                  <Input
+                    type="date"
+                    value={parcela.dataISO}
+                    onChange={(e) => handleParcelaDataChange(index, e.target.value)}
+                    className="h-9"
+                  />
+                  
+                  <span className={`text-xs w-16 text-right ${
+                    index === 0 && !formData.a_receber ? "text-green-600 font-medium" : "text-amber-600"
+                  }`}>
+                    {index === 0 && !formData.a_receber ? "Pago" : "A Receber"}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
 
