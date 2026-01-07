@@ -355,8 +355,8 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
               </div>
               
               {parcelasEditaveis.map((parcela, index) => (
-                <div key={parcela.numero} className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 items-center">
-                  <span className="text-sm font-medium w-8">{parcela.numero}x</span>
+                <div key={parcela.numero} className="grid grid-cols-[32px_120px_1fr_70px] gap-2 items-center">
+                  <span className="text-sm font-medium">{parcela.numero}x</span>
                   
                   <div className="relative">
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
@@ -365,7 +365,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
                       step="0.01"
                       value={parcela.valor}
                       onChange={(e) => handleParcelaValorChange(index, e.target.value)}
-                      className="pl-8 h-9"
+                      className="pl-9 h-9"
                     />
                   </div>
                   
@@ -376,7 +376,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
                     className="h-9"
                   />
                   
-                  <span className={`text-xs w-16 text-right ${
+                  <span className={`text-xs text-right ${
                     index === 0 && !formData.a_receber ? "text-green-600 font-medium" : "text-amber-600"
                   }`}>
                     {index === 0 && !formData.a_receber ? "Pago" : "A Receber"}
