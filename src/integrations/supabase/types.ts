@@ -581,6 +581,10 @@ export type Database = {
       }
       clientes: {
         Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
           created_at: string
           created_by: string | null
           data_fim_plano: string | null
@@ -588,8 +592,11 @@ export type Database = {
           data_nascimento: string | null
           email: string | null
           empresa_id: string
+          estado: string | null
           id: string
+          logradouro: string | null
           nome: string
+          numero: string | null
           observacoes: string | null
           plano_contratado: string | null
           status: Database["public"]["Enums"]["status_cliente"]
@@ -598,6 +605,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           created_at?: string
           created_by?: string | null
           data_fim_plano?: string | null
@@ -605,8 +616,11 @@ export type Database = {
           data_nascimento?: string | null
           email?: string | null
           empresa_id: string
+          estado?: string | null
           id?: string
+          logradouro?: string | null
           nome: string
+          numero?: string | null
           observacoes?: string | null
           plano_contratado?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
@@ -615,6 +629,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           created_at?: string
           created_by?: string | null
           data_fim_plano?: string | null
@@ -622,8 +640,11 @@ export type Database = {
           data_nascimento?: string | null
           email?: string | null
           empresa_id?: string
+          estado?: string | null
           id?: string
+          logradouro?: string | null
           nome?: string
+          numero?: string | null
           observacoes?: string | null
           plano_contratado?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]

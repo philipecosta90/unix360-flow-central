@@ -14,7 +14,7 @@ import { useServicos } from "@/hooks/useServicos";
 import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 
 import { logger } from "@/utils/logger";
-import { X, ClipboardList, MessageCircle, CreditCard } from "lucide-react";
+import { X, ClipboardList, MessageCircle, CreditCard, MapPin } from "lucide-react";
 
 interface AddClientDrawerProps {
   open: boolean;
@@ -36,7 +36,16 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     tags: "",
     observacoes: "",
     data_nascimento: "",
+    // Campos de endereço
+    cep: "",
+    logradouro: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
   });
+  const [buscandoCep, setBuscandoCep] = useState(false);
   
   // Serviço e plano
   const [servicoSelecionadoId, setServicoSelecionadoId] = useState<string>("");
@@ -155,7 +164,15 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
         data_inicio_plano: dataInicioPlano || null,
         data_fim_plano: dataFimPlano || null,
-        data_nascimento: formData.data_nascimento || null
+        data_nascimento: formData.data_nascimento || null,
+        // Campos de endereço
+        cep: formData.cep.trim() || null,
+        logradouro: formData.logradouro.trim() || null,
+        numero: formData.numero.trim() || null,
+        complemento: formData.complemento.trim() || null,
+        bairro: formData.bairro.trim() || null,
+        cidade: formData.cidade.trim() || null,
+        estado: formData.estado.trim() || null,
       };
 
       // Passa a flag de enviarBoasVindas para o ClientsModule
@@ -224,6 +241,13 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       tags: "",
       observacoes: "",
       data_nascimento: "",
+      cep: "",
+      logradouro: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
     });
     setServicoSelecionadoId("");
     setDataInicioPlano(format(new Date(), "yyyy-MM-dd"));
@@ -302,6 +326,125 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                 value={formData.data_nascimento}
                 onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
               />
+            </div>
+
+            {/* Endereço */}
+            <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <Label className="font-medium">Endereço (para emissão de NF)</Label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cep">CEP</Label>
+                  <div className="relative">
+                    <Input
+                      id="cep"
+                      value={formData.cep}
+                      onChange={(e) => {
+                        const cepValue = e.target.value.replace(/\D/g, '').slice(0, 8);
+                        setFormData({...formData, cep: cepValue});
+                        
+                        // Busca automática por CEP
+                        if (cepValue.length === 8) {
+                          setBuscandoCep(true);
+                          fetch(`https://viacep.com.br/ws/${cepValue}/json/`)
+                            .then(res => res.json())
+                            .then(data => {
+                              if (!data.erro) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  logradouro: data.logradouro || "",
+                                  bairro: data.bairro || "",
+                                  cidade: data.localidade || "",
+                                  estado: data.uf || "",
+                                }));
+                              }
+                            })
+                            .catch(() => {})
+                            .finally(() => setBuscandoCep(false));
+                        }
+                      }}
+                      placeholder="00000000"
+                      maxLength={8}
+                    />
+                    {buscandoCep && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                        Buscando...
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="logradouro">Logradouro</Label>
+                  <Input
+                    id="logradouro"
+                    value={formData.logradouro}
+                    onChange={(e) => setFormData({...formData, logradouro: e.target.value})}
+                    placeholder="Rua, Avenida, etc."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="numero">Número</Label>
+                  <Input
+                    id="numero"
+                    value={formData.numero}
+                    onChange={(e) => setFormData({...formData, numero: e.target.value})}
+                    placeholder="123"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="complemento">Complemento</Label>
+                  <Input
+                    id="complemento"
+                    value={formData.complemento}
+                    onChange={(e) => setFormData({...formData, complemento: e.target.value})}
+                    placeholder="Apto, Bloco..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bairro">Bairro</Label>
+                  <Input
+                    id="bairro"
+                    value={formData.bairro}
+                    onChange={(e) => setFormData({...formData, bairro: e.target.value})}
+                    placeholder="Bairro"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cidade">Cidade</Label>
+                  <Input
+                    id="cidade"
+                    value={formData.cidade}
+                    onChange={(e) => setFormData({...formData, cidade: e.target.value})}
+                    placeholder="Cidade"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="estado">Estado</Label>
+                  <Select value={formData.estado} onValueChange={(value) => setFormData({...formData, estado: value})}>
+                    <SelectTrigger id="estado">
+                      <SelectValue placeholder="UF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map((uf) => (
+                        <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
             {/* Serviço Contratado */}
