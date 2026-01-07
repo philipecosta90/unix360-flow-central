@@ -25,7 +25,7 @@ interface AddClientDrawerProps {
 export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps) => {
   const { toast } = useToast();
   
-  const { templates, fetchTemplates, sendAnamnese } = useAnamnese();
+  const { templates, fetchTemplates, sendAnamnese, sendAnamneseWhatsApp } = useAnamnese();
   const { servicosAtivos, isLoading: loadingServicos } = useServicos();
   const { createTransaction } = useFinancialTransactions({});
   
@@ -143,10 +143,10 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       return;
     }
 
-    if (enviarAnamnese && !formData.email.trim()) {
+    if (enviarAnamnese && !formData.email.trim() && !formData.telefone.trim()) {
       toast({
         title: "Erro",
-        description: "O e-mail é obrigatório para enviar a anamnese.",
+        description: "Informe o telefone ou e-mail do cliente para enviar a anamnese.",
         variant: "destructive",
       });
       return;
@@ -217,13 +217,23 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       }
       
       // Se cliente foi criado e deve enviar anamnese
-      if (enviarAnamnese && result && 'id' in result && selectedTemplateId && formData.email) {
-        await sendAnamnese(
-          result.id,
-          selectedTemplateId,
-          formData.nome.trim(),
-          formData.email.trim()
-        );
+      if (enviarAnamnese && result && 'id' in result && selectedTemplateId) {
+        // Priorizar WhatsApp se tiver telefone, senão usar e-mail
+        if (formData.telefone.trim()) {
+          await sendAnamneseWhatsApp(
+            result.id,
+            selectedTemplateId,
+            formData.nome.trim(),
+            formData.telefone.trim()
+          );
+        } else if (formData.email.trim()) {
+          await sendAnamnese(
+            result.id,
+            selectedTemplateId,
+            formData.nome.trim(),
+            formData.email.trim()
+          );
+        }
       }
       
       // Reset form

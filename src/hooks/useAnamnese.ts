@@ -252,6 +252,49 @@ export function useAnamnese() {
     }
   }, [userProfile?.empresa_id, toast]);
 
+  const sendAnamneseWhatsApp = useCallback(async (
+    clienteId: string,
+    templateId: string,
+    clienteNome: string,
+    clienteTelefone: string
+  ) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("send-anamnese-whatsapp", {
+        body: {
+          clienteId,
+          templateId,
+          clienteNome,
+          clienteTelefone,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "Anamnese enviada!",
+          description: `Questionário enviado para ${clienteNome} via WhatsApp.`,
+        });
+        return true;
+      } else {
+        toast({
+          title: "Atenção",
+          description: data?.message || "Não foi possível enviar a anamnese via WhatsApp.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (error: any) {
+      console.error("Erro ao enviar anamnese via WhatsApp:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar a anamnese via WhatsApp.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [toast]);
+
   const resendAnamnese = useCallback(async (envioId: string) => {
     try {
       // Buscar dados do envio original
@@ -633,6 +676,7 @@ export function useAnamnese() {
     fetchRespostas,
     createDefaultTemplate,
     sendAnamnese,
+    sendAnamneseWhatsApp,
     resendAnamnese,
     deleteEnvio,
     // CRUD Templates
