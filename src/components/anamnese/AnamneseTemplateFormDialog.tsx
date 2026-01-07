@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, GripVertical, Pencil, Eye } from "lucide-react";
+import { Loader2, Plus, Trash2, GripVertical, Pencil, Eye, AlertTriangle } from "lucide-react";
 import { useAnamnese, AnamneseTemplate, AnamnesePergunta } from "@/hooks/useAnamnese";
 import { AnamnesePerguntaFormDialog } from "./AnamnesePerguntaFormDialog";
 import { ClientPagePreview } from "@/components/common/ClientPagePreview";
@@ -59,6 +59,7 @@ export function AnamneseTemplateFormDialog({
 
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [avisoFinal, setAvisoFinal] = useState("");
   const [perguntas, setPerguntas] = useState<AnamnesePergunta[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingPerguntas, setLoadingPerguntas] = useState(false);
@@ -82,11 +83,13 @@ export function AnamneseTemplateFormDialog({
     if (open && template) {
       setNome(template.nome);
       setDescricao(template.descricao || "");
+      setAvisoFinal(template.aviso_final || "");
       setTemplateId(template.id);
       loadPerguntas(template.id);
     } else if (open && !template) {
       setNome("");
       setDescricao("");
+      setAvisoFinal("");
       setPerguntas([]);
       setTemplateId(null);
     }
@@ -105,7 +108,7 @@ export function AnamneseTemplateFormDialog({
     setLoading(true);
     try {
       if (isEditing && template) {
-        await updateTemplate(template.id, { nome, descricao });
+        await updateTemplate(template.id, { nome, descricao, aviso_final: avisoFinal });
       } else {
         const novoTemplate = await createTemplate(nome, descricao);
         if (novoTemplate) {
@@ -245,6 +248,22 @@ export function AnamneseTemplateFormDialog({
                       rows={3}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="avisoFinal" className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      Avisos Importantes (Final do Questionário)
+                    </Label>
+                    <Textarea
+                      id="avisoFinal"
+                      placeholder="Ex: Lembre-se de enviar suas fotos no prazo de 24h após preencher este formulário..."
+                      value={avisoFinal}
+                      onChange={(e) => setAvisoFinal(e.target.value)}
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Este aviso será exibido ao cliente no final do questionário, antes do botão de enviar.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Seção de perguntas - só aparece se já salvou o template */}
@@ -353,6 +372,7 @@ export function AnamneseTemplateFormDialog({
                   templateNome={nome}
                   templateDescricao={descricao}
                   perguntas={previewPerguntas}
+                  avisoFinal={avisoFinal}
                 />
               </div>
             )}
@@ -431,6 +451,7 @@ export function AnamneseTemplateFormDialog({
               templateNome={nome}
               templateDescricao={descricao}
               perguntas={previewPerguntas}
+              avisoFinal={avisoFinal}
             />
           </ScrollArea>
         </SheetContent>

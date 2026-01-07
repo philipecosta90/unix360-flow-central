@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Building2, Eye } from "lucide-react";
+import { Building2, Eye, AlertTriangle } from "lucide-react";
 import { useEmpresaConfig } from "@/hooks/useEmpresaConfig";
 
 interface Pergunta {
@@ -17,6 +17,7 @@ interface ClientPagePreviewProps {
   templateNome: string;
   templateDescricao?: string;
   perguntas: Pergunta[];
+  avisoFinal?: string;
 }
 
 export function ClientPagePreview({
@@ -24,6 +25,7 @@ export function ClientPagePreview({
   templateNome,
   templateDescricao,
   perguntas,
+  avisoFinal,
 }: ClientPagePreviewProps) {
   const { config, loading } = useEmpresaConfig();
 
@@ -132,6 +134,21 @@ export function ClientPagePreview({
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Warning Card */}
+          {avisoFinal && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-amber-800 mb-0.5">Avisos Importantes</p>
+                  <p className="text-xs text-amber-700 whitespace-pre-line">
+                    {avisoFinal}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 

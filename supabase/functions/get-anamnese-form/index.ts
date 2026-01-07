@@ -20,6 +20,7 @@ interface AnamneseFormResponse {
     template: {
       nome: string;
       descricao: string | null;
+      aviso_final: string | null;
     };
     empresa: {
       nome: string;
@@ -88,11 +89,14 @@ const handler = async (req: Request): Promise<Response> => {
     const validatedEnvio = tokenData[0];
     console.log(`get-anamnese-form: Token valid, template_id: ${validatedEnvio.template_id}`);
 
-    // Buscar template usando função security definer
+    // Buscar template usando query direta (com service role key)
     const { data: templateData } = await supabase
-      .rpc('get_anamnese_template', { p_template_id: validatedEnvio.template_id });
+      .from('anamnese_templates')
+      .select('nome, descricao, aviso_final')
+      .eq('id', validatedEnvio.template_id)
+      .single();
 
-    const template = templateData?.[0] || { nome: 'Anamnese', descricao: null };
+    const template = templateData || { nome: 'Anamnese', descricao: null, aviso_final: null };
 
     // Buscar dados da empresa para personalização
     const { data: empresaData } = await supabase
@@ -123,6 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
         template: {
           nome: template.nome,
           descricao: template.descricao,
+          aviso_final: template.aviso_final,
         },
         empresa: {
           nome: empresa.nome_exibicao || empresa.nome,

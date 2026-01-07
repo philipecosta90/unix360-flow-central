@@ -163,6 +163,7 @@ export type Database = {
       anamnese_templates: {
         Row: {
           ativo: boolean | null
+          aviso_final: string | null
           created_at: string | null
           descricao: string | null
           empresa_id: string
@@ -172,6 +173,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          aviso_final?: string | null
           created_at?: string | null
           descricao?: string | null
           empresa_id: string
@@ -181,6 +183,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          aviso_final?: string | null
           created_at?: string | null
           descricao?: string | null
           empresa_id?: string

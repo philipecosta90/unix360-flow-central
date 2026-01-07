@@ -10,6 +10,7 @@ export interface AnamneseTemplate {
   empresa_id: string;
   nome: string;
   descricao: string | null;
+  aviso_final: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -404,7 +405,7 @@ export function useAnamnese() {
 
   const updateTemplate = useCallback(async (
     templateId: string,
-    dados: { nome?: string; descricao?: string; ativo?: boolean }
+    dados: { nome?: string; descricao?: string; aviso_final?: string; ativo?: boolean }
   ) => {
     try {
       const { error } = await supabase
