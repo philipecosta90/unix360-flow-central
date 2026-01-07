@@ -585,6 +585,7 @@ export type Database = {
           cep: string | null
           cidade: string | null
           complemento: string | null
+          cpf_cnpj: string | null
           created_at: string
           created_by: string | null
           data_fim_plano: string | null
@@ -609,6 +610,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
           data_fim_plano?: string | null
@@ -633,6 +635,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
           data_fim_plano?: string | null
