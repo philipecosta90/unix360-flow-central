@@ -16,6 +16,13 @@ import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 import { logger } from "@/utils/logger";
 import { X, ClipboardList, MessageCircle, CreditCard, MapPin } from "lucide-react";
 
+interface ParcelaEditavel {
+  numero: number;
+  valor: string;
+  dataISO: string;
+  aReceber: boolean;
+}
+
 interface AddClientDrawerProps {
   open: boolean;
   onClose: () => void;
@@ -64,35 +71,55 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   const [enviarBoasVindas, setEnviarBoasVindas] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [parcelasEditaveis, setParcelasEditaveis] = useState<ParcelaEditavel[]>([]);
 
   // Serviço selecionado
   const servicoSelecionado = servicosAtivos?.find(s => s.id === servicoSelecionadoId);
 
-  // Calcular preview das parcelas
-  const calcularParcelas = () => {
-    if (!servicoSelecionado || formaPagamento !== "pix_parcelado") return [];
+  // Gerar parcelas editáveis quando mudam os parâmetros
+  useEffect(() => {
+    if (formaPagamento !== "pix_parcelado" || !servicoSelecionado || !dataPagamento) {
+      setParcelasEditaveis([]);
+      return;
+    }
     
     const valorTotal = servicoSelecionado.valor;
     const valorParcela = Math.floor((valorTotal / numeroParcelas) * 100) / 100;
     const valorUltimaParcela = Math.round((valorTotal - (valorParcela * (numeroParcelas - 1))) * 100) / 100;
     
-    return Array.from({ length: numeroParcelas }, (_, i) => {
+    const novasParcelas = Array.from({ length: numeroParcelas }, (_, i) => {
       const dataParcela = addMonths(parseISO(dataPagamento), i);
       const isPrimeiraParcela = i === 0;
       const isUltimaParcela = i === numeroParcelas - 1;
       
       return {
         numero: i + 1,
-        valor: isUltimaParcela ? valorUltimaParcela : valorParcela,
-        data: format(dataParcela, "dd/MM/yyyy"),
+        valor: (isUltimaParcela ? valorUltimaParcela : valorParcela).toFixed(2),
         dataISO: format(dataParcela, "yyyy-MM-dd"),
-        status: isPrimeiraParcela ? (statusPagamento === "pago" ? "Pago" : "A Receber") : "A Receber",
         aReceber: isPrimeiraParcela ? statusPagamento === "a_receber" : true,
       };
     });
+    
+    setParcelasEditaveis(novasParcelas);
+  }, [formaPagamento, servicoSelecionado, dataPagamento, numeroParcelas, statusPagamento]);
+
+  // Handlers para edição de parcelas
+  const handleParcelaValorChange = (index: number, novoValor: string) => {
+    setParcelasEditaveis(prev => 
+      prev.map((p, i) => i === index ? { ...p, valor: novoValor } : p)
+    );
   };
 
-  const parcelasPreview = calcularParcelas();
+  const handleParcelaDataChange = (index: number, novaData: string) => {
+    setParcelasEditaveis(prev => 
+      prev.map((p, i) => i === index ? { ...p, dataISO: novaData } : p)
+    );
+  };
+
+  // Calcular total para exibição
+  const totalParcelas = parcelasEditaveis.reduce(
+    (acc, p) => acc + (parseFloat(p.valor) || 0), 0
+  );
 
   // Log de montagem do componente
   useEffect(() => {
@@ -184,14 +211,13 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       
       // Criar lançamento(s) financeiro(s) se cliente foi criado com sucesso
       if (result && 'id' in result && servicoSelecionado) {
-        if (formaPagamento === "pix_parcelado") {
-          // Criar múltiplas parcelas
-          const parcelas = calcularParcelas();
-          for (const parcela of parcelas) {
+        if (formaPagamento === "pix_parcelado" && parcelasEditaveis.length > 0) {
+          // Criar múltiplas parcelas com valores EDITADOS
+          for (const parcela of parcelasEditaveis) {
             await createTransaction.mutateAsync({
               tipo: "entrada",
-              descricao: `Contratação: ${servicoSelecionado.nome} - ${formData.nome.trim()} (${parcela.numero}/${numeroParcelas})`,
-              valor: parcela.valor,
+              descricao: `Contratação: ${servicoSelecionado.nome} - ${formData.nome.trim()} (${parcela.numero}/${parcelasEditaveis.length})`,
+              valor: parseFloat(parcela.valor),
               categoria: servicoSelecionado.categoria || "Serviços",
               data: parcela.dataISO,
               a_receber: parcela.aReceber,
@@ -269,6 +295,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     setStatusPagamento("pago");
     setDataPagamento(format(new Date(), "yyyy-MM-dd"));
     setNumeroParcelas(3);
+    setParcelasEditaveis([]);
     setEnviarAnamnese(false);
     setEnviarBoasVindas(true);
   };
@@ -625,20 +652,48 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                   </div>
                 </div>
 
-                {/* Preview das parcelas */}
-                {formaPagamento === "pix_parcelado" && parcelasPreview.length > 0 && (
-                  <div className="mt-4 p-3 bg-background rounded-md border">
-                    <Label className="text-xs text-muted-foreground mb-2 block">Preview das parcelas:</Label>
-                    <div className="space-y-1">
-                      {parcelasPreview.map((parcela) => (
-                        <div key={parcela.numero} className="flex justify-between text-sm">
-                          <span>• {parcela.numero}ª parcela: R$ {parcela.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em {parcela.data}</span>
-                          <span className={parcela.status === "Pago" ? "text-green-600 font-medium" : "text-amber-600"}>
-                            ({parcela.status})
-                          </span>
-                        </div>
-                      ))}
+                {/* Parcelas editáveis */}
+                {formaPagamento === "pix_parcelado" && parcelasEditaveis.length > 0 && (
+                  <div className="mt-4 p-3 bg-background rounded-md border space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-muted-foreground">
+                        Parcelas (editáveis):
+                      </Label>
+                      <span className="text-xs font-medium">
+                        Total: R$ {totalParcelas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
                     </div>
+                    
+                    {parcelasEditaveis.map((parcela, index) => (
+                      <div key={parcela.numero} className="grid grid-cols-[40px_1fr_1fr_70px] gap-2 items-center">
+                        <span className="text-sm font-medium">{parcela.numero}x</span>
+                        
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={parcela.valor}
+                            onChange={(e) => handleParcelaValorChange(index, e.target.value)}
+                            className="pl-9 h-9"
+                          />
+                        </div>
+                        
+                        <Input
+                          type="date"
+                          value={parcela.dataISO}
+                          onChange={(e) => handleParcelaDataChange(index, e.target.value)}
+                          className="h-9"
+                        />
+                        
+                        <span className={`text-xs text-right ${
+                          !parcela.aReceber ? "text-green-600 font-medium" : "text-amber-600"
+                        }`}>
+                          {!parcela.aReceber ? "Pago" : "A Receber"}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
