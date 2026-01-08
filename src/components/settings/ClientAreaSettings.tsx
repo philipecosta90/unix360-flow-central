@@ -109,7 +109,11 @@ export const ClientAreaSettings = () => {
         .update({ logo_url: logoUrl })
         .eq("id", userProfile.empresa_id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Erro ao atualizar logo no banco:", updateError);
+        toast.error("Erro ao salvar logo. Verifique suas permissões.");
+        return;
+      }
 
       setConfig(prev => ({ ...prev, logo_url: logoUrl }));
       toast.success("Logo atualizada com sucesso!");
@@ -122,20 +126,40 @@ export const ClientAreaSettings = () => {
   };
 
   const handleSave = async () => {
-    if (!userProfile?.empresa_id) return;
+    if (!userProfile?.empresa_id) {
+      toast.error("Perfil não encontrado. Faça login novamente.");
+      return;
+    }
 
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from("empresas")
         .update({
           nome_exibicao: config.nome_exibicao || null,
           cor_primaria: config.cor_primaria,
           cor_secundaria: config.cor_secundaria,
         })
-        .eq("id", userProfile.empresa_id);
+        .eq("id", userProfile.empresa_id)
+        .select("nome_exibicao, cor_primaria, cor_secundaria")
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro RLS ao salvar:", error);
+        toast.error("Erro ao salvar. Verifique suas permissões de administrador.");
+        return;
+      }
+
+      // Atualizar estado com dados confirmados do banco
+      if (data) {
+        setConfig(prev => ({
+          ...prev,
+          nome_exibicao: data.nome_exibicao,
+          cor_primaria: data.cor_primaria || "#43B26D",
+          cor_secundaria: data.cor_secundaria || "#37A05B",
+        }));
+      }
+      
       toast.success("Configurações salvas com sucesso!");
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
