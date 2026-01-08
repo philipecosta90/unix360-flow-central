@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -33,10 +33,14 @@ export const ClientAreaSettings = () => {
   });
 
   // Carregar configurações atuais
-  useState(() => {
+  useEffect(() => {
     const fetchConfig = async () => {
-      if (!userProfile?.empresa_id) return;
+      if (!userProfile?.empresa_id) {
+        setLoading(false);
+        return;
+      }
       
+      setLoading(true);
       try {
         const { data, error } = await supabase
           .from("empresas")
@@ -62,7 +66,7 @@ export const ClientAreaSettings = () => {
     };
     
     fetchConfig();
-  });
+  }, [userProfile?.empresa_id]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
