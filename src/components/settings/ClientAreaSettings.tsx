@@ -146,7 +146,7 @@ export const ClientAreaSettings = () => {
 
       if (error) {
         console.error("Erro RLS ao salvar:", error);
-        toast.error("Erro ao salvar. Verifique suas permissões de administrador.");
+        toast.error("Erro ao salvar. Usuários com nível 'visualização' não podem editar.");
         return;
       }
 
