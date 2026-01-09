@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Send, User, Phone, FileText, Loader2 } from "lucide-react";
+import { Send, User, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
 import type { AnamneseTemplate } from "@/hooks/useAnamnese";
 
 interface Cliente {
@@ -43,11 +44,33 @@ export const AnamneseEnviarDialog = ({
   templates,
 }: AnamneseEnviarDialogProps) => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [telefoneDestino, setTelefoneDestino] = useState<string>("");
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
 
+  // Initialize phone when client changes
+  useEffect(() => {
+    if (cliente?.telefone) {
+      // Clean the phone number
+      const cleaned = cliente.telefone.replace(/\D/g, "");
+      setTelefoneDestino(cleaned);
+    } else {
+      setTelefoneDestino("");
+    }
+  }, [cliente]);
+
   const handleSend = async () => {
-    if (!cliente || !selectedTemplateId) return;
+    if (!cliente || !selectedTemplateId || !telefoneDestino) return;
+
+    // Validate phone length
+    if (telefoneDestino.length < 10 || telefoneDestino.length > 15) {
+      toast({
+        title: "Telefone inválido",
+        description: "O número deve ter entre 10 e 15 dígitos.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setSending(true);
     try {
@@ -56,7 +79,7 @@ export const AnamneseEnviarDialog = ({
           clienteId: cliente.id,
           templateId: selectedTemplateId,
           clienteNome: cliente.nome,
-          clienteTelefone: cliente.telefone,
+          clienteTelefone: telefoneDestino,
         },
       });
 
@@ -99,6 +122,8 @@ export const AnamneseEnviarDialog = ({
 
   if (!cliente) return null;
 
+  const isPhoneValid = telefoneDestino.length >= 10 && telefoneDestino.length <= 15;
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -108,24 +133,25 @@ export const AnamneseEnviarDialog = ({
             Enviar Anamnese via WhatsApp
           </DialogTitle>
           <DialogDescription>
-            Selecione o template de anamnese para enviar ao cliente
+            Selecione o template e confirme o número de telefone
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {/* Informações do cliente */}
-          <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{cliente.nome}</span>
-            </div>
-            {cliente.telefone && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4" />
-                <span>{cliente.telefone}</span>
-              </div>
-            )}
+          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">{cliente.nome}</span>
           </div>
+
+          {/* Telefone com seletor de país */}
+          <IntlPhoneInput
+            label="Telefone do destinatário"
+            value={telefoneDestino}
+            onChange={setTelefoneDestino}
+            defaultCountry="BR"
+            helperText="Selecione o país e digite apenas o número local"
+          />
 
           {/* Seleção de template */}
           <div className="space-y-2">
@@ -163,7 +189,7 @@ export const AnamneseEnviarDialog = ({
           </Button>
           <Button
             onClick={handleSend}
-            disabled={!selectedTemplateId || sending}
+            disabled={!selectedTemplateId || !isPhoneValid || sending}
             className="bg-lime-600 hover:bg-lime-700"
           >
             {sending ? (
