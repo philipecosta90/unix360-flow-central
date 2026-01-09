@@ -174,7 +174,7 @@ export function IntlPhoneInput({
     onChange?.(fullNumber);
   };
 
-  const displayValue = `+${country.dialCode} ${localNumber}`;
+  const displayValue = `${country.dialCode}${localNumber}`;
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -193,7 +193,7 @@ export function IntlPhoneInput({
             >
               <span className="flex items-center gap-1">
                 <span className="text-lg">{getFlagEmoji(country.iso2)}</span>
-                <span className="text-xs text-muted-foreground">+{country.dialCode}</span>
+                <span className="text-xs text-muted-foreground">{country.dialCode}</span>
               </span>
               <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -218,7 +218,7 @@ export function IntlPhoneInput({
                       />
                       <span className="mr-2 text-lg">{getFlagEmoji(c.iso2)}</span>
                       <span className="flex-1">{c.name}</span>
-                      <span className="text-muted-foreground">+{c.dialCode}</span>
+                      <span className="text-muted-foreground">{c.dialCode}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -244,7 +244,7 @@ export function IntlPhoneInput({
 
       {value && (
         <p className="text-xs text-muted-foreground">
-          Número completo: <span className="font-mono">{displayValue}</span>
+          Número que será salvo: <span className="font-mono">{displayValue}</span>
         </p>
       )}
     </div>
