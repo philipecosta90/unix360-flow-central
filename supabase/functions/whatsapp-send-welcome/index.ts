@@ -15,14 +15,10 @@ interface CheckUserResponse {
   }>;
 }
 
-// Normaliza telefone para formato internacional E.164
+// Normaliza telefone - apenas remove caracteres não numéricos
+// O frontend IntlPhoneInput já envia o número com DDI correto
 function normalizePhone(phone: string): string {
-  let cleaned = phone.replace(/\D/g, '');
-  // Se tem 10 ou 11 dígitos, assume brasileiro e adiciona 55
-  if (cleaned.length === 10 || cleaned.length === 11) {
-    cleaned = '55' + cleaned;
-  }
-  return cleaned;
+  return phone.replace(/\D/g, '');
 }
 
 const DEFAULT_MESSAGE = `Olá {clienteNome}! 👋
