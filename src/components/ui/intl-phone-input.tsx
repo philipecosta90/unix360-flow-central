@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -128,27 +128,77 @@ export function IntlPhoneInput({
   className,
 }: IntlPhoneInputProps) {
   const [open, setOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(defaultCountry);
+  const userSelectedCountryRef = useRef(false);
+  const previousValueRef = useRef(value);
 
-  // Detect country from value or use default
-  const detectedCountry = useMemo(() => {
-    if (value) {
-      const detected = detectCountryFromPhone(value);
-      if (detected) return detected;
+  // Detect country from value - handles corrupted numbers like "55353..."
+  const { detectedCountryIso, normalizedValue } = useMemo(() => {
+    if (!value) {
+      return { detectedCountryIso: defaultCountry, normalizedValue: "" };
     }
-    return defaultCountry;
+
+    const cleaned = value.replace(/\D/g, "");
+    
+    // Sort by dialCode length descending to match longer codes first
+    const sorted = [...COUNTRIES].sort(
+      (a, b) => b.dialCode.length - a.dialCode.length
+    );
+
+    // First, try direct detection
+    for (const country of sorted) {
+      if (cleaned.startsWith(country.dialCode)) {
+        return { detectedCountryIso: country.iso2, normalizedValue: cleaned };
+      }
+    }
+
+    // If starts with "55" but also has another valid dial code after, it's corrupted
+    // Example: "55353830755996" -> should be "353830755996" (Ireland)
+    if (cleaned.startsWith("55") && cleaned.length > 4) {
+      const withoutBR = cleaned.slice(2);
+      for (const country of sorted) {
+        if (country.dialCode !== "55" && withoutBR.startsWith(country.dialCode)) {
+          // Found a valid country after removing "55" - this is corrupted data
+          return { detectedCountryIso: country.iso2, normalizedValue: withoutBR };
+        }
+      }
+    }
+
+    return { detectedCountryIso: defaultCountry, normalizedValue: cleaned };
   }, [value, defaultCountry]);
 
-  const [selectedCountry, setSelectedCountry] = useState(detectedCountry);
+  // Sync selectedCountry when value changes from outside (not user interaction)
+  useEffect(() => {
+    // Only auto-update if user hasn't manually selected a country
+    // or if the value changed significantly (different number loaded)
+    if (value !== previousValueRef.current) {
+      previousValueRef.current = value;
+      
+      // Reset user selection flag when a new value is loaded
+      if (!userSelectedCountryRef.current || value !== previousValueRef.current) {
+        userSelectedCountryRef.current = false;
+        setSelectedCountry(detectedCountryIso);
+      }
+    }
+  }, [value, detectedCountryIso]);
+
+  // Also update on mount if value exists
+  useEffect(() => {
+    if (value && !userSelectedCountryRef.current) {
+      setSelectedCountry(detectedCountryIso);
+    }
+  }, []);
 
   const country = COUNTRIES.find((c) => c.iso2 === selectedCountry) || COUNTRIES[0];
 
-  // Extract local number from value
+  // Extract local number from normalized value
   const localNumber = useMemo(() => {
-    if (!value) return "";
-    return extractLocalNumber(value, country.dialCode);
-  }, [value, country.dialCode]);
+    if (!normalizedValue) return "";
+    return extractLocalNumber(normalizedValue, country.dialCode);
+  }, [normalizedValue, country.dialCode]);
 
   const handleCountrySelect = (iso2: string) => {
+    userSelectedCountryRef.current = true;
     setSelectedCountry(iso2);
     setOpen(false);
 
