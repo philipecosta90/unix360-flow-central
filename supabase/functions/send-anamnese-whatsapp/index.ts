@@ -17,6 +17,16 @@ interface CheckUserResponse {
   }>;
 }
 
+// Normaliza telefone para formato internacional E.164
+function normalizePhone(phone: string): string {
+  let cleaned = phone.replace(/\D/g, '');
+  // Se tem 10 ou 11 dígitos, assume brasileiro e adiciona 55
+  if (cleaned.length === 10 || cleaned.length === 11) {
+    cleaned = '55' + cleaned;
+  }
+  return cleaned;
+}
+
 const DEFAULT_MESSAGE = `Olá {clienteNome}! 👋
 
 📋 *Questionário de Anamnese*
@@ -172,7 +182,7 @@ Deno.serve(async (req) => {
           "token": instancia.user_token,
         },
         body: JSON.stringify({
-          Phone: [clienteTelefone],
+          Phone: [normalizePhone(clienteTelefone)],
         }),
       });
 
@@ -269,7 +279,7 @@ Deno.serve(async (req) => {
     // 5. Enviar mensagem via WhatsApp
     console.log("Enviando mensagem com link da anamnese...");
 
-    const destino = jid?.includes("@") ? jid : clienteTelefone;
+    const destino = jid?.includes("@") ? jid : normalizePhone(clienteTelefone);
 
     const sendResponse = await fetch(`${WHATSAPP_API_URL}/chat/send/text`, {
       method: "POST",
