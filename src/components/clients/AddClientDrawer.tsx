@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { parseISO, addMonths, format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +73,11 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   const [loading, setLoading] = useState(false);
   const [parcelasEditaveis, setParcelasEditaveis] = useState<ParcelaEditavel[]>([]);
 
+  // Ref para rastrear se o usuário editou manualmente a data de término
+  const userEditedEndDateRef = useRef(false);
+  // Ref para rastrear o último serviço selecionado (para resetar flag quando mudar)
+  const lastServicoIdRef = useRef<string>("");
+
   // Serviço selecionado
   const servicoSelecionado = servicosAtivos?.find(s => s.id === servicoSelecionadoId);
 
@@ -140,14 +145,24 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   }, [templates, selectedTemplateId]);
 
   // Calcular data de término automaticamente quando serviço ou data de início mudar
+  // Respeita edições manuais do usuário, exceto quando o serviço muda
   useEffect(() => {
-    if (servicoSelecionado && dataInicioPlano) {
+    // Se o serviço mudou, resetar a flag de edição manual
+    if (servicoSelecionadoId !== lastServicoIdRef.current) {
+      userEditedEndDateRef.current = false;
+      lastServicoIdRef.current = servicoSelecionadoId;
+    }
+
+    // Só calcula automaticamente se:
+    // 1. Há serviço selecionado E data de início
+    // 2. O usuário NÃO editou manualmente a data de término
+    if (servicoSelecionado && dataInicioPlano && !userEditedEndDateRef.current) {
       const duracaoMeses = servicoSelecionado.duracao_meses || 1;
       const dataInicio = parseISO(dataInicioPlano);
       const dataFim = addMonths(dataInicio, duracaoMeses);
       setDataFimPlano(format(dataFim, "yyyy-MM-dd"));
     }
-  }, [servicoSelecionado, dataInicioPlano]);
+  }, [servicoSelecionado, dataInicioPlano, servicoSelecionadoId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -298,6 +313,9 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     setParcelasEditaveis([]);
     setEnviarAnamnese(false);
     setEnviarBoasVindas(true);
+    // Resetar flags de edição manual
+    userEditedEndDateRef.current = false;
+    lastServicoIdRef.current = "";
   };
 
   const handleClose = () => {
@@ -574,8 +592,10 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                         id="data_fim_plano"
                         type="date"
                         value={dataFimPlano}
-                        disabled
-                        className="bg-muted"
+                        onChange={(e) => {
+                          userEditedEndDateRef.current = true;
+                          setDataFimPlano(e.target.value);
+                        }}
                       />
                     </div>
                   </div>
