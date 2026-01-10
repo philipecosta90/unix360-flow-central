@@ -25,8 +25,9 @@ export const usePlanExpirationAlerts = () => {
 
       const { data: clients, error } = await supabase
         .from('clientes')
-        .select('id, nome, data_fim_plano')
+        .select('id, nome, data_fim_plano, status')
         .eq('empresa_id', userProfile.empresa_id)
+        .neq('status', 'inativo') // Excluir clientes inativos
         .not('data_fim_plano', 'is', null)
         .lte('data_fim_plano', warningDate.toISOString().split('T')[0]);
 
