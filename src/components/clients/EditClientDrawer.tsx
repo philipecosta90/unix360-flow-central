@@ -78,6 +78,14 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
 
   useEffect(() => {
     if (client) {
+      // Debug: Log dos dados do cliente sendo carregados
+      logger.info('📝 EditClientDrawer - Carregando cliente:', {
+        id: client.id,
+        nome: client.nome,
+        data_inicio_plano: client.data_inicio_plano,
+        data_fim_plano: client.data_fim_plano,
+      });
+
       setFormData({
         nome: client.nome || "",
         email: client.email || "",
