@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IntlPhoneInput } from "@/components/ui/intl-phone-input";
@@ -67,6 +67,9 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [loading, setLoading] = useState(false);
   const [servicoSelecionadoId, setServicoSelecionadoId] = useState<string>("");
+  
+  // Ref para controlar qual cliente já foi inicializado - evita reinicializações indesejadas
+  const lastInitializedClientIdRef = useRef<string | null>(null);
 
   const servicoSelecionado = servicosAtivos?.find(s => s.id === servicoSelecionadoId);
 
@@ -76,10 +79,11 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
     return () => logger.ui('EditClientDrawer', 'Component UNMOUNTED');
   }, []);
 
+  // Effect 1: Inicializa o formulário APENAS quando o drawer abre com um novo cliente
+  // NÃO depende de servicosAtivos para evitar reset das datas
   useEffect(() => {
-    if (client) {
-      // Debug: Log dos dados do cliente sendo carregados
-      logger.info('📝 EditClientDrawer - Carregando cliente:', {
+    if (open && client && client.id !== lastInitializedClientIdRef.current) {
+      logger.info('📝 EditClientDrawer - Inicializando formulário para cliente:', {
         id: client.id,
         nome: client.nome,
         data_inicio_plano: client.data_inicio_plano,
@@ -107,15 +111,29 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
       setDataInicioPlano(client.data_inicio_plano || "");
       setDataFimPlano(client.data_fim_plano || "");
       
-      // Encontrar serviço correspondente ao plano_contratado
-      if (client.plano_contratado && servicosAtivos) {
-        const servico = servicosAtivos.find(s => s.nome === client.plano_contratado);
-        setServicoSelecionadoId(servico?.id || "");
-      } else {
-        setServicoSelecionadoId("");
+      lastInitializedClientIdRef.current = client.id;
+    }
+    
+    // Reset ref quando o drawer fecha para permitir reinicialização na próxima abertura
+    if (!open) {
+      lastInitializedClientIdRef.current = null;
+    }
+  }, [open, client]);
+
+  // Effect 2: Mapeia o serviço contratado para o ID do serviço quando a lista de serviços carrega
+  // Este effect NÃO reseta datas nem formData
+  useEffect(() => {
+    if (client?.plano_contratado && servicosAtivos && servicosAtivos.length > 0) {
+      const servico = servicosAtivos.find(s => s.nome === client.plano_contratado);
+      if (servico && servicoSelecionadoId !== servico.id) {
+        logger.info('📝 EditClientDrawer - Mapeando serviço:', {
+          plano_contratado: client.plano_contratado,
+          servico_id: servico.id,
+        });
+        setServicoSelecionadoId(servico.id);
       }
     }
-  }, [client, servicosAtivos]);
+  }, [client?.plano_contratado, servicosAtivos]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
