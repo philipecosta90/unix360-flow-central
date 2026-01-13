@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Save } from "lucide-react";
+import { AlertTriangle, CalendarIcon, Save } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -118,6 +118,18 @@ export const CheckinAgendamentoDialog = ({
             Configure o envio automático de check-ins para um paciente
           </DialogDescription>
         </DialogHeader>
+
+        {/* Aviso de uso responsável do WhatsApp */}
+        <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+          <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-600 dark:text-amber-400">Atenção ao uso do WhatsApp</p>
+            <p className="text-muted-foreground text-xs mt-1">
+              Evite agendamentos em massa no mesmo horário. Recomendamos intervalos 
+              de 15-30 segundos entre envios para evitar bloqueio pela Meta.
+            </p>
+          </div>
+        </div>
 
         <div className="space-y-4 py-4">
           {/* Paciente */}
