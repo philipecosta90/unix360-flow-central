@@ -101,6 +101,18 @@ function calcularProximoEnvio(frequencia: string, intervaloDias: number | null):
   return toLocalISODate(proxEnvio);
 }
 
+// Delay aleatório entre 15-30 segundos para evitar bloqueio pela Meta
+const MIN_DELAY_MS = 15000; // 15 segundos
+const MAX_DELAY_MS = 30000; // 30 segundos
+
+function getRandomDelay(): number {
+  return Math.floor(Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS + 1)) + MIN_DELAY_MS;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 Deno.serve(async (req) => {
   const startTime = new Date().toISOString();
   console.log(`[${startTime}] Edge Function process-scheduled-checkins iniciada`);
@@ -203,9 +215,12 @@ Deno.serve(async (req) => {
     let erros = 0;
     const resultados: Array<{ agendamentoId: string; status: string; message: string }> = [];
 
-    // Processar cada agendamento que já passou do horário
-    for (const agendamento of agendamentosParaProcessar) {
-      console.log(`[${startTime}] Processando agendamento ${agendamento.id}`);
+    console.log(`[${startTime}] Iniciando processamento de ${agendamentosParaProcessar.length} agendamentos com delay entre envios...`);
+
+    // Processar cada agendamento que já passou do horário (com delay entre envios)
+    for (let idx = 0; idx < agendamentosParaProcessar.length; idx++) {
+      const agendamento = agendamentosParaProcessar[idx];
+      console.log(`[${startTime}] Processando agendamento ${idx + 1}/${agendamentosParaProcessar.length} - ID: ${agendamento.id}`);
 
       // Verificar se o cliente tem dados válidos
       const cliente = Array.isArray(agendamento.cliente) 
@@ -402,7 +417,7 @@ Equipe *${nomeEmpresa}*`;
           continue;
         }
 
-        console.log(`[${startTime}] Check-in enviado com sucesso para ${cliente.nome}`);
+        console.log(`[${startTime}] ✓ Check-in enviado com sucesso para ${cliente.nome}`);
         enviados++;
 
         // Atualizar próximo envio
@@ -438,6 +453,13 @@ Equipe *${nomeEmpresa}*`;
           await supabase.from("notifications").insert(notifications);
         }
 
+        // Aplicar delay entre envios (exceto após o último)
+        if (idx < agendamentosParaProcessar.length - 1) {
+          const delayMs = getRandomDelay();
+          console.log(`[${startTime}] ⏳ Aguardando ${(delayMs / 1000).toFixed(1)}s antes do próximo envio...`);
+          await sleep(delayMs);
+        }
+
       } catch (err) {
         console.error(`[${startTime}] Erro ao processar agendamento ${agendamento.id}:`, err);
         erros++;
@@ -459,6 +481,7 @@ Equipe *${nomeEmpresa}*`;
         enviados,
         erros,
         resultados,
+        delayAplicado: `${MIN_DELAY_MS / 1000}-${MAX_DELAY_MS / 1000} segundos`,
         timestamp: endTime,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

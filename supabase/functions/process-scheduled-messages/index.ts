@@ -35,6 +35,18 @@ interface Company {
   nome: string;
 }
 
+// Delay aleatório entre 15-30 segundos para evitar bloqueio pela Meta
+const MIN_DELAY_MS = 15000; // 15 segundos
+const MAX_DELAY_MS = 30000; // 30 segundos
+
+function getRandomDelay(): number {
+  return Math.floor(Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS + 1)) + MIN_DELAY_MS;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -174,8 +186,12 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Enviar para cada cliente
-        for (const client of clientsToSend) {
+        // Enviar para cada cliente com delay entre envios
+        console.log(`[process-scheduled-messages] Iniciando envio para ${clientsToSend.length} clientes com delay entre mensagens...`);
+        
+        for (let i = 0; i < clientsToSend.length; i++) {
+          const client = clientsToSend[i];
+          
           try {
             let content = message.conteudo;
 
@@ -207,10 +223,17 @@ Deno.serve(async (req) => {
 
             if (response.ok) {
               totalEnviados++;
-              console.log(`[process-scheduled-messages] Mensagem enviada para ${client.nome}`);
+              console.log(`[process-scheduled-messages] ✓ Mensagem ${i + 1}/${clientsToSend.length} enviada para ${client.nome}`);
             } else {
               totalErros++;
-              console.error(`[process-scheduled-messages] Erro ao enviar para ${client.nome}:`, await response.text());
+              console.error(`[process-scheduled-messages] ✗ Erro ao enviar para ${client.nome}:`, await response.text());
+            }
+
+            // Aplicar delay entre mensagens (exceto após a última)
+            if (i < clientsToSend.length - 1) {
+              const delayMs = getRandomDelay();
+              console.log(`[process-scheduled-messages] ⏳ Aguardando ${(delayMs / 1000).toFixed(1)}s antes do próximo envio...`);
+              await sleep(delayMs);
             }
           } catch (clientError) {
             totalErros++;
@@ -259,7 +282,7 @@ Deno.serve(async (req) => {
               empresa_id: schedule.empresa_id,
               type: "message_scheduled",
               title: "Mensagens agendadas enviadas",
-              message: `${totalEnviados} mensagens enviadas via agendamento automático.`,
+              message: `${totalEnviados} mensagens enviadas via agendamento automático (com delay de segurança aplicado).`,
             });
           }
         }
@@ -276,6 +299,7 @@ Deno.serve(async (req) => {
         success: true,
         enviados: totalEnviados,
         erros: totalErros,
+        delayAplicado: `${MIN_DELAY_MS / 1000}-${MAX_DELAY_MS / 1000} segundos`,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
