@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { CreateInstanceDialog } from "./CreateInstanceDialog";
 import { QRCodeDialog } from "./QRCodeDialog";
+import { WhatsAppUsageNotice } from "./WhatsAppUsageNotice";
 import {
   useWhatsAppInstances,
   WhatsAppInstance,
@@ -97,6 +98,9 @@ export const WhatsAppModule = () => {
 
   return (
     <div className="space-y-6">
+      {/* Aviso de uso responsável */}
+      <WhatsAppUsageNotice />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
