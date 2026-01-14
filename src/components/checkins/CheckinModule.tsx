@@ -6,6 +6,7 @@ import { CheckinTemplates } from "./CheckinTemplates";
 import { CheckinAgendamentos } from "./CheckinAgendamentos";
 import { CheckinRelatorio } from "./CheckinRelatorio";
 import { CheckinEnviarDialog } from "./CheckinEnviarDialog";
+import CheckinEnviosFila from "./CheckinEnviosFila";
 
 export const CheckinModule = () => {
   const [showEnviarDialog, setShowEnviarDialog] = useState(false);
@@ -29,9 +30,10 @@ export const CheckinModule = () => {
       </div>
 
       <Tabs defaultValue="templates" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
+          <TabsTrigger value="fila">Fila de Envios</TabsTrigger>
           <TabsTrigger value="relatorio">Relatório</TabsTrigger>
         </TabsList>
 
@@ -41,6 +43,10 @@ export const CheckinModule = () => {
 
         <TabsContent value="agendamentos" className="space-y-4 mt-4">
           <CheckinAgendamentos />
+        </TabsContent>
+
+        <TabsContent value="fila" className="space-y-4 mt-4">
+          <CheckinEnviosFila />
         </TabsContent>
 
         <TabsContent value="relatorio" className="space-y-4 mt-4">
