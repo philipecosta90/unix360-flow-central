@@ -13,6 +13,7 @@ import { MessageSchedulesList } from './MessageSchedulesList';
 import { useWhatsAppMessages, MESSAGE_TYPES, WhatsAppMessage } from '@/hooks/useWhatsAppMessages';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
 import { useMessageSchedules } from '@/hooks/useMessageSchedules';
+import { WhatsAppUsageNotice } from '@/components/whatsapp/WhatsAppUsageNotice';
 
 export const MessagesModule = () => {
   const {
@@ -255,6 +256,9 @@ export const MessagesModule = () => {
 
         {/* Agendamentos Tab */}
         <TabsContent value="agendamentos" className="space-y-6 mt-6">
+          {/* Aviso de uso responsável do WhatsApp */}
+          <WhatsAppUsageNotice />
+
           {/* Info */}
           <div className="rounded-lg border bg-muted/30 p-4">
             <h3 className="font-medium">Agendamentos automáticos</h3>
