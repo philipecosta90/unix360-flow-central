@@ -101,9 +101,9 @@ function calcularProximoEnvio(frequencia: string, intervaloDias: number | null):
   return toLocalISODate(proxEnvio);
 }
 
-// Delay aleatório entre 15-30 segundos para evitar bloqueio pela Meta
+// Delay aleatório entre 15-20 segundos para evitar bloqueio pela Meta
 const MIN_DELAY_MS = 15000; // 15 segundos
-const MAX_DELAY_MS = 30000; // 30 segundos
+const MAX_DELAY_MS = 20000; // 20 segundos
 
 function getRandomDelay(): number {
   return Math.floor(Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS + 1)) + MIN_DELAY_MS;
@@ -196,7 +196,13 @@ Deno.serve(async (req) => {
       return false;
     });
 
-    console.log(`[${startTime}] ${agendamentosParaProcessar.length} de ${agendamentos.length} agendamentos prontos para envio`);
+    console.log(`[${startTime}] 📋 Fila de envio: ${agendamentosParaProcessar.length} de ${agendamentos.length} agendamentos prontos`);
+    
+    if (agendamentosParaProcessar.length > 1) {
+      const avgDelaySeconds = (MIN_DELAY_MS + MAX_DELAY_MS) / 2 / 1000;
+      const estimatedMinutes = ((agendamentosParaProcessar.length - 1) * avgDelaySeconds / 60).toFixed(1);
+      console.log(`[${startTime}] ⏱️ Tempo estimado para processar fila: ~${estimatedMinutes} minutos (delay ${MIN_DELAY_MS/1000}-${MAX_DELAY_MS/1000}s entre envios)`);
+    }
 
     if (agendamentosParaProcessar.length === 0) {
       return new Response(
