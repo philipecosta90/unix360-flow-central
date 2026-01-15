@@ -8,14 +8,13 @@ import { Button } from "@/components/ui/button";
 import { 
   Clock, 
   CheckCircle2, 
-  XCircle, 
   Send, 
   RefreshCw,
   User,
   FileText,
   Loader2
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface CheckinEnvio {
@@ -35,34 +34,10 @@ interface CheckinEnvio {
   agendamento_id: string | null;
 }
 
-const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  pendente: {
-    label: "Pendente",
-    color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
-    icon: <Clock className="h-4 w-4" />,
-  },
-  enviado: {
-    label: "Enviado",
-    color: "bg-blue-500/10 text-blue-600 border-blue-500/30",
-    icon: <Send className="h-4 w-4" />,
-  },
-  respondido: {
-    label: "Respondido",
-    color: "bg-green-500/10 text-green-600 border-green-500/30",
-    icon: <CheckCircle2 className="h-4 w-4" />,
-  },
-  expirado: {
-    label: "Expirado",
-    color: "bg-red-500/10 text-red-600 border-red-500/30",
-    icon: <XCircle className="h-4 w-4" />,
-  },
-};
-
 export default function CheckinEnviosFila() {
   const { userProfile } = useAuth();
   const [envios, setEnvios] = useState<CheckinEnvio[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ pendente: 0, enviado: 0, respondido: 0, expirado: 0 });
 
   const fetchEnvios = async () => {
     if (!userProfile?.empresa_id) return;
@@ -82,8 +57,9 @@ export default function CheckinEnviosFila() {
           template:checkin_templates(id, nome)
         `)
         .eq("empresa_id", userProfile.empresa_id)
-        .order("created_at", { ascending: false })
-        .limit(50);
+        .eq("status", "pendente")
+        .order("created_at", { ascending: true })
+        .limit(100);
 
       if (error) throw error;
 
@@ -94,15 +70,6 @@ export default function CheckinEnviosFila() {
       })) as CheckinEnvio[];
 
       setEnvios(formattedData);
-      
-      // Calculate stats
-      const newStats = { pendente: 0, enviado: 0, respondido: 0, expirado: 0 };
-      formattedData.forEach((e) => {
-        if (e.status in newStats) {
-          newStats[e.status as keyof typeof newStats]++;
-        }
-      });
-      setStats(newStats);
     } catch (error) {
       console.error("Erro ao buscar envios:", error);
     } finally {
@@ -130,7 +97,6 @@ export default function CheckinEnviosFila() {
         },
         (payload) => {
           console.log("Realtime update:", payload);
-          // Refresh data on any change
           fetchEnvios();
         }
       )
@@ -140,10 +106,6 @@ export default function CheckinEnviosFila() {
       supabase.removeChannel(channel);
     };
   }, [userProfile?.empresa_id]);
-
-  const getStatusConfig = (status: string) => {
-    return statusConfig[status] || statusConfig.pendente;
-  };
 
   const formatTime = (dateStr: string | null) => {
     if (!dateStr) return "-";
@@ -156,6 +118,11 @@ export default function CheckinEnviosFila() {
       return "-";
     }
   };
+
+  // Calculate estimated time (avg 17.5s per send)
+  const estimatedMinutes = envios.length > 1 
+    ? Math.ceil((envios.length - 1) * 17.5 / 60) 
+    : 0;
 
   return (
     <Card>
@@ -177,23 +144,16 @@ export default function CheckinEnviosFila() {
         </div>
         
         {/* Stats Summary */}
-        <div className="flex gap-2 mt-3 flex-wrap">
+        <div className="flex items-center gap-3 mt-3">
           <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
             <Clock className="h-3 w-3 mr-1" />
-            {stats.pendente} Pendentes
+            {envios.length} na fila
           </Badge>
-          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30">
-            <Send className="h-3 w-3 mr-1" />
-            {stats.enviado} Enviados
-          </Badge>
-          <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
-            {stats.respondido} Respondidos
-          </Badge>
-          <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30">
-            <XCircle className="h-3 w-3 mr-1" />
-            {stats.expirado} Expirados
-          </Badge>
+          {envios.length > 0 && estimatedMinutes > 0 && (
+            <span className="text-sm text-muted-foreground">
+              Tempo estimado: ~{estimatedMinutes} min
+            </span>
+          )}
         </div>
       </CardHeader>
 
@@ -204,14 +164,14 @@ export default function CheckinEnviosFila() {
           </div>
         ) : envios.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <Send className="h-12 w-12 mx-auto mb-3 opacity-20" />
-            <p>Nenhum envio de check-in registrado</p>
+            <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500 opacity-50" />
+            <p className="font-medium">Fila de envios vazia</p>
+            <p className="text-sm">Todos os check-ins foram enviados com sucesso</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-2">
               {envios.map((envio, index) => {
-                const config = getStatusConfig(envio.status);
                 const isRecent = envio.created_at && 
                   (new Date().getTime() - new Date(envio.created_at).getTime()) < 60000;
 
@@ -222,9 +182,9 @@ export default function CheckinEnviosFila() {
                       isRecent ? "ring-2 ring-primary/50 animate-pulse" : ""
                     }`}
                   >
-                    {/* Queue number */}
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground">
-                      {index + 1}
+                    {/* Queue position */}
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                      #{index + 1}
                     </div>
 
                     {/* Client info */}
@@ -250,16 +210,16 @@ export default function CheckinEnviosFila() {
 
                     {/* Time */}
                     <div className="text-xs text-muted-foreground text-right flex-shrink-0">
-                      {formatTime(envio.enviado_em || envio.created_at)}
+                      {formatTime(envio.created_at)}
                     </div>
 
                     {/* Status badge */}
                     <Badge
                       variant="outline"
-                      className={`flex-shrink-0 ${config.color}`}
+                      className="flex-shrink-0 bg-yellow-500/10 text-yellow-600 border-yellow-500/30"
                     >
-                      {config.icon}
-                      <span className="ml-1">{config.label}</span>
+                      <Clock className="h-4 w-4" />
+                      <span className="ml-1">Na fila</span>
                     </Badge>
                   </div>
                 );
