@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
         agendamento_id: agendamentoId || null,
         token: token,
         status: "pendente",
-        enviado_em: new Date().toISOString(),
+        enviado_em: null, // Só preenche após enviar com sucesso
         expira_em: expiraEm.toISOString(),
         pontuacao_maxima: pontuacaoMaxima,
       });
@@ -332,6 +332,19 @@ Deno.serve(async (req) => {
 
     const sendData = await sendResponse.json();
     console.log("Mensagem enviada com sucesso:", JSON.stringify(sendData));
+
+    // Atualizar status para "enviado" após sucesso
+    const { error: updateError } = await supabaseAdmin
+      .from("checkin_envios")
+      .update({ 
+        status: "enviado",
+        enviado_em: new Date().toISOString()
+      })
+      .eq("token", token);
+
+    if (updateError) {
+      console.error("Erro ao atualizar status do envio:", updateError);
+    }
 
     return new Response(
       JSON.stringify({
