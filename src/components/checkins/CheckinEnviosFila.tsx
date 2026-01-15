@@ -58,6 +58,7 @@ export default function CheckinEnviosFila() {
         `)
         .eq("empresa_id", userProfile.empresa_id)
         .eq("status", "pendente")
+        .is("enviado_em", null) // Apenas envios que ainda não foram processados
         .order("created_at", { ascending: true })
         .limit(100);
 
