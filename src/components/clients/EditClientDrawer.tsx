@@ -9,8 +9,9 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/utils/logger";
 import { X, MapPin, CreditCard } from "lucide-react";
-import { parseISO } from "date-fns";
+import { parseISO, addMonths, format } from "date-fns";
 import { useServicos } from "@/hooks/useServicos";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Cliente {
   id: string;
@@ -68,8 +69,15 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
   const [loading, setLoading] = useState(false);
   const [servicoSelecionadoId, setServicoSelecionadoId] = useState<string>("");
   
+  // Estados para dados de pagamento
+  const [formaPagamento, setFormaPagamento] = useState<string>("pix");
+  const [statusPagamento, setStatusPagamento] = useState<string>("pago");
+  const [dataPagamento, setDataPagamento] = useState<string>("");
+  
   // Ref para controlar qual cliente já foi inicializado - evita reinicializações indesejadas
   const lastInitializedClientIdRef = useRef<string | null>(null);
+  // Ref para rastrear se o usuário editou manualmente a data de término
+  const userEditedEndDateRef = useRef(false);
 
   const servicoSelecionado = servicosAtivos?.find(s => s.id === servicoSelecionadoId);
 
@@ -112,6 +120,32 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
       setDataFimPlano(client.data_fim_plano || "");
       
       lastInitializedClientIdRef.current = client.id;
+      userEditedEndDateRef.current = false;
+      
+      // Buscar dados de pagamento do cliente (última transação financeira)
+      const fetchPaymentData = async () => {
+        try {
+          const { data: transacoes } = await supabase
+            .from('financeiro_lancamentos')
+            .select('*')
+            .eq('cliente_id', client.id)
+            .eq('tipo', 'entrada')
+            .order('created_at', { ascending: false })
+            .limit(1);
+          
+          if (transacoes && transacoes.length > 0) {
+            const transacao = transacoes[0];
+            // Inferir forma de pagamento da categoria ou deixar padrão
+            setFormaPagamento("pix");
+            setStatusPagamento(transacao.a_receber ? "a_receber" : "pago");
+            setDataPagamento(transacao.data || "");
+          }
+        } catch (error) {
+          logger.error('Erro ao buscar dados de pagamento:', error);
+        }
+      };
+      
+      fetchPaymentData();
     }
     
     // Reset ref quando o drawer fecha para permitir reinicialização na próxima abertura
@@ -134,6 +168,16 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
       }
     }
   }, [client?.plano_contratado, servicosAtivos]);
+
+  // Calcular data de término automaticamente quando serviço ou data de início mudar
+  useEffect(() => {
+    if (servicoSelecionado && dataInicioPlano && !userEditedEndDateRef.current) {
+      const duracaoMeses = servicoSelecionado.duracao_meses || 1;
+      const dataInicio = parseISO(dataInicioPlano);
+      const dataFim = addMonths(dataInicio, duracaoMeses);
+      setDataFimPlano(format(dataFim, "yyyy-MM-dd"));
+    }
+  }, [servicoSelecionado, dataInicioPlano]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -391,35 +435,37 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value: 'ativo' | 'inativo' | 'lead' | 'prospecto') => setFormData({...formData, status: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lead">Lead</SelectItem>
-                    <SelectItem value="prospecto">Prospecto</SelectItem>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select 
+                value={formData.status} 
+                onValueChange={(value: 'ativo' | 'inativo' | 'lead' | 'prospecto') => setFormData({...formData, status: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lead">Lead</SelectItem>
+                  <SelectItem value="prospecto">Prospecto</SelectItem>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Serviço Contratado - Card estilizado */}
+            <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                <Label className="font-medium">Serviço Contratado</Label>
               </div>
 
-              {/* Serviço Contratado */}
               <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-primary" />
-                  Serviço Contratado
-                </Label>
                 <Select 
                   value={servicoSelecionadoId} 
                   onValueChange={(value) => {
                     setServicoSelecionadoId(value);
+                    userEditedEndDateRef.current = false;
                     if (value === "none" || value === "") {
                       setFormData(prev => ({ ...prev, plano_contratado: "" }));
                     } else {
@@ -442,39 +488,112 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                     ))}
                   </SelectContent>
                 </Select>
-                {servicoSelecionado && (
-                  <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 mt-1">
-                    <span className="font-medium">{servicoSelecionado.tipo === 'recorrente' ? 'Recorrente' : 'Único'}</span>
-                    {servicoSelecionado.duracao_meses && (
-                      <span> • {servicoSelecionado.duracao_meses} {servicoSelecionado.duracao_meses === 1 ? 'mês' : 'meses'}</span>
-                    )}
+              </div>
+
+              {servicoSelecionado && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Valor</Label>
+                      <p className="font-medium text-lg">
+                        R$ {servicoSelecionado.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Duração</Label>
+                      <p className="font-medium">
+                        {servicoSelecionado.duracao_meses || 1} {(servicoSelecionado.duracao_meses || 1) === 1 ? 'mês' : 'meses'}
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({servicoSelecionado.tipo === 'recorrente' ? 'Recorrente' : 'Único'})
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="data_inicio_plano">Data de Início</Label>
+                      <Input
+                        id="data_inicio_plano"
+                        type="date"
+                        value={dataInicioPlano}
+                        onChange={(e) => setDataInicioPlano(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="data_fim_plano">Data de Término</Label>
+                      <Input
+                        id="data_fim_plano"
+                        type="date"
+                        value={dataFimPlano}
+                        min={dataInicioPlano || undefined}
+                        onChange={(e) => {
+                          userEditedEndDateRef.current = true;
+                          setDataFimPlano(e.target.value);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="data_inicio_plano">Data de Início do Plano</Label>
-                <Input
-                  id="data_inicio_plano"
-                  type="date"
-                  value={dataInicioPlano}
-                  onChange={(e) => setDataInicioPlano(e.target.value)}
-                />
-              </div>
+            {/* Dados do Pagamento */}
+            {servicoSelecionado && (
+              <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-green-500" />
+                  <Label className="font-medium">Dados do Pagamento</Label>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="data_fim_plano">Data de Término do Plano</Label>
-                <Input
-                  id="data_fim_plano"
-                  type="date"
-                  value={dataFimPlano}
-                  min={dataInicioPlano || undefined}
-                  onChange={(e) => setDataFimPlano(e.target.value)}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Forma de Pagamento</Label>
+                    <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pix">Pix</SelectItem>
+                        <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                        <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                        <SelectItem value="boleto">Boleto</SelectItem>
+                        <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                        <SelectItem value="transferencia">Transferência</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Status do Pagamento</Label>
+                    <Select value={statusPagamento} onValueChange={setStatusPagamento}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pago">Pago</SelectItem>
+                        <SelectItem value="a_receber">A Receber</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="data_pagamento">Data do Pagamento</Label>
+                    <Input
+                      id="data_pagamento"
+                      type="date"
+                      value={dataPagamento}
+                      onChange={(e) => setDataPagamento(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  * Alterações nos dados de pagamento são apenas informativos. Para editar transações, acesse o módulo Financeiro.
+                </p>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
