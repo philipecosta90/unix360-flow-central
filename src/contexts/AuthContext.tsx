@@ -82,6 +82,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (!profile && session.user.user_metadata?.nome) {
               try {
                 logger.business('Completing signup process...');
+                // Aguardar um pouco para garantir que a sessão está estável
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Verificar se ainda temos uma sessão válida
+                const { data: { session: currentSession } } = await supabase.auth.getSession();
+                if (!currentSession?.access_token) {
+                  logger.error('Sessão não disponível para completar cadastro');
+                  return;
+                }
+                
                 const { error } = await supabase.functions.invoke('signup-complete');
                 if (!error) {
                   // Refresh profile after completion
@@ -94,8 +104,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     }
                   }, 1000);
                   return;
+                } else {
+                  logger.error('Erro ao completar cadastro:', error);
                 }
-                } catch (error) {
+              } catch (error) {
                 logger.error('Erro ao completar cadastro:', error);
               }
             }
