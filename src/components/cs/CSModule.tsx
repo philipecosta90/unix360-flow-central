@@ -7,7 +7,6 @@ import { Settings, Users, Heart, Target } from "lucide-react";
 import { useNicheSettings } from "@/hooks/useNicheSettings";
 import { CSDashboard } from "./CSDashboard";
 import { CSOnboarding } from "./CSOnboarding";
-import { CSInteracoes } from "./CSInteracoes";
 import { CSClientList } from "./CSClientList";
 import { CheckinModule } from "@/components/checkins/CheckinModule";
 
@@ -42,12 +41,11 @@ export const CSModule = () => {
       )}
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-5 w-full">
+        <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-4 w-full">
           <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Dashboard</TabsTrigger>
           <TabsTrigger value="clientes" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Clientes</TabsTrigger>
           <TabsTrigger value="checkins" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Check-ins</TabsTrigger>
           <TabsTrigger value="onboarding" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Onboarding</TabsTrigger>
-          <TabsTrigger value="interacoes" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Interações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
@@ -64,10 +62,6 @@ export const CSModule = () => {
 
         <TabsContent value="onboarding" className="space-y-6">
           <CSOnboarding selectedClient={selectedClient} />
-        </TabsContent>
-
-        <TabsContent value="interacoes" className="space-y-6">
-          <CSInteracoes selectedClient={selectedClient} />
         </TabsContent>
       </Tabs>
     </div>

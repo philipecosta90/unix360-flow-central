@@ -438,7 +438,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
       {/* Client Tabs */}
       <Tabs defaultValue="informacoes" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 h-auto">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
           <TabsTrigger value="informacoes" className="text-xs sm:text-sm py-2">
             <span className="hidden xs:inline">Informações</span>
             <span className="xs:hidden">Info</span>
@@ -450,10 +450,6 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
           <TabsTrigger value="checkins" className="text-xs sm:text-sm py-2">
             <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 inline" />
             <span className="hidden sm:inline">Check-ins</span>
-          </TabsTrigger>
-          <TabsTrigger value="interacoes" className="text-xs sm:text-sm py-2">
-            <span className="hidden xs:inline">Histórico</span>
-            <span className="xs:hidden">Histórico</span>
           </TabsTrigger>
           <TabsTrigger value="documentos" className="text-xs sm:text-sm py-2">
             <span className="hidden xs:inline">Documentos</span>
@@ -547,103 +543,6 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
 
         <TabsContent value="checkins">
           <ClientCheckinHistory clientId={client.id} />
-        </TabsContent>
-
-        <TabsContent value="interacoes">
-          <Card>
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-6">
-              <CardTitle className="text-base sm:text-lg text-foreground">Histórico de Interações</CardTitle>
-              <Button 
-                onClick={() => setShowInteractionDialog(true)}
-                className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-3 py-2 w-fit"
-                size="sm"
-              >
-                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden xs:inline">Registrar Interação</span>
-                <span className="xs:hidden">Nova Interação</span>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {loadingInteractions ? (
-                  <p>Carregando interações...</p>
-                ) : interactions.length > 0 ? (
-                  <div className="space-y-4">
-                    {interactions.map((interacao) => {
-                      const IconComponent = getInteractionIcon(interacao.tipo);
-                      const colorClass = getInteractionColor(interacao.tipo);
-                      
-                        return (
-                          <div key={interacao.id} className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg">
-                            <div className={`p-2 rounded-full ${colorClass} flex-shrink-0`}>
-                              <IconComponent className="h-3 w-3 sm:h-4 sm:w-4" />
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 xs:gap-2">
-                                 <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{interacao.titulo}</h4>
-                                 <div className="flex items-center gap-2">
-                                   <span className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-                                     {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
-                                   </span>
-                                   <div className="flex gap-1">
-                                     <Button
-                                       variant="ghost"
-                                       size="sm"
-                                       onClick={() => handleEditInteraction(interacao)}
-                                       className="h-6 w-6 p-0 hover:bg-blue-100"
-                                     >
-                                       <Edit className="h-3 w-3 text-blue-600" />
-                                     </Button>
-                                     <Button
-                                       variant="ghost"
-                                       size="sm"
-                                       onClick={() => handleDeleteInteraction(interacao.id)}
-                                       className="h-6 w-6 p-0 hover:bg-red-100"
-                                     >
-                                       <Trash2 className="h-3 w-3 text-red-600" />
-                                     </Button>
-                                   </div>
-                                 </div>
-                               </div>
-                               
-                               {interacao.descricao && (
-                                 <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed break-words">{interacao.descricao}</p>
-                               )}
-                               
-                               <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4 mt-2">
-                                 <span className="text-xs text-muted-foreground capitalize">
-                                   {interacao.tipo === 'call' ? 'Ligação' :
-                                    interacao.tipo === 'email' ? 'E-mail' :
-                                    interacao.tipo === 'meeting' ? 'Reunião' :
-                                    interacao.tipo === 'feedback' ? 'Feedback' : 'Outro'}
-                                 </span>
-                                 <span className="text-xs text-muted-foreground/70">
-                                   {new Date(interacao.created_at).toLocaleString('pt-BR')}
-                                 </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                    })}
-                  </div>
-                 ) : (
-                    <div className="text-center py-6 sm:py-8">
-                      <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
-                      <p className="text-muted-foreground mb-3 sm:mb-4 text-sm sm:text-base">Nenhuma interação registrada ainda</p>
-                     <Button 
-                       onClick={() => setShowInteractionDialog(true)}
-                       className="bg-[#43B26D] hover:bg-[#37A05B] text-sm px-4 py-2"
-                       size="sm"
-                     >
-                       <span className="hidden xs:inline">Registrar Interação</span>
-                       <span className="xs:hidden">Nova Interação</span>
-                     </Button>
-                   </div>
-                 )}
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="documentos">
