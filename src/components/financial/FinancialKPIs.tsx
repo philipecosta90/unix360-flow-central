@@ -7,6 +7,7 @@ interface FinancialKPIsProps {
     totalExpenses: number;
     balance: number;
     pendingRevenue: number;
+    pendingRevenueMonth: number;
   };
 }
 
@@ -19,7 +20,7 @@ export const FinancialKPIs = ({ kpis }: FinancialKPIsProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
@@ -65,14 +66,28 @@ export const FinancialKPIs = ({ kpis }: FinancialKPIsProps) => {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
-            <span className="mr-2">⏰</span> A Receber
+            <span className="mr-2">📅</span> A Receber (Mês)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            {formatCurrency(kpis.pendingRevenueMonth)}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Vence no período</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+            <span className="mr-2">⏰</span> A Receber (Total)
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
             {formatCurrency(kpis.pendingRevenue)}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Valores futuros</p>
+          <p className="text-xs text-muted-foreground mt-1">Total geral pendente</p>
         </CardContent>
       </Card>
     </div>

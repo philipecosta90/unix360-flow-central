@@ -237,6 +237,11 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
   const pendingRevenue = allTransactions
     .filter(t => t.tipo === 'entrada' && t.a_receber)
     .reduce((sum, t) => sum + Number(t.valor), 0);
+
+  // A Receber do Mês: transações a_receber que vencem no período filtrado
+  const pendingRevenueMonth = transactions
+    .filter(t => t.tipo === 'entrada' && t.a_receber)
+    .reduce((sum, t) => sum + Number(t.valor), 0);
   
   const today = toLocalISODate();
 
@@ -295,6 +300,7 @@ export const useFinancialTransactions = (filters?: FinancialFilters) => {
       totalExpenses,
       balance,
       pendingRevenue,
+      pendingRevenueMonth,
     },
     categoryData: Object.values(categoryData),
     monthlyRevenueData: sortedMonthlyData,
