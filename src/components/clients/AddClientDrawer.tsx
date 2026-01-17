@@ -62,7 +62,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
   
   // Pagamento
   const [formaPagamento, setFormaPagamento] = useState<string>("pix");
-  const [statusPagamento, setStatusPagamento] = useState<string>("pago");
+  const [statusPagamento, setStatusPagamento] = useState<string>("a_receber");
   const [dataPagamento, setDataPagamento] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [numeroParcelas, setNumeroParcelas] = useState<number>(3);
   
