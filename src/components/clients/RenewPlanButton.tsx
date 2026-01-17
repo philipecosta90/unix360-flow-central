@@ -1,16 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { RefreshCw, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { format, addDays } from "date-fns";
+import { RefreshCw } from "lucide-react";
+import { RenewPlanDialog } from "./RenewPlanDialog";
 
 interface RenewPlanButtonProps {
   clientId: string;
@@ -18,114 +9,30 @@ interface RenewPlanButtonProps {
   onSuccess: () => void;
 }
 
-const RENEWAL_OPTIONS = [
-  { label: "30 dias", days: 30 },
-  { label: "60 dias", days: 60 },
-  { label: "90 dias", days: 90 },
-  { label: "6 meses", days: 180 },
-  { label: "1 ano", days: 365 },
-];
-
 export const RenewPlanButton = ({ clientId, clientName, onSuccess }: RenewPlanButtonProps) => {
-  const { toast } = useToast();
-  const { userProfile } = useAuth();
-  const [loading, setLoading] = useState(false);
-
-  const handleRenew = async (days: number, label: string) => {
-    if (!userProfile?.empresa_id) {
-      toast({
-        title: "Erro",
-        description: "Perfil não encontrado.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const today = new Date();
-      const endDate = addDays(today, days);
-      const dataInicio = format(today, "yyyy-MM-dd");
-      const dataFim = format(endDate, "yyyy-MM-dd");
-
-      // 1. Atualizar cliente
-      const { error: updateError } = await supabase
-        .from("clientes")
-        .update({
-          data_inicio_plano: dataInicio,
-          data_fim_plano: dataFim,
-          status: "ativo",
-        })
-        .eq("id", clientId);
-
-      if (updateError) throw updateError;
-
-      // 2. Registrar histórico de renovação
-      const { error: historyError } = await supabase
-        .from("historico_renovacoes")
-        .insert({
-          cliente_id: clientId,
-          empresa_id: userProfile.empresa_id,
-          data_inicio_plano: dataInicio,
-          data_fim_plano: dataFim,
-          periodo_dias: days,
-          periodo_label: label,
-          renovado_por: userProfile.id,
-        });
-
-      if (historyError) {
-        console.error("Erro ao registrar histórico:", historyError);
-        // Não falhar a operação se o histórico falhar
-      }
-
-      toast({
-        title: "Plano renovado!",
-        description: `${clientName} agora tem plano até ${format(endDate, "dd/MM/yyyy")} (${label}).`,
-      });
-
-      onSuccess();
-    } catch (error: any) {
-      console.error("Erro ao renovar plano:", error);
-      toast({
-        title: "Erro",
-        description: error?.message || "Não foi possível renovar o plano.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={loading}
-          className="text-primary hover:text-primary/80 hover:bg-primary/10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <RefreshCw className="w-4 h-4 mr-1" />
-              Renovar
-            </>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        {RENEWAL_OPTIONS.map((option) => (
-          <DropdownMenuItem
-            key={option.days}
-            onClick={() => handleRenew(option.days, option.label)}
-          >
-            {option.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-primary hover:text-primary/80 hover:bg-primary/10"
+        onClick={(e) => {
+          e.stopPropagation();
+          setDialogOpen(true);
+        }}
+      >
+        <RefreshCw className="w-4 h-4 mr-1" />
+        Renovar
+      </Button>
+      <RenewPlanDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        clientId={clientId}
+        clientName={clientName}
+        onSuccess={onSuccess}
+      />
+    </>
   );
 };
