@@ -34,7 +34,7 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
     valor: '',
     categoria: '',
     data: toLocalISODate(),
-    a_receber: false,
+    a_receber: true,
     recorrente: false,
     cliente_id: 'none',
     servico_id: 'none',
