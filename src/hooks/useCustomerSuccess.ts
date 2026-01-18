@@ -271,13 +271,91 @@ export const useCustomerSuccess = () => {
     }
   });
 
+  // Hook para buscar todos os clientes em onboarding (com pelo menos 1 etapa pendente)
+  const useClientesEmOnboarding = () => {
+    return useQuery({
+      queryKey: ['clientes-onboarding', userProfile?.empresa_id],
+      queryFn: async () => {
+        if (!userProfile?.empresa_id) return [];
+
+        console.log('🔍 Buscando clientes em onboarding...');
+
+        // Buscar todos os onboardings com dados dos clientes
+        const { data: onboardings, error } = await supabase
+          .from('cs_onboarding')
+          .select('*, clientes(id, nome, email, telefone, status)')
+          .eq('empresa_id', userProfile.empresa_id)
+          .order('cliente_id')
+          .order('ordem');
+
+        if (error) {
+          console.error('❌ Erro ao buscar onboardings:', error);
+          return [];
+        }
+
+        // Agrupar por cliente
+        const clientesMap = new Map<string, {
+          cliente: { id: string; nome: string; email?: string; telefone?: string; status: string };
+          etapas: typeof onboardings;
+        }>();
+
+        onboardings?.forEach(step => {
+          const clienteId = step.cliente_id;
+          if (!step.clientes) return; // Skip if no client data
+          
+          if (!clientesMap.has(clienteId)) {
+            clientesMap.set(clienteId, {
+              cliente: step.clientes as any,
+              etapas: []
+            });
+          }
+          clientesMap.get(clienteId)!.etapas.push(step);
+        });
+
+        // Filtrar apenas clientes com pelo menos 1 etapa pendente
+        const clientesComPendencias = Array.from(clientesMap.values())
+          .filter(item => item.etapas.some(e => !e.concluido));
+
+        console.log(`✅ Encontrados ${clientesComPendencias.length} clientes em onboarding`);
+
+        return clientesComPendencias;
+      },
+      enabled: !!userProfile?.empresa_id,
+      refetchInterval: 2 * 60 * 1000, // Atualizar a cada 2 minutos
+    });
+  };
+
+  // Mutation para atualizar etapa por título (usado nas automações)
+  const updateOnboardingByTitulo = useMutation({
+    mutationFn: async ({ clienteId, titulo, concluido }: { clienteId: string; titulo: string; concluido: boolean }) => {
+      const { error } = await supabase
+        .from('cs_onboarding')
+        .update({ 
+          concluido, 
+          data_conclusao: concluido ? new Date().toISOString() : null 
+        })
+        .eq('cliente_id', clienteId)
+        .eq('empresa_id', userProfile?.empresa_id)
+        .ilike('titulo', `%${titulo}%`);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cs-data'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding'] });
+      queryClient.invalidateQueries({ queryKey: ['clientes-onboarding'] });
+    }
+  });
+
   return {
     useCSData,
     useClientOnboarding,
     useClientInteracoes,
     useClientNPS,
+    useClientesEmOnboarding,
     createOnboardingStep,
     updateOnboardingStep,
+    updateOnboardingByTitulo,
     createInteracao,
     createNPS
   };

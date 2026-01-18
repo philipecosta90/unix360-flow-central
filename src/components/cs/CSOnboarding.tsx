@@ -1,53 +1,85 @@
-
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { useCustomerSuccess } from "@/hooks/useCustomerSuccess";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, CheckCircle, Clock } from "lucide-react";
+import { 
+  Search, 
+  CheckCircle, 
+  Clock, 
+  User,
+  ChevronDown,
+  ChevronUp,
+  Send,
+  FileText,
+  ClipboardList,
+  Dumbbell,
+  PartyPopper
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface CSOnboardingProps {
-  selectedClient: string | null;
+  selectedClient?: string | null;
 }
 
+// Ícones para cada etapa de onboarding
+const getStepIcon = (titulo: string, concluido: boolean) => {
+  const iconClass = concluido ? "text-green-600" : "text-muted-foreground";
+  
+  if (titulo.toLowerCase().includes("boas-vindas")) {
+    return <PartyPopper className={`h-4 w-4 ${iconClass}`} />;
+  }
+  if (titulo.toLowerCase().includes("anamnese enviada")) {
+    return <Send className={`h-4 w-4 ${iconClass}`} />;
+  }
+  if (titulo.toLowerCase().includes("anamnese preenchida")) {
+    return <FileText className={`h-4 w-4 ${iconClass}`} />;
+  }
+  if (titulo.toLowerCase().includes("planejamento")) {
+    return <ClipboardList className={`h-4 w-4 ${iconClass}`} />;
+  }
+  if (titulo.toLowerCase().includes("protocolo")) {
+    return <Dumbbell className={`h-4 w-4 ${iconClass}`} />;
+  }
+  
+  return concluido 
+    ? <CheckCircle className={`h-4 w-4 ${iconClass}`} />
+    : <Clock className={`h-4 w-4 ${iconClass}`} />;
+};
+
 export const CSOnboarding = ({ selectedClient }: CSOnboardingProps) => {
-  const { useClientOnboarding, useCSData, createOnboardingStep, updateOnboardingStep } = useCustomerSuccess();
-  const { data: csData } = useCSData();
-  const { data: onboardingSteps, isLoading } = useClientOnboarding(selectedClient || "");
+  const { useClientesEmOnboarding, updateOnboardingStep } = useCustomerSuccess();
+  const { data: clientesOnboarding, isLoading } = useClientesEmOnboarding();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newStep, setNewStep] = useState({
-    titulo: "",
-    descricao: "",
-    ordem: 1
-  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
 
-  const handleCreateStep = async () => {
-    if (!selectedClient || !newStep.titulo) {
-      toast.error("Selecione um cliente e preencha o título");
-      return;
-    }
+  // Filtrar clientes com base na busca
+  const filteredClientes = useMemo(() => {
+    if (!clientesOnboarding) return [];
+    
+    if (!searchTerm.trim()) return clientesOnboarding;
+    
+    const termLower = searchTerm.toLowerCase();
+    return clientesOnboarding.filter(item => 
+      item.cliente.nome.toLowerCase().includes(termLower) ||
+      item.cliente.email?.toLowerCase().includes(termLower)
+    );
+  }, [clientesOnboarding, searchTerm]);
 
-    try {
-      await createOnboardingStep.mutateAsync({
-        cliente_id: selectedClient,
-        titulo: newStep.titulo,
-        descricao: newStep.descricao,
-        ordem: newStep.ordem
-      });
-      
-      setNewStep({ titulo: "", descricao: "", ordem: 1 });
-      setIsDialogOpen(false);
-      toast.success("Passo de onboarding criado com sucesso!");
-    } catch (error) {
-      toast.error("Erro ao criar passo de onboarding");
-    }
+  const toggleExpanded = (clienteId: string) => {
+    setExpandedClients(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(clienteId)) {
+        newSet.delete(clienteId);
+      } else {
+        newSet.add(clienteId);
+      }
+      return newSet;
+    });
   };
 
   const handleToggleStep = async (stepId: string, concluido: boolean) => {
@@ -58,160 +90,192 @@ export const CSOnboarding = ({ selectedClient }: CSOnboardingProps) => {
         data_conclusao: concluido ? new Date().toISOString() : null
       });
       
-      toast.success(concluido ? "Passo concluído!" : "Passo marcado como pendente");
+      toast.success(concluido ? "Etapa concluída!" : "Etapa marcada como pendente");
     } catch (error) {
-      toast.error("Erro ao atualizar passo");
+      toast.error("Erro ao atualizar etapa");
     }
   };
 
-  const selectedClientData = csData?.clientes?.find(c => c.id === selectedClient);
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Onboarding do Cliente</h2>
-          {selectedClientData && (
-            <p className="text-gray-600 mt-1">Cliente: {selectedClientData.nome}</p>
-          )}
+          <h2 className="text-2xl font-bold text-foreground">Onboarding de Clientes</h2>
+          <p className="text-muted-foreground mt-1">
+            Acompanhe o progresso de cada cliente no processo de onboarding
+          </p>
         </div>
-        
-        {selectedClient && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Passo
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Adicionar Passo do Onboarding</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="titulo">Título *</Label>
-                  <Input
-                    id="titulo"
-                    value={newStep.titulo}
-                    onChange={(e) => setNewStep({ ...newStep, titulo: e.target.value })}
-                    placeholder="Ex: Configurar acesso ao sistema"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="descricao">Descrição</Label>
-                  <Textarea
-                    id="descricao"
-                    value={newStep.descricao}
-                    onChange={(e) => setNewStep({ ...newStep, descricao: e.target.value })}
-                    placeholder="Detalhes do passo..."
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="ordem">Ordem</Label>
-                  <Input
-                    id="ordem"
-                    type="number"
-                    min="1"
-                    value={newStep.ordem}
-                    onChange={(e) => setNewStep({ ...newStep, ordem: parseInt(e.target.value) || 1 })}
-                  />
-                </div>
-                
-                <Button onClick={handleCreateStep} disabled={createOnboardingStep.isPending}>
-                  {createOnboardingStep.isPending ? "Criando..." : "Criar Passo"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
       </div>
 
-      {!selectedClient ? (
+      {/* Busca */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              placeholder="Buscar cliente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Lista de clientes em onboarding */}
+      {isLoading ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-gray-500 text-center">
-              Selecione um cliente na aba "Clientes" para visualizar e gerenciar o onboarding
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">Carregando clientes...</p>
+          </CardContent>
+        </Card>
+      ) : filteredClientes.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <User className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+            <p className="text-muted-foreground">
+              {searchTerm 
+                ? "Nenhum cliente encontrado com esse termo" 
+                : "Nenhum cliente em processo de onboarding"}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Quando você cadastrar novos clientes, eles aparecerão aqui automaticamente
             </p>
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Progresso do Onboarding</CardTitle>
-            {onboardingSteps && onboardingSteps.length > 0 && (
-              <div className="flex items-center space-x-4">
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-green-600 h-2 rounded-full transition-all" 
-                    style={{ 
-                      width: `${(onboardingSteps.filter(s => s.concluido).length / onboardingSteps.length) * 100}%` 
-                    }}
-                  />
-                </div>
-                <span className="text-sm text-gray-600">
-                  {onboardingSteps.filter(s => s.concluido).length} / {onboardingSteps.length}
-                </span>
-              </div>
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {isLoading ? (
-                <p>Carregando passos do onboarding...</p>
-              ) : onboardingSteps && onboardingSteps.length > 0 ? (
-                onboardingSteps.map((step, index) => (
-                  <div
-                    key={step.id}
-                    className={`flex items-start space-x-4 p-4 border rounded-lg ${
-                      step.concluido ? 'bg-green-50 border-green-200' : 'bg-gray-50'
-                    }`}
-                  >
-                    <Checkbox
-                      checked={step.concluido}
-                      onCheckedChange={(checked) => handleToggleStep(step.id, !!checked)}
-                    />
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        {step.concluido ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <Clock className="h-4 w-4 text-gray-400" />
-                        )}
-                        <h4 className={`font-medium ${step.concluido ? 'text-green-800' : 'text-gray-900'}`}>
-                          {step.titulo}
-                        </h4>
+        <div className="space-y-4">
+          {filteredClientes.map((item) => {
+            const { cliente, etapas } = item;
+            const etapasConcluidas = etapas.filter(e => e.concluido).length;
+            const totalEtapas = etapas.length;
+            const progresso = totalEtapas > 0 ? (etapasConcluidas / totalEtapas) * 100 : 0;
+            const isExpanded = expandedClients.has(cliente.id);
+            
+            // Encontrar próxima etapa pendente
+            const proximaEtapa = etapas.find(e => !e.concluido);
+            
+            return (
+              <Card key={cliente.id} className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
                       </div>
-                      
-                      {step.descricao && (
-                        <p className="text-sm text-gray-600 mt-1">{step.descricao}</p>
-                      )}
-                      
-                      <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                        <span>Ordem: {step.ordem}</span>
-                        {step.data_conclusao && (
-                          <span>
-                            Concluído em: {new Date(step.data_conclusao).toLocaleDateString('pt-BR')}
-                          </span>
+                      <div>
+                        <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+                        {cliente.email && (
+                          <p className="text-sm text-muted-foreground">{cliente.email}</p>
                         )}
                       </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <Badge 
+                        variant={progresso === 100 ? "default" : "secondary"}
+                        className={progresso === 100 ? "bg-green-100 text-green-800" : ""}
+                      >
+                        {etapasConcluidas}/{totalEtapas} etapas
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleExpanded(cliente.id)}
+                      >
+                        {isExpanded ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Nenhum passo de onboarding configurado</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Clique em "Novo Passo" para começar
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  
+                  {/* Barra de progresso */}
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Progresso</span>
+                      <span className="font-medium">{Math.round(progresso)}%</span>
+                    </div>
+                    <Progress value={progresso} className="h-2" />
+                  </div>
+                  
+                  {/* Próxima etapa (quando não expandido) */}
+                  {!isExpanded && proximaEtapa && (
+                    <div className="mt-3 flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-amber-500" />
+                        <span className="text-sm">
+                          Próxima: <strong>{proximaEtapa.titulo}</strong>
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleToggleStep(proximaEtapa.id, true)}
+                        disabled={updateOnboardingStep.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Marcar como concluída
+                      </Button>
+                    </div>
+                  )}
+                </CardHeader>
+                
+                {/* Lista de etapas expandida */}
+                {isExpanded && (
+                  <CardContent className="pt-0">
+                    <div className="space-y-2 border-t pt-4">
+                      {etapas.map((step) => (
+                        <div
+                          key={step.id}
+                          className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                            step.concluido 
+                              ? 'bg-green-50 border border-green-100' 
+                              : 'bg-muted/30 border border-transparent hover:border-muted'
+                          }`}
+                        >
+                          <Checkbox
+                            checked={step.concluido}
+                            onCheckedChange={(checked) => handleToggleStep(step.id, !!checked)}
+                            disabled={updateOnboardingStep.isPending}
+                          />
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              {getStepIcon(step.titulo, step.concluido)}
+                              <h4 className={`font-medium ${
+                                step.concluido ? 'text-green-800' : 'text-foreground'
+                              }`}>
+                                {step.titulo}
+                              </h4>
+                            </div>
+                            
+                            {step.descricao && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {step.descricao}
+                              </p>
+                            )}
+                            
+                            {step.data_conclusao && (
+                              <p className="text-xs text-green-600 mt-1">
+                                Concluído em {new Date(step.data_conclusao).toLocaleDateString('pt-BR')}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <Badge variant="outline" className="flex-shrink-0">
+                            {step.ordem}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })}
+        </div>
       )}
     </div>
   );

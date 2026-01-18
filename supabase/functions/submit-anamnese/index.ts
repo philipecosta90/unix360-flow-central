@@ -121,6 +121,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("submit-anamnese: Respostas saved successfully");
 
+    // Marcar etapa "Anamnese preenchida" como concluída no onboarding
+    try {
+      const { error: onboardingError } = await supabase
+        .from("cs_onboarding")
+        .update({ 
+          concluido: true, 
+          data_conclusao: new Date().toISOString() 
+        })
+        .eq("cliente_id", envio.cliente_id)
+        .eq("empresa_id", envio.empresa_id)
+        .ilike("titulo", "%anamnese preenchida%");
+      
+      if (onboardingError) {
+        console.warn("submit-anamnese: Error updating onboarding step:", onboardingError);
+      } else {
+        console.log("submit-anamnese: Onboarding step 'Anamnese preenchida' marked as complete");
+      }
+    } catch (onboardingErr) {
+      console.warn("submit-anamnese: Could not update onboarding:", onboardingErr);
+    }
+
     // Enviar email de notificação para a empresa
     const empresaEmail = empresa?.email;
     const clienteNome = envio.cliente?.nome || "Cliente";

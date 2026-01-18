@@ -9,7 +9,7 @@ import { CSClientDetail } from "./CSClientDetail";
 import { Search, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 
 interface CSClientListProps {
-  onSelectClient: (clientId: string) => void;
+  onSelectClient?: (clientId: string) => void;
 }
 
 export const CSClientList = ({ onSelectClient }: CSClientListProps) => {
@@ -84,7 +84,7 @@ export const CSClientList = ({ onSelectClient }: CSClientListProps) => {
                   <div
                     key={cliente.id}
                     className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors bg-white"
-                    onClick={() => onSelectClient(cliente.id)}
+                    onClick={() => onSelectClient?.(cliente.id)}
                   >
                     {/* Avatar e informações principais */}
                     <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
