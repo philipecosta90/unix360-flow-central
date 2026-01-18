@@ -88,7 +88,7 @@ serve(async (req: Request): Promise<Response> => {
         .insert({
           nome: nomeEmpresa,
           email: user.email,
-          plano: 'gratuito', // Plano padrão para novos cadastros
+          plano: 'gratuito',
           ativa: true
         })
         .select()
@@ -109,7 +109,6 @@ serve(async (req: Request): Promise<Response> => {
 
       if (stagesError) {
         console.error('❌ [SIGNUP-COMPLETE] Erro ao criar etapas padrão do CRM:', stagesError.message);
-        // Não lançar erro aqui para não interromper o processo de criação do usuário
       } else {
         console.log('✅ [SIGNUP-COMPLETE] Etapas padrão do CRM criadas com sucesso');
       }
@@ -118,7 +117,7 @@ serve(async (req: Request): Promise<Response> => {
       console.log('👤 [SIGNUP-COMPLETE] Criando perfil com trial de 7 dias...');
       const trialStartDate = new Date();
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialStartDate.getDate() + 7); // 7 dias de trial
+      trialEndDate.setDate(trialStartDate.getDate() + 7);
       
       const { error: profileError } = await supabaseAdmin
         .from('perfis')
@@ -127,7 +126,7 @@ serve(async (req: Request): Promise<Response> => {
           empresa_id: newEmpresaId,
           nome: nome,
           email: user.email || 'usuario@email.com',
-          nivel_permissao: 'operacional', // Usuários começam com nível operacional
+          nivel_permissao: 'operacional',
           ativo: true,
           trial_start_date: trialStartDate.toISOString(),
           trial_end_date: trialEndDate.toISOString(),
@@ -162,7 +161,7 @@ serve(async (req: Request): Promise<Response> => {
         }
       );
 
-    } catch (transactionError: any) {
+    } catch (transactionError) {
       console.error('💥 [SIGNUP-COMPLETE] Erro na transação, fazendo rollback...', transactionError);
       
       // Rollback: Remover empresa se foi criada
@@ -182,78 +181,15 @@ serve(async (req: Request): Promise<Response> => {
       throw transactionError;
     }
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('💥 [SIGNUP-COMPLETE] Erro inesperado:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor';
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Erro interno do servidor'
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders,
-        },
-      }
-    );
-  }
-});
-      if (profileError) {
-        throw new Error(`Erro ao criar perfil: ${profileError.message}`);
-      }
-
-      console.log('✅ [SIGNUP-COMPLETE] Perfil criado com sucesso com trial de 7 dias');
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Cadastro completado com sucesso',
-          user: {
-            id: user.id,
-            email: user.email,
-            nome: nome,
-            empresa_id: newEmpresaId,
-            nome_empresa: nomeEmpresa
-          }
-        }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
-        }
-      );
-
-    } catch (transactionError: any) {
-      console.error('💥 [SIGNUP-COMPLETE] Erro na transação, fazendo rollback...', transactionError);
-      
-      // Rollback: Remover empresa se foi criada
-      if (newEmpresaId) {
-        console.log('🧹 [SIGNUP-COMPLETE] Removendo empresa...');
-        try {
-          await supabaseAdmin
-            .from('empresas')
-            .delete()
-            .eq('id', newEmpresaId);
-          console.log('✅ [SIGNUP-COMPLETE] Empresa removida');
-        } catch (deleteError) {
-          console.error('❌ [SIGNUP-COMPLETE] Erro ao remover empresa:', deleteError);
-        }
-      }
-
-      throw transactionError;
-    }
-
-  } catch (error: any) {
-    console.error('💥 [SIGNUP-COMPLETE] Erro inesperado:', error);
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'Erro interno do servidor'
+        error: errorMessage
       }),
       {
         status: 500,
