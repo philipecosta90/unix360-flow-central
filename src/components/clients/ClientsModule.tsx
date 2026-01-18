@@ -242,6 +242,32 @@ export const ClientsModule = () => {
         }
       }
 
+      // Criar etapas de onboarding automaticamente
+      const ONBOARDING_STEPS = [
+        { ordem: 1, titulo: "Boas-vindas", descricao: "Mensagem de boas-vindas enviada ao cliente", concluido: !!options?.enviarBoasVindas },
+        { ordem: 2, titulo: "Anamnese enviada", descricao: "Questionário de anamnese enviado", concluido: false },
+        { ordem: 3, titulo: "Anamnese preenchida", descricao: "Cliente preencheu a anamnese", concluido: false },
+        { ordem: 4, titulo: "Planejamento criado", descricao: "Dieta e treino do cliente elaborados", concluido: false },
+        { ordem: 5, titulo: "Protocolo enviado", descricao: "Dieta e treino enviados ao cliente", concluido: false },
+      ];
+
+      try {
+        await supabase.from('cs_onboarding').insert(
+          ONBOARDING_STEPS.map(step => ({
+            empresa_id: userProfile.empresa_id,
+            cliente_id: data.id,
+            titulo: step.titulo,
+            descricao: step.descricao,
+            ordem: step.ordem,
+            concluido: step.concluido,
+            data_conclusao: step.concluido ? new Date().toISOString() : null,
+          }))
+        );
+        console.log('✅ Etapas de onboarding criadas para cliente:', data.id);
+      } catch (onboardingError) {
+        console.warn('⚠️ Erro ao criar etapas de onboarding:', onboardingError);
+      }
+
       fetchClients();
       setShowAddDrawer(false);
       return { id: data.id };

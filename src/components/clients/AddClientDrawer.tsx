@@ -275,6 +275,22 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
             formData.email.trim()
           );
         }
+        
+        // Marcar etapa "Anamnese enviada" como concluída no onboarding
+        try {
+          const { supabase } = await import("@/integrations/supabase/client");
+          await supabase
+            .from('cs_onboarding')
+            .update({ 
+              concluido: true, 
+              data_conclusao: new Date().toISOString() 
+            })
+            .eq('cliente_id', result.id)
+            .ilike('titulo', '%anamnese enviada%');
+          console.log('✅ Etapa "Anamnese enviada" marcada como concluída');
+        } catch (onboardingError) {
+          console.warn('⚠️ Erro ao atualizar onboarding:', onboardingError);
+        }
       }
       
       // Reset form

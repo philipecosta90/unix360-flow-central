@@ -1,9 +1,4 @@
-
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Settings, Users, Heart, Target } from "lucide-react";
 import { useNicheSettings } from "@/hooks/useNicheSettings";
 import { CSDashboard } from "./CSDashboard";
 import { CSOnboarding } from "./CSOnboarding";
@@ -11,7 +6,6 @@ import { CSClientList } from "./CSClientList";
 import { CheckinModule } from "@/components/checkins/CheckinModule";
 
 export const CSModule = () => {
-  const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const { settings: nicheSettings, isLoading: nicheLoading } = useNicheSettings();
 
   const nicheConfig = nicheSettings?.config;
@@ -53,7 +47,7 @@ export const CSModule = () => {
         </TabsContent>
 
         <TabsContent value="clientes" className="space-y-6">
-          <CSClientList onSelectClient={setSelectedClient} />
+          <CSClientList />
         </TabsContent>
 
         <TabsContent value="checkins" className="space-y-6">
@@ -61,7 +55,7 @@ export const CSModule = () => {
         </TabsContent>
 
         <TabsContent value="onboarding" className="space-y-6">
-          <CSOnboarding selectedClient={selectedClient} />
+          <CSOnboarding />
         </TabsContent>
       </Tabs>
     </div>
