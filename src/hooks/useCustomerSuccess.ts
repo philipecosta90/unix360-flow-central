@@ -236,6 +236,7 @@ export const useCustomerSuccess = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cs-data'] });
       queryClient.invalidateQueries({ queryKey: ['onboarding'] });
+      queryClient.invalidateQueries({ queryKey: ['clientes-onboarding'] });
     }
   });
 
