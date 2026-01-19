@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNicheSettings } from "@/hooks/useNicheSettings";
 import { CSDashboard } from "./CSDashboard";
 import { CSOnboarding } from "./CSOnboarding";
 import { CSClientList } from "./CSClientList";
+import { CSKanbanBoard } from "./CSKanbanBoard";
 import { CheckinModule } from "@/components/checkins/CheckinModule";
 
 export const CSModule = () => {
   const { settings: nicheSettings, isLoading: nicheLoading } = useNicheSettings();
+  const [clientViewMode, setClientViewMode] = useState<'kanban' | 'list'>('kanban');
 
   const nicheConfig = nicheSettings?.config;
   const nicheType = nicheSettings?.niche_type || 'fitness';
@@ -14,8 +17,8 @@ export const CSModule = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Sucesso do Cliente</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-foreground">Sucesso do Cliente</h1>
+        <p className="text-muted-foreground mt-2">
           Monitore e engaje seus clientes para maximizar a satisfação
           {nicheConfig?.name && ` - ${nicheConfig.name}`}
         </p>
@@ -23,9 +26,9 @@ export const CSModule = () => {
 
       {/* Orientações específicas do nicho */}
       {nicheConfig && !nicheLoading && (
-        <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/30 dark:to-green-950/30 rounded-lg border">
           <h4 className="font-medium mb-2">💡 Orientações para {nicheConfig.name}:</h4>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-muted-foreground">
             {nicheType === 'fitness' && "Focus no engajamento: monitore frequência, evolução física e satisfação dos alunos. Acompanhe cancelamentos e implemente programas de retenção."}
             {nicheType === 'consultoria' && "Foque nos resultados: acompanhe o progresso das sessões, alcance de objetivos e satisfação com os resultados. Monitore renovações de contratos."}
             {nicheType === 'medical' && "Cuidado contínuo: monitore adesão aos tratamentos, satisfação com atendimento e eficácia dos procedimentos. Acompanhe retornos e consultas preventivas."}
@@ -34,20 +37,30 @@ export const CSModule = () => {
         </div>
       )}
 
-      <Tabs defaultValue="dashboard" className="w-full">
+      <Tabs defaultValue="clientes" className="w-full">
         <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-4 w-full">
+          <TabsTrigger value="clientes" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Jornada</TabsTrigger>
           <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Dashboard</TabsTrigger>
-          <TabsTrigger value="clientes" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Clientes</TabsTrigger>
           <TabsTrigger value="checkins" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Check-ins</TabsTrigger>
           <TabsTrigger value="onboarding" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Onboarding</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="space-y-6">
-          <CSDashboard />
+        <TabsContent value="clientes" className="space-y-6">
+          {clientViewMode === 'kanban' ? (
+            <CSKanbanBoard 
+              viewMode={clientViewMode} 
+              onViewModeChange={setClientViewMode}
+            />
+          ) : (
+            <CSClientList 
+              viewMode={clientViewMode}
+              onViewModeChange={setClientViewMode}
+            />
+          )}
         </TabsContent>
 
-        <TabsContent value="clientes" className="space-y-6">
-          <CSClientList />
+        <TabsContent value="dashboard" className="space-y-6">
+          <CSDashboard />
         </TabsContent>
 
         <TabsContent value="checkins" className="space-y-6">
