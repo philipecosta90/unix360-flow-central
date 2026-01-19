@@ -591,6 +591,8 @@ export type Database = {
           cpf_cnpj: string | null
           created_at: string
           created_by: string | null
+          cs_stage_entered_at: string | null
+          cs_stage_id: string | null
           data_fim_plano: string | null
           data_inicio_plano: string | null
           data_nascimento: string | null
@@ -616,6 +618,8 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
+          cs_stage_entered_at?: string | null
+          cs_stage_id?: string | null
           data_fim_plano?: string | null
           data_inicio_plano?: string | null
           data_nascimento?: string | null
@@ -641,6 +645,8 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
+          cs_stage_entered_at?: string | null
+          cs_stage_id?: string | null
           data_fim_plano?: string | null
           data_inicio_plano?: string | null
           data_nascimento?: string | null
@@ -659,6 +665,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "clientes_cs_stage_id_fkey"
+            columns: ["cs_stage_id"]
+            isOneToOne: false
+            referencedRelation: "cs_stages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "clientes_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -1078,6 +1091,50 @@ export type Database = {
           },
           {
             foreignKeyName: "cs_onboarding_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cs_stages: {
+        Row: {
+          ativo: boolean | null
+          auto_move: Json | null
+          cor: string | null
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          auto_move?: Json | null
+          cor?: string | null
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          ordem: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          auto_move?: Json | null
+          cor?: string | null
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cs_stages_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
@@ -1781,6 +1838,10 @@ export type Database = {
         Returns: string
       }
       create_default_crm_stages_for_company: {
+        Args: { p_empresa_id: string }
+        Returns: undefined
+      }
+      create_default_cs_stages_for_company: {
         Args: { p_empresa_id: string }
         Returns: undefined
       }
