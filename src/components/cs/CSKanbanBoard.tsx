@@ -14,9 +14,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Search, RefreshCw, Users, List, LayoutGrid } from 'lucide-react';
+import { Search, RefreshCw, Users, List, LayoutGrid, Settings2 } from 'lucide-react';
 import { CSKanbanColumn } from './CSKanbanColumn';
 import { CSKanbanCard } from './CSKanbanCard';
+import { CSStageSettingsDialog } from './CSStageSettingsDialog';
 import { useCSStages } from '@/hooks/useCSStages';
 import { useCSClients, CSClient } from '@/hooks/useCSClients';
 import { useCSDragAndDrop } from '@/hooks/useCSDragAndDrop';
@@ -31,6 +32,7 @@ export const CSKanbanBoard = ({ onViewModeChange, viewMode = 'kanban' }: CSKanba
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
   const { stages, isLoading: stagesLoading } = useCSStages();
   const { clients, clientsByStage, isLoading: clientsLoading, refetch } = useCSClients();
@@ -126,6 +128,15 @@ export const CSKanbanBoard = ({ onViewModeChange, viewMode = 'kanban' }: CSKanba
               title="Atualizar"
             >
               <RefreshCw className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowSettingsDialog(true)}
+              title="Configurar etapas"
+            >
+              <Settings2 className="h-4 w-4" />
             </Button>
 
             {onViewModeChange && (
@@ -226,6 +237,12 @@ export const CSKanbanBoard = ({ onViewModeChange, viewMode = 'kanban' }: CSKanba
           onOpenChange={setShowDetailModal}
         />
       )}
+
+      {/* Modal de Configurações de Etapas */}
+      <CSStageSettingsDialog
+        open={showSettingsDialog}
+        onOpenChange={setShowSettingsDialog}
+      />
     </>
   );
 };
