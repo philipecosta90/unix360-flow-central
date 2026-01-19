@@ -18,7 +18,7 @@ import { usePlanExpirationAlerts } from "@/hooks/usePlanExpirationAlerts";
 import { formatDateDisplay } from "@/utils/dateUtils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, Plus, Search, CalendarDays, AlertTriangle, ChevronDown, ChevronUp, Users, UserPlus, Upload } from "lucide-react";
+import { Loader2, Plus, Search, CalendarDays, AlertTriangle, ChevronDown, ChevronUp, Users, UserPlus, Upload, MessageCircle } from "lucide-react";
 import { ImportClientsDialog } from "./ImportClientsDialog";
 interface Cliente {
   id: string;
@@ -51,6 +51,28 @@ export const ClientsModule = () => {
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [showAllExpiringPlans, setShowAllExpiringPlans] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const openWhatsApp = (telefone: string | undefined, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!telefone) {
+      toast({
+        title: "Telefone não cadastrado",
+        description: "Este cliente não possui número de telefone cadastrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Remove caracteres não numéricos e adiciona código do país se necessário
+    let phoneNumber = telefone.replace(/\D/g, '');
+    
+    // Se não começar com código do país (55 para Brasil), adiciona
+    if (!phoneNumber.startsWith('55') && phoneNumber.length <= 11) {
+      phoneNumber = '55' + phoneNumber;
+    }
+    
+    window.open(`https://api.whatsapp.com/send/?phone=${phoneNumber}`, '_blank');
+  };
+
   const fetchClients = async () => {
     if (!userProfile?.empresa_id) return;
     try {
@@ -498,6 +520,15 @@ export const ClientsModule = () => {
                           <CardTitle className="text-lg">{client.nome || 'Nome não informado'}</CardTitle>
                           {client.email && <p className="text-sm text-gray-600">{client.email}</p>}
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => openWhatsApp(client.telefone, e)}
+                          className="h-9 w-9 p-0 rounded-full text-green-600 hover:text-green-700 hover:bg-green-50"
+                          title="Abrir WhatsApp"
+                        >
+                          <MessageCircle className="h-5 w-5" />
+                        </Button>
                       </div>
                     </CardHeader>
                     <CardContent>
