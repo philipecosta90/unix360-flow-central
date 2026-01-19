@@ -70,7 +70,7 @@ export const ClientsModule = () => {
       phoneNumber = '55' + phoneNumber;
     }
     
-    window.open(`https://api.whatsapp.com/send/?phone=${phoneNumber}`, '_blank');
+    window.open(`https://wa.me/${phoneNumber}`, '_blank');
   };
 
   const fetchClients = async () => {
