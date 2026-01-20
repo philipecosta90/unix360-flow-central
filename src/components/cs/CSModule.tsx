@@ -1,16 +1,13 @@
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNicheSettings } from "@/hooks/useNicheSettings";
 import { CSDashboard } from "./CSDashboard";
 import { CSOnboarding } from "./CSOnboarding";
-import { CSClientList } from "./CSClientList";
 import { CSKanbanBoard } from "./CSKanbanBoard";
 import { CSPlanner } from "./CSPlanner";
 import { CheckinModule } from "@/components/checkins/CheckinModule";
 
 export const CSModule = () => {
   const { settings: nicheSettings, isLoading: nicheLoading } = useNicheSettings();
-  const [clientViewMode, setClientViewMode] = useState<'kanban' | 'list'>('kanban');
 
   const nicheConfig = nicheSettings?.config;
   const nicheType = nicheSettings?.niche_type || 'fitness';
@@ -48,17 +45,7 @@ export const CSModule = () => {
         </TabsList>
 
         <TabsContent value="clientes" className="space-y-6">
-          {clientViewMode === 'kanban' ? (
-            <CSKanbanBoard 
-              viewMode={clientViewMode} 
-              onViewModeChange={setClientViewMode}
-            />
-          ) : (
-            <CSClientList 
-              viewMode={clientViewMode}
-              onViewModeChange={setClientViewMode}
-            />
-          )}
+          <CSKanbanBoard />
         </TabsContent>
 
         <TabsContent value="planner" className="space-y-6">

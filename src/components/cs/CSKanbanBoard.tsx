@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Search, RefreshCw, Users, List, LayoutGrid, Settings2 } from 'lucide-react';
+import { Search, RefreshCw, Users, Settings2 } from 'lucide-react';
 import { CSKanbanColumn } from './CSKanbanColumn';
 import { CSKanbanCard } from './CSKanbanCard';
 import { CSStageSettingsDialog } from './CSStageSettingsDialog';
@@ -23,12 +23,7 @@ import { useCSClients, CSClient } from '@/hooks/useCSClients';
 import { useCSDragAndDrop } from '@/hooks/useCSDragAndDrop';
 import { CSClientDetail } from './CSClientDetail';
 
-interface CSKanbanBoardProps {
-  onViewModeChange?: (mode: 'kanban' | 'list') => void;
-  viewMode?: 'kanban' | 'list';
-}
-
-export const CSKanbanBoard = ({ onViewModeChange, viewMode = 'kanban' }: CSKanbanBoardProps) => {
+export const CSKanbanBoard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -139,26 +134,6 @@ export const CSKanbanBoard = ({ onViewModeChange, viewMode = 'kanban' }: CSKanba
               <Settings2 className="h-4 w-4" />
             </Button>
 
-            {onViewModeChange && (
-              <div className="flex items-center border rounded-md">
-                <Button
-                  variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="rounded-r-none"
-                  onClick={() => onViewModeChange('kanban')}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="rounded-l-none"
-                  onClick={() => onViewModeChange('list')}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
           </div>
         </div>
 
