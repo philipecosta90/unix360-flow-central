@@ -70,7 +70,9 @@ export const ClientsModule = () => {
       phoneNumber = '55' + phoneNumber;
     }
     
-    window.open(`https://wa.me/${phoneNumber}`, '_blank');
+    const url = `https://wa.me/${phoneNumber}`;
+    console.log('📱 Abrindo WhatsApp:', url);
+    window.open(url, '_blank');
   };
 
   const fetchClients = async () => {
