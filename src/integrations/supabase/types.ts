@@ -586,6 +586,7 @@ export type Database = {
         Row: {
           bairro: string | null
           cep: string | null
+          ciclo_atual: number | null
           cidade: string | null
           complemento: string | null
           cpf_cnpj: string | null
@@ -604,15 +605,20 @@ export type Database = {
           nome: string
           numero: string | null
           observacoes: string | null
+          planner_obs: string | null
           plano_contratado: string | null
+          semana_atual: number | null
           status: Database["public"]["Enums"]["status_cliente"]
           tags: string[] | null
           telefone: string | null
+          tipo_contrato: string | null
+          ultimo_contato: string | null
           updated_at: string
         }
         Insert: {
           bairro?: string | null
           cep?: string | null
+          ciclo_atual?: number | null
           cidade?: string | null
           complemento?: string | null
           cpf_cnpj?: string | null
@@ -631,15 +637,20 @@ export type Database = {
           nome: string
           numero?: string | null
           observacoes?: string | null
+          planner_obs?: string | null
           plano_contratado?: string | null
+          semana_atual?: number | null
           status?: Database["public"]["Enums"]["status_cliente"]
           tags?: string[] | null
           telefone?: string | null
+          tipo_contrato?: string | null
+          ultimo_contato?: string | null
           updated_at?: string
         }
         Update: {
           bairro?: string | null
           cep?: string | null
+          ciclo_atual?: number | null
           cidade?: string | null
           complemento?: string | null
           cpf_cnpj?: string | null
@@ -658,10 +669,14 @@ export type Database = {
           nome?: string
           numero?: string | null
           observacoes?: string | null
+          planner_obs?: string | null
           plano_contratado?: string | null
+          semana_atual?: number | null
           status?: Database["public"]["Enums"]["status_cliente"]
           tags?: string[] | null
           telefone?: string | null
+          tipo_contrato?: string | null
+          ultimo_contato?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1091,6 +1106,57 @@ export type Database = {
           },
           {
             foreignKeyName: "cs_onboarding_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cs_planner_semanas: {
+        Row: {
+          checkin_realizado: boolean | null
+          cliente_id: string
+          created_at: string
+          empresa_id: string
+          id: string
+          micro_meta: string | null
+          semana_numero: number
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          checkin_realizado?: boolean | null
+          cliente_id: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          micro_meta?: string | null
+          semana_numero: number
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checkin_realizado?: boolean | null
+          cliente_id?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          micro_meta?: string | null
+          semana_numero?: number
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cs_planner_semanas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cs_planner_semanas_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
