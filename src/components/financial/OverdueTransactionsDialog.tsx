@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
+import { formatDateDisplay } from "@/utils/dateUtils";
 
 interface Transaction {
   id: string;
@@ -34,17 +35,17 @@ export const OverdueTransactionsDialog = ({
     }).format(value);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
-
   const getTypeColor = (type: string) => {
     return type === "entrada" ? "text-green-600" : "text-red-600";
   };
 
   const getDaysOverdue = (dateString: string) => {
     const today = new Date();
-    const dueDate = new Date(dateString);
+    today.setHours(0, 0, 0, 0);
+    
+    const [year, month, day] = dateString.split('-');
+    const dueDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    
     const diffTime = today.getTime() - dueDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
@@ -82,7 +83,7 @@ export const OverdueTransactionsDialog = ({
                   const daysOverdue = getDaysOverdue(transaction.data);
                   return (
                     <TableRow key={transaction.id}>
-                      <TableCell>{formatDate(transaction.data)}</TableCell>
+                      <TableCell>{formatDateDisplay(transaction.data)}</TableCell>
                       <TableCell className="font-medium">{transaction.descricao}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={getTypeColor(transaction.tipo)}>
