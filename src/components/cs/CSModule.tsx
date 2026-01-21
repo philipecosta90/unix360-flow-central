@@ -1,6 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNicheSettings } from "@/hooks/useNicheSettings";
-import { CSDashboard } from "./CSDashboard";
 import { CSOnboarding } from "./CSOnboarding";
 import { CSKanbanBoard } from "./CSKanbanBoard";
 import { CSPlanner } from "./CSPlanner";
@@ -36,10 +35,9 @@ export const CSModule = () => {
       )}
 
       <Tabs defaultValue="clientes" className="w-full">
-        <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-5 w-full">
+        <TabsList className="flex flex-wrap h-auto gap-1 sm:grid sm:grid-cols-4 w-full">
           <TabsTrigger value="clientes" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Jornada</TabsTrigger>
           <TabsTrigger value="planner" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Planner</TabsTrigger>
-          <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Dashboard</TabsTrigger>
           <TabsTrigger value="checkins" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Check-ins</TabsTrigger>
           <TabsTrigger value="onboarding" className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2">Onboarding</TabsTrigger>
         </TabsList>
@@ -50,10 +48,6 @@ export const CSModule = () => {
 
         <TabsContent value="planner" className="space-y-6">
           <CSPlanner />
-        </TabsContent>
-
-        <TabsContent value="dashboard" className="space-y-6">
-          <CSDashboard />
         </TabsContent>
 
         <TabsContent value="checkins" className="space-y-6">
