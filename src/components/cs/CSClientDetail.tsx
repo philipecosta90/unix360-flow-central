@@ -12,7 +12,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { User, Mail, Phone, Calendar, MessageSquare, CheckCircle, Clock, AlertTriangle, Star, ListChecks } from "lucide-react";
+import { User, Mail, Phone, Calendar, CheckCircle, Clock, AlertTriangle, Star, ListChecks } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -29,13 +29,11 @@ export const CSClientDetail = ({
 }: CSClientDetailProps) => {
   const {
     useCSData,
-    useClientInteracoes,
     useClientOnboarding
   } = useCustomerSuccess();
   const { useSemanas } = useCSPlanner();
   
   const { data: csData } = useCSData();
-  const { data: interacoes = [] } = useClientInteracoes(clientId || "");
   const { data: onboarding = [] } = useClientOnboarding(clientId || "");
   const { data: todasSemanas = [] } = useSemanas();
   
@@ -277,45 +275,6 @@ export const CSClientDetail = ({
             </Card>
           )}
 
-          {/* Interações Recentes */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
-                Interações Recentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {interacoes.length > 0 ? (
-                <div className="space-y-3">
-                  {interacoes.slice(0, 5).map(interacao => (
-                    <div key={interacao.id} className="flex items-start gap-3 p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
-                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                        <MessageSquare className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 xs:gap-2">
-                          <h4 className="font-medium text-sm leading-tight truncate">{interacao.titulo}</h4>
-                          <span className="text-xs text-muted-foreground flex-shrink-0">
-                            {format(new Date(interacao.data_interacao), "dd/MM/yyyy", { locale: ptBR })}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">{interacao.tipo}</p>
-                        {interacao.descricao && (
-                          <p className="text-sm mt-2 leading-relaxed break-words">{interacao.descricao}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                  <p className="text-sm">Nenhuma interação registrada</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </DialogContent>
     </Dialog>
