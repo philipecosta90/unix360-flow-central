@@ -90,14 +90,14 @@ export function ClientPagePreview({
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto">
+        <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto text-gray-900">
           {/* Template Title */}
           <div className="text-center">
-            <h3 className="font-bold text-base flex items-center justify-center gap-2">
+            <h3 className="font-bold text-base flex items-center justify-center gap-2 text-gray-900">
               {iconLabel} {templateNome || "Nome do Template"}
             </h3>
             {templateDescricao && (
-              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
+              <p className="text-xs text-gray-500 mt-1 whitespace-pre-line">
                 {templateDescricao}
               </p>
             )}
@@ -105,7 +105,7 @@ export function ClientPagePreview({
 
           {/* Questions Preview */}
           {Object.keys(perguntasPorSecao).length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground text-xs">
+            <div className="text-center py-6 text-gray-500 text-xs">
               <p>Adicione perguntas para visualizar</p>
               <p className="mt-1">como aparecerão para o cliente</p>
             </div>
@@ -122,10 +122,10 @@ export function ClientPagePreview({
                   <div className="space-y-2">
                     {perguntasSecao.map((p) => (
                       <div key={p.id} className="space-y-1">
-                        <label className="text-xs font-medium flex items-center gap-1">
+                      <label className="text-xs font-medium flex items-center gap-1 text-gray-900">
                           {p.pergunta}
                           {p.obrigatoria && (
-                            <span className="text-destructive">*</span>
+                            <span className="text-red-500">*</span>
                           )}
                         </label>
                         <PreviewInput tipo={p.tipo} />
@@ -168,52 +168,52 @@ export function ClientPagePreview({
 
 function PreviewInput({ tipo }: { tipo: string }) {
   const baseClass =
-    "w-full rounded border border-input bg-background px-2 py-1 text-xs text-muted-foreground";
+    "w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-400";
 
   switch (tipo) {
     case "textarea":
       return (
         <div className={`${baseClass} h-12`}>
-          <span className="text-muted-foreground/50">Resposta longa...</span>
+          <span className="text-gray-400">Resposta longa...</span>
         </div>
       );
     case "select":
     case "escala":
       return (
         <div className={`${baseClass} flex items-center justify-between`}>
-          <span className="text-muted-foreground/50">Selecione...</span>
-          <span className="text-muted-foreground/30">▼</span>
+          <span className="text-gray-400">Selecione...</span>
+          <span className="text-gray-300">▼</span>
         </div>
       );
     case "number":
       return (
         <div className={baseClass}>
-          <span className="text-muted-foreground/50">123</span>
+          <span className="text-gray-400">123</span>
         </div>
       );
     case "date":
       return (
         <div className={baseClass}>
-          <span className="text-muted-foreground/50">dd/mm/aaaa</span>
+          <span className="text-gray-400">dd/mm/aaaa</span>
         </div>
       );
     case "email":
       return (
         <div className={baseClass}>
-          <span className="text-muted-foreground/50">email@exemplo.com</span>
+          <span className="text-gray-400">email@exemplo.com</span>
         </div>
       );
     case "foto":
     case "arquivo":
       return (
         <div className={`${baseClass} text-center`}>
-          <span className="text-muted-foreground/50">📎 Anexar arquivo</span>
+          <span className="text-gray-400">📎 Anexar arquivo</span>
         </div>
       );
     default:
       return (
         <div className={baseClass}>
-          <span className="text-muted-foreground/50">Digite aqui...</span>
+          <span className="text-gray-400">Digite aqui...</span>
         </div>
       );
   }
