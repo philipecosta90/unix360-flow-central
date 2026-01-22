@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Search, RefreshCw, Users, Settings2 } from 'lucide-react';
+import { Search, RefreshCw, Users, Settings2, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { CSKanbanColumn } from './CSKanbanColumn';
 import { CSKanbanCard } from './CSKanbanCard';
 import { CSStageSettingsDialog } from './CSStageSettingsDialog';
@@ -28,6 +28,19 @@ export const CSKanbanBoard = () => {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
+
+  const toggleColumnCollapse = useCallback((columnId: string) => {
+    setCollapsedColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(columnId)) {
+        next.delete(columnId);
+      } else {
+        next.add(columnId);
+      }
+      return next;
+    });
+  }, []);
 
   const { stages, isLoading: stagesLoading } = useCSStages();
   const { clients, clientsByStage, isLoading: clientsLoading, refetch } = useCSClients();
@@ -148,33 +161,74 @@ export const CSKanbanBoard = () => {
             <div className="flex gap-4 pb-4 min-w-max">
               {/* Coluna para clientes sem etapa */}
               {unassignedClients.length > 0 && (
-                <div className="flex-shrink-0 w-72 flex flex-col bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden">
-                  <div className="px-3 py-2.5 flex items-center justify-between bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                      <h3 className="font-semibold text-sm text-foreground">
-                        Sem Etapa
-                      </h3>
+                collapsedColumns.has('unassigned') ? (
+                  // Collapsed unassigned column
+                  <div 
+                    className="flex-shrink-0 w-10 flex flex-col rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden cursor-pointer transition-all hover:opacity-80 bg-yellow-50/50 dark:bg-yellow-950/10"
+                    onClick={() => toggleColumnCollapse('unassigned')}
+                  >
+                    <div className="px-1 py-2 flex items-center justify-center border-b border-yellow-300 dark:border-yellow-700">
+                      <ChevronsRight className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-200">
-                      {unassignedClients.length}
-                    </span>
+                    <div className="py-2 flex items-center justify-center border-b-2 border-yellow-400">
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-yellow-200 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-200">
+                        {unassignedClients.length}
+                      </span>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center py-4">
+                      <span 
+                        className="text-xs font-semibold text-foreground whitespace-nowrap"
+                        style={{ 
+                          writingMode: 'vertical-rl',
+                          textOrientation: 'mixed',
+                          transform: 'rotate(180deg)'
+                        }}
+                      >
+                        Sem Etapa
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 p-2">
-                    <ScrollArea className="h-[calc(100vh-280px)]">
-                      <div className="space-y-2 pr-2">
-                        {unassignedClients.map((client) => (
-                          <CSKanbanCard
-                            key={client.id}
-                            client={client}
-                            onViewDetails={handleViewDetails}
-                            onOpenWhatsApp={handleOpenWhatsApp}
-                          />
-                        ))}
+                ) : (
+                  // Expanded unassigned column
+                  <div className="flex-shrink-0 w-72 flex flex-col bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden">
+                    <div className="px-3 py-2.5 flex items-center justify-between bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                        <h3 className="font-semibold text-sm text-foreground">
+                          Sem Etapa
+                        </h3>
                       </div>
-                    </ScrollArea>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-200">
+                          {unassignedClients.length}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => toggleColumnCollapse('unassigned')}
+                          title="Minimizar coluna"
+                        >
+                          <ChevronsLeft className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex-1 p-2">
+                      <ScrollArea className="h-[calc(100vh-280px)]">
+                        <div className="space-y-2 pr-2">
+                          {unassignedClients.map((client) => (
+                            <CSKanbanCard
+                              key={client.id}
+                              client={client}
+                              onViewDetails={handleViewDetails}
+                              onOpenWhatsApp={handleOpenWhatsApp}
+                            />
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
                   </div>
-                </div>
+                )
               )}
 
               {/* Colunas das etapas */}
@@ -185,6 +239,8 @@ export const CSKanbanBoard = () => {
                   clients={filterClients(clientsByStage[stage.id] || [])}
                   onViewDetails={handleViewDetails}
                   onOpenWhatsApp={handleOpenWhatsApp}
+                  isCollapsed={collapsedColumns.has(stage.id)}
+                  onToggleCollapse={() => toggleColumnCollapse(stage.id)}
                 />
               ))}
             </div>
