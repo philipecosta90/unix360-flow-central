@@ -7,6 +7,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Card } from '@/components/ui/card';
@@ -45,6 +46,11 @@ export const CSKanbanBoard = () => {
   const { stages, isLoading: stagesLoading } = useCSStages();
   const { clients, clientsByStage, isLoading: clientsLoading, refetch } = useCSClients();
   const { activeClient, handleDragStart, handleDragEnd, isUpdating } = useCSDragAndDrop();
+
+  // Droppable para coluna "Sem Etapa"
+  const { setNodeRef: setUnassignedRef, isOver: isOverUnassigned } = useDroppable({
+    id: 'unassigned',
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -164,7 +170,8 @@ export const CSKanbanBoard = () => {
                 collapsedColumns.has('unassigned') ? (
                   // Collapsed unassigned column
                   <div 
-                    className="flex-shrink-0 w-10 flex flex-col rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden cursor-pointer transition-all hover:opacity-80 bg-yellow-50/50 dark:bg-yellow-950/10"
+                    ref={setUnassignedRef}
+                    className={`flex-shrink-0 w-10 flex flex-col rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden cursor-pointer transition-all hover:opacity-80 bg-yellow-50/50 dark:bg-yellow-950/10 ${isOverUnassigned ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                     onClick={() => toggleColumnCollapse('unassigned')}
                   >
                     <div className="px-1 py-2 flex items-center justify-center border-b border-yellow-300 dark:border-yellow-700">
@@ -190,7 +197,10 @@ export const CSKanbanBoard = () => {
                   </div>
                 ) : (
                   // Expanded unassigned column
-                  <div className="flex-shrink-0 w-72 flex flex-col bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden">
+                  <div 
+                    ref={setUnassignedRef}
+                    className={`flex-shrink-0 w-72 flex flex-col bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden ${isOverUnassigned ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                  >
                     <div className="px-3 py-2.5 flex items-center justify-between bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400">
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-yellow-500" />
