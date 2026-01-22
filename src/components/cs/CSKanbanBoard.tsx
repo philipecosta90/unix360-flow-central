@@ -164,81 +164,85 @@ export const CSKanbanBoard = () => {
           onDragEnd={handleDragEnd}
         >
           <ScrollArea className="w-full">
-            <div className="flex gap-4 pb-4 min-w-max">
-              {/* Coluna para clientes sem etapa */}
-              {unassignedClients.length > 0 && (
-                collapsedColumns.has('unassigned') ? (
-                  // Collapsed unassigned column
-                  <div 
-                    ref={setUnassignedRef}
-                    className={`flex-shrink-0 w-10 flex flex-col rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden cursor-pointer transition-all hover:opacity-80 bg-yellow-50/50 dark:bg-yellow-950/10 ${isOverUnassigned ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-                    onClick={() => toggleColumnCollapse('unassigned')}
-                  >
-                    <div className="px-1 py-2 flex items-center justify-center border-b border-yellow-300 dark:border-yellow-700">
-                      <ChevronsRight className="h-4 w-4 text-muted-foreground" />
+          <div className="flex gap-4 pb-4 min-w-max">
+              {/* Coluna para clientes sem etapa - sempre visível */}
+              {collapsedColumns.has('unassigned') ? (
+                // Collapsed unassigned column
+                <div 
+                  ref={setUnassignedRef}
+                  className={`flex-shrink-0 w-10 flex flex-col rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden cursor-pointer transition-all hover:opacity-80 bg-yellow-50/50 dark:bg-yellow-950/10 ${isOverUnassigned ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                  onClick={() => toggleColumnCollapse('unassigned')}
+                >
+                  <div className="px-1 py-2 flex items-center justify-center border-b border-yellow-300 dark:border-yellow-700">
+                    <ChevronsRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="py-2 flex items-center justify-center border-b-2 border-yellow-400">
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-yellow-200 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-200">
+                      {unassignedClients.length}
+                    </span>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center py-4">
+                    <span 
+                      className="text-xs font-semibold text-foreground whitespace-nowrap"
+                      style={{ 
+                        writingMode: 'vertical-rl',
+                        textOrientation: 'mixed',
+                        transform: 'rotate(180deg)'
+                      }}
+                    >
+                      Sem Etapa
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                // Expanded unassigned column
+                <div 
+                  ref={setUnassignedRef}
+                  className={`flex-shrink-0 w-72 flex flex-col bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden ${isOverUnassigned ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                >
+                  <div className="px-3 py-2.5 flex items-center justify-between bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                      <h3 className="font-semibold text-sm text-foreground">
+                        Sem Etapa
+                      </h3>
                     </div>
-                    <div className="py-2 flex items-center justify-center border-b-2 border-yellow-400">
-                      <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-yellow-200 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-200">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-200">
                         {unassignedClients.length}
                       </span>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center py-4">
-                      <span 
-                        className="text-xs font-semibold text-foreground whitespace-nowrap"
-                        style={{ 
-                          writingMode: 'vertical-rl',
-                          textOrientation: 'mixed',
-                          transform: 'rotate(180deg)'
-                        }}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => toggleColumnCollapse('unassigned')}
+                        title="Minimizar coluna"
                       >
-                        Sem Etapa
-                      </span>
+                        <ChevronsLeft className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
-                ) : (
-                  // Expanded unassigned column
-                  <div 
-                    ref={setUnassignedRef}
-                    className={`flex-shrink-0 w-72 flex flex-col bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden ${isOverUnassigned ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-                  >
-                    <div className="px-3 py-2.5 flex items-center justify-between bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                        <h3 className="font-semibold text-sm text-foreground">
-                          Sem Etapa
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-200">
-                          {unassignedClients.length}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => toggleColumnCollapse('unassigned')}
-                          title="Minimizar coluna"
-                        >
-                          <ChevronsLeft className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex-1 p-2">
-                      <ScrollArea className="h-[calc(100vh-280px)]">
-                        <div className="space-y-2 pr-2">
-                          {unassignedClients.map((client) => (
+                  <div className="flex-1 p-2">
+                    <ScrollArea className="h-[calc(100vh-280px)]">
+                      <div className="space-y-2 pr-2">
+                        {unassignedClients.length === 0 ? (
+                          <div className="text-center py-8 text-muted-foreground text-sm">
+                            Nenhum cliente sem etapa
+                          </div>
+                        ) : (
+                          unassignedClients.map((client) => (
                             <CSKanbanCard
                               key={client.id}
                               client={client}
                               onViewDetails={handleViewDetails}
                               onOpenWhatsApp={handleOpenWhatsApp}
                             />
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
+                          ))
+                        )}
+                      </div>
+                    </ScrollArea>
                   </div>
-                )
+                </div>
               )}
 
               {/* Colunas das etapas */}
