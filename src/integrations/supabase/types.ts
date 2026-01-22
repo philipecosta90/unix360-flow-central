@@ -600,6 +600,7 @@ export type Database = {
           email: string | null
           empresa_id: string
           estado: string | null
+          foto_url: string | null
           id: string
           logradouro: string | null
           nome: string
@@ -632,6 +633,7 @@ export type Database = {
           email?: string | null
           empresa_id: string
           estado?: string | null
+          foto_url?: string | null
           id?: string
           logradouro?: string | null
           nome: string
@@ -664,6 +666,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string
           estado?: string | null
+          foto_url?: string | null
           id?: string
           logradouro?: string | null
           nome?: string

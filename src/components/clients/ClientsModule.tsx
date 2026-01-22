@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ClientDetail } from "./ClientDetail";
@@ -33,6 +33,7 @@ interface Cliente {
   updated_at: string;
   data_inicio_plano?: string;
   data_fim_plano?: string;
+  foto_url?: string;
 }
 export const ClientsModule = () => {
   const {
@@ -514,6 +515,9 @@ export const ClientsModule = () => {
                     <CardHeader className="pb-3">
                       <div className="flex items-center space-x-3">
                         <Avatar>
+                          {client.foto_url && (
+                            <AvatarImage src={client.foto_url} alt={client.nome} />
+                          )}
                           <AvatarFallback className="bg-[#43B26D] text-white">
                             {client.nome ? client.nome.split(' ').map(n => n[0]).join('').substring(0, 2) : 'CL'}
                           </AvatarFallback>

@@ -13,6 +13,8 @@ import { parseISO, addMonths, format } from "date-fns";
 import { useServicos } from "@/hooks/useServicos";
 import { supabase } from "@/integrations/supabase/client";
 
+import { ClientAvatarUpload } from "./ClientAvatarUpload";
+
 interface Cliente {
   id: string;
   nome: string;
@@ -33,6 +35,7 @@ interface Cliente {
   bairro?: string;
   cidade?: string;
   estado?: string;
+  foto_url?: string;
 }
 
 interface EditClientDrawerProps {
@@ -62,6 +65,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
     bairro: "",
     cidade: "",
     estado: "",
+    foto_url: "",
   });
   const [dataInicioPlano, setDataInicioPlano] = useState<string>("");
   const [dataFimPlano, setDataFimPlano] = useState<string>("");
@@ -115,6 +119,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
         bairro: client.bairro || "",
         cidade: client.cidade || "",
         estado: client.estado || "",
+        foto_url: client.foto_url || "",
       });
       setDataInicioPlano(client.data_inicio_plano || "");
       setDataFimPlano(client.data_fim_plano || "");
@@ -227,6 +232,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
         bairro: formData.bairro.trim() || null,
         cidade: formData.cidade.trim() || null,
         estado: formData.estado.trim() || null,
+        foto_url: formData.foto_url || null,
       };
 
       await onSave(clientData);
@@ -256,6 +262,18 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
         
         <form id="edit-client-form" onSubmit={handleSubmit} className="flex-1 overflow-auto px-6">
           <div className="space-y-4 pb-6">
+            {/* Foto de Perfil */}
+            <div className="flex flex-col items-center gap-3 py-4 border-b border-border">
+              <ClientAvatarUpload
+                currentUrl={formData.foto_url}
+                clientName={formData.nome || "Cliente"}
+                clientId={client.id}
+                onUpload={(url) => setFormData({...formData, foto_url: url || ""})}
+                size="lg"
+              />
+              <Label className="text-sm text-muted-foreground">Foto de Perfil</Label>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="nome">Nome completo *</Label>
               <Input

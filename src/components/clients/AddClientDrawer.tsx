@@ -15,6 +15,7 @@ import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 
 import { logger } from "@/utils/logger";
 import { X, ClipboardList, MessageCircle, CreditCard, MapPin } from "lucide-react";
+import { ClientAvatarUpload } from "./ClientAvatarUpload";
 
 interface ParcelaEditavel {
   numero: number;
@@ -52,6 +53,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     bairro: "",
     cidade: "",
     estado: "",
+    foto_url: "",
   });
   const [buscandoCep, setBuscandoCep] = useState(false);
   
@@ -217,6 +219,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         bairro: formData.bairro.trim() || null,
         cidade: formData.cidade.trim() || null,
         estado: formData.estado.trim() || null,
+        foto_url: formData.foto_url || null,
       };
 
       // Passa a flag de enviarBoasVindas para o ClientsModule
@@ -318,6 +321,7 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       bairro: "",
       cidade: "",
       estado: "",
+      foto_url: "",
     });
     setServicoSelecionadoId("");
     setDataInicioPlano(format(new Date(), "yyyy-MM-dd"));
@@ -358,6 +362,17 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         
         <form id="add-client-form" onSubmit={handleSubmit} className="flex-1 overflow-auto px-6">
           <div className="space-y-4 pb-6">
+            {/* Foto de Perfil */}
+            <div className="flex flex-col items-center gap-3 py-4 border-b border-border">
+              <ClientAvatarUpload
+                currentUrl={formData.foto_url}
+                clientName={formData.nome || "Novo Cliente"}
+                onUpload={(url) => setFormData({...formData, foto_url: url || ""})}
+                size="lg"
+              />
+              <Label className="text-sm text-muted-foreground">Foto de Perfil (opcional)</Label>
+            </div>
+
             {/* Dados Pessoais */}
             <div className="space-y-2">
               <Label htmlFor="nome">Nome completo *</Label>

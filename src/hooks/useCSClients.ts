@@ -14,6 +14,7 @@ export interface CSClient {
   data_fim_plano: string | null;
   plano_contratado: string | null;
   created_at: string;
+  foto_url: string | null;
 }
 
 export const useCSClients = () => {
@@ -26,7 +27,7 @@ export const useCSClients = () => {
 
       const { data, error } = await supabase
         .from('clientes')
-        .select('id, nome, email, telefone, status, cs_stage_id, cs_stage_entered_at, data_inicio_plano, data_fim_plano, plano_contratado, created_at')
+        .select('id, nome, email, telefone, status, cs_stage_id, cs_stage_entered_at, data_inicio_plano, data_fim_plano, plano_contratado, created_at, foto_url')
         .eq('empresa_id', userProfile.empresa_id)
         .eq('status', 'ativo')
         .order('nome', { ascending: true });
