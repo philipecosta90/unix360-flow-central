@@ -19,11 +19,14 @@ export const useCSDragAndDrop = () => {
   const queryClient = useQueryClient();
 
   const updateClientStageMutation = useMutation({
-    mutationFn: async ({ clientId, stageId }: { clientId: string; stageId: string }) => {
+    mutationFn: async ({ clientId, stageId }: { clientId: string; stageId: string | null }) => {
+      // Se for 'unassigned', salvar como null no banco
+      const actualStageId = stageId === 'unassigned' ? null : stageId;
+      
       const { error } = await supabase
         .from('clientes')
         .update({ 
-          cs_stage_id: stageId,
+          cs_stage_id: actualStageId,
           cs_stage_entered_at: new Date().toISOString()
         })
         .eq('id', clientId);
@@ -45,7 +48,9 @@ export const useCSDragAndDrop = () => {
             empresa_id: perfil.empresa_id,
             tipo: 'stage_change',
             titulo: 'Mudança de etapa no CS',
-            descricao: `Cliente movido para nova etapa do fluxo CS`,
+            descricao: actualStageId 
+              ? `Cliente movido para nova etapa do fluxo CS` 
+              : `Cliente removido das etapas do CS`,
             responsavel_id: userData.user.id,
           });
         }
@@ -78,9 +83,14 @@ export const useCSDragAndDrop = () => {
 
     // Obter o cliente atual
     const currentClient = active.data.current as CSClient;
+    const currentStageId = currentClient?.cs_stage_id;
+    const targetIsUnassigned = targetStageId === 'unassigned';
     
-    // Verificar se realmente mudou de etapa
-    if (currentClient?.cs_stage_id === targetStageId) return;
+    // Se o cliente já está sem etapa e o destino é 'unassigned', não fazer nada
+    if (currentStageId === null && targetIsUnassigned) return;
+    
+    // Se o cliente está em uma etapa e o destino é a mesma etapa, não fazer nada
+    if (currentStageId === targetStageId) return;
 
     updateClientStageMutation.mutate({
       clientId,
