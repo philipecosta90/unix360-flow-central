@@ -3,7 +3,7 @@ import { useCSPlanner, calcularCicloSemana } from "@/hooks/useCSPlanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Table, 
   TableBody, 
@@ -104,6 +104,9 @@ export const CSClientDetail = ({
         <DialogHeader className="space-y-3">
           <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <Avatar className="w-12 h-12 sm:w-14 sm:h-14">
+              {cliente.foto_url && (
+                <AvatarImage src={cliente.foto_url} alt={cliente.nome} />
+              )}
               <AvatarFallback className="bg-primary text-primary-foreground text-lg sm:text-xl">
                 {cliente.nome.charAt(0).toUpperCase()}
               </AvatarFallback>

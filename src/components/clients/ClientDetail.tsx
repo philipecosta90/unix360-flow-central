@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Mail, Phone, Calendar, Tag, Plus, MessageCircle, Activity, File, Download, Eye, Edit, Trash2, CheckCircle2, ClipboardList, RefreshCw, BarChart3 } from "lucide-react";
 import { ClientCheckinHistory } from "./ClientCheckinHistory";
@@ -29,6 +29,7 @@ interface Cliente {
   tags?: string[];
   created_at: string;
   updated_at: string;
+  foto_url?: string;
 }
 
 interface ClientDetailProps {
@@ -380,6 +381,9 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
             <div className="flex items-center gap-3 sm:gap-4">
               <Avatar className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 flex-shrink-0">
+                {client.foto_url && (
+                  <AvatarImage src={client.foto_url} alt={client.nome} />
+                )}
                 <AvatarFallback className="bg-[#43B26D] text-white text-sm sm:text-lg lg:text-2xl">
                   {client.nome.split(' ').map(n => n[0]).join('').substring(0, 2)}
                 </AvatarFallback>
