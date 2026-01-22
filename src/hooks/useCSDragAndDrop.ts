@@ -79,22 +79,40 @@ export const useCSDragAndDrop = () => {
     if (!over) return;
 
     const clientId = active.id as string;
-    const targetStageId = over.id as string;
+    const overId = over.id as string;
 
     // Obter o cliente atual
     const currentClient = active.data.current as CSClient;
     const currentStageId = currentClient?.cs_stage_id;
-    const targetIsUnassigned = targetStageId === 'unassigned';
-    
-    // Se o cliente já está sem etapa e o destino é 'unassigned', não fazer nada
-    if (currentStageId === null && targetIsUnassigned) return;
+
+    // Determinar a etapa de destino
+    let targetStageId: string | null;
+
+    if (overId === 'unassigned') {
+      // Destino é a coluna "Sem Etapa"
+      targetStageId = null;
+    } else {
+      // Verificar se over.data.current contém dados de um card (cliente)
+      const overData = over.data.current as CSClient | undefined;
+      
+      if (overData && 'cs_stage_id' in overData) {
+        // É um card - usar a etapa do card de destino
+        targetStageId = overData.cs_stage_id;
+      } else {
+        // É uma coluna/etapa - usar o ID diretamente
+        targetStageId = overId;
+      }
+    }
+
+    // Se o cliente já está sem etapa e o destino também é sem etapa, não fazer nada
+    if (currentStageId === null && targetStageId === null) return;
     
     // Se o cliente está em uma etapa e o destino é a mesma etapa, não fazer nada
     if (currentStageId === targetStageId) return;
 
     updateClientStageMutation.mutate({
       clientId,
-      stageId: targetStageId,
+      stageId: targetStageId === null ? 'unassigned' : targetStageId,
     });
   };
 
