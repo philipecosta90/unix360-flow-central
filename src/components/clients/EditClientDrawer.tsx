@@ -78,6 +78,15 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
   const [statusPagamento, setStatusPagamento] = useState<string>("pago");
   const [dataPagamento, setDataPagamento] = useState<string>("");
   
+  // Estados para Pix Parcelado
+  const [numeroParcelas, setNumeroParcelas] = useState<number>(2);
+  const [parcelasInfo, setParcelasInfo] = useState<Array<{
+    numero: number;
+    valor: number;
+    data: string;
+    status: string;
+  }>>([]);
+  
   // Ref para controlar qual cliente já foi inicializado - evita reinicializações indesejadas
   const lastInitializedClientIdRef = useRef<string | null>(null);
   // Ref para rastrear se o usuário editou manualmente a data de término
@@ -127,7 +136,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
       lastInitializedClientIdRef.current = client.id;
       userEditedEndDateRef.current = false;
       
-      // Buscar dados de pagamento do cliente (última transação financeira)
+      // Buscar dados de pagamento do cliente (transações financeiras)
       const fetchPaymentData = async () => {
         try {
           const { data: transacoes } = await supabase
@@ -135,15 +144,38 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
             .select('*')
             .eq('cliente_id', client.id)
             .eq('tipo', 'entrada')
-            .order('created_at', { ascending: false })
-            .limit(1);
+            .order('data', { ascending: true });
           
           if (transacoes && transacoes.length > 0) {
-            const transacao = transacoes[0];
-            // Inferir forma de pagamento da categoria ou deixar padrão
+            // Verificar se são parcelas (descrição contém "1/X", "2/X", etc.)
+            const pareceParcelado = transacoes.some(t => 
+              t.descricao && /\(\d+\/\d+\)/.test(t.descricao)
+            );
+            
+            if (pareceParcelado && transacoes.length > 1) {
+              setFormaPagamento("pix_parcelado");
+              setNumeroParcelas(transacoes.length);
+              setParcelasInfo(transacoes.map((t, idx) => ({
+                numero: idx + 1,
+                valor: t.valor,
+                data: t.data,
+                status: t.a_receber ? "a_receber" : "pago"
+              })));
+              // Usar status da primeira parcela como status geral
+              setStatusPagamento(transacoes[0].a_receber ? "a_receber" : "pago");
+              setDataPagamento(transacoes[0].data || "");
+            } else {
+              // Transação única
+              const transacao = transacoes[0];
+              setFormaPagamento("pix");
+              setStatusPagamento(transacao.a_receber ? "a_receber" : "pago");
+              setDataPagamento(transacao.data || "");
+              setParcelasInfo([]);
+            }
+          } else {
+            // Sem transações, resetar estado
             setFormaPagamento("pix");
-            setStatusPagamento(transacao.a_receber ? "a_receber" : "pago");
-            setDataPagamento(transacao.data || "");
+            setParcelasInfo([]);
           }
         } catch (error) {
           logger.error('Erro ao buscar dados de pagamento:', error);
@@ -173,6 +205,29 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
       }
     }
   }, [client?.plano_contratado, servicosAtivos]);
+
+  // Recalcular parcelas quando número de parcelas ou forma de pagamento mudar (apenas se não veio do banco)
+  useEffect(() => {
+    if (formaPagamento === "pix_parcelado" && servicoSelecionado && parcelasInfo.length === 0) {
+      const valorTotal = servicoSelecionado.valor;
+      const valorParcela = valorTotal / numeroParcelas;
+      const novasParcelas = [];
+      const dataBase = dataInicioPlano ? parseISO(dataInicioPlano) : new Date();
+
+      for (let i = 0; i < numeroParcelas; i++) {
+        const dataParcela = addMonths(dataBase, i);
+        novasParcelas.push({
+          numero: i + 1,
+          valor: Math.round(valorParcela * 100) / 100,
+          data: format(dataParcela, "yyyy-MM-dd"),
+          status: i === 0 ? statusPagamento : "a_receber"
+        });
+      }
+      setParcelasInfo(novasParcelas);
+    } else if (formaPagamento !== "pix_parcelado") {
+      setParcelasInfo([]);
+    }
+  }, [formaPagamento, numeroParcelas, servicoSelecionado, dataInicioPlano]);
 
   // Calcular data de término automaticamente quando serviço ou data de início mudar
   useEffect(() => {
@@ -608,7 +663,91 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                   </div>
                 </div>
 
-                <p className="text-xs text-muted-foreground">
+                {/* Seção de Pix Parcelado */}
+                {formaPagamento === "pix_parcelado" && (
+                  <div className="col-span-full space-y-4 border-t pt-4 mt-2">
+                    <div className="space-y-2">
+                      <Label>Número de Parcelas</Label>
+                      <Select
+                        value={numeroParcelas.toString()}
+                        onValueChange={(v) => {
+                          setNumeroParcelas(parseInt(v));
+                          setParcelasInfo([]); // Resetar para recalcular
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => (
+                            <SelectItem key={n} value={n.toString()}>
+                              {n}x
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {parcelasInfo.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">
+                          Detalhes das Parcelas (informativo)
+                        </Label>
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {parcelasInfo.map((parcela, index) => (
+                            <div
+                              key={parcela.numero}
+                              className="grid grid-cols-4 gap-2 items-center text-sm"
+                            >
+                              <span className="text-muted-foreground font-medium">
+                                {parcela.numero}ª
+                              </span>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={parcela.valor}
+                                onChange={(e) => {
+                                  const novasParcelas = [...parcelasInfo];
+                                  novasParcelas[index].valor = parseFloat(e.target.value) || 0;
+                                  setParcelasInfo(novasParcelas);
+                                }}
+                                className="h-8 text-sm"
+                              />
+                              <Input
+                                type="date"
+                                value={parcela.data}
+                                onChange={(e) => {
+                                  const novasParcelas = [...parcelasInfo];
+                                  novasParcelas[index].data = e.target.value;
+                                  setParcelasInfo(novasParcelas);
+                                }}
+                                className="h-8 text-sm"
+                              />
+                              <Select
+                                value={parcela.status}
+                                onValueChange={(v) => {
+                                  const novasParcelas = [...parcelasInfo];
+                                  novasParcelas[index].status = v;
+                                  setParcelasInfo(novasParcelas);
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-sm">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pago">Pago</SelectItem>
+                                  <SelectItem value="a_receber">A Receber</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground col-span-full">
                   * Alterações nos dados de pagamento são apenas informativos. Para editar transações, acesse o módulo Financeiro.
                 </p>
               </div>

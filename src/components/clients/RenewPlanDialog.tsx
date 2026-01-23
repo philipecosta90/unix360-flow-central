@@ -22,7 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useServicos } from "@/hooks/useServicos";
 import { useQueryClient } from "@tanstack/react-query";
-import { format, addDays, addMonths } from "date-fns";
+import { format, addDays, addMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Loader2, Calendar, DollarSign } from "lucide-react";
 
@@ -75,6 +75,11 @@ export const RenewPlanDialog = ({
   const [selectedPeriod, setSelectedPeriod] = useState<string>("30");
   const [registerPayment, setRegisterPayment] = useState(false);
 
+  // Datas editáveis
+  const [dataInicioRenovacao, setDataInicioRenovacao] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [dataFimRenovacao, setDataFimRenovacao] = useState<string>("");
+  const [dataFimEditadaManualmente, setDataFimEditadaManualmente] = useState(false);
+
   // Payment fields
   const [servicoId, setServicoId] = useState<string>("");
   const [valor, setValor] = useState<string>("");
@@ -83,9 +88,16 @@ export const RenewPlanDialog = ({
   const [numeroParcelas, setNumeroParcelas] = useState<number>(2);
   const [parcelasEditaveis, setParcelasEditaveis] = useState<ParcelaEditavel[]>([]);
 
-  const today = new Date();
   const selectedDays = parseInt(selectedPeriod) || 30;
-  const endDate = addDays(today, selectedDays);
+  
+  // Calcular data fim automaticamente quando data início ou período mudar
+  useEffect(() => {
+    if (dataInicioRenovacao && !dataFimEditadaManualmente) {
+      const dataInicio = parseISO(dataInicioRenovacao);
+      const novaDataFim = addDays(dataInicio, selectedDays);
+      setDataFimRenovacao(format(novaDataFim, "yyyy-MM-dd"));
+    }
+  }, [dataInicioRenovacao, selectedDays, dataFimEditadaManualmente]);
 
   // Initialize parcelas when payment method or value changes
   useEffect(() => {
@@ -93,9 +105,10 @@ export const RenewPlanDialog = ({
       const valorTotal = parseFloat(valor) || 0;
       const valorParcela = valorTotal / numeroParcelas;
       const novasParcelas: ParcelaEditavel[] = [];
+      const dataBase = dataInicioRenovacao ? parseISO(dataInicioRenovacao) : new Date();
 
       for (let i = 0; i < numeroParcelas; i++) {
-        const dataParcela = addMonths(today, i);
+        const dataParcela = addMonths(dataBase, i);
         novasParcelas.push({
           numero: i + 1,
           valor: Math.round(valorParcela * 100) / 100,
@@ -105,7 +118,7 @@ export const RenewPlanDialog = ({
       }
       setParcelasEditaveis(novasParcelas);
     }
-  }, [formaPagamento, valor, numeroParcelas, aReceber]);
+  }, [formaPagamento, valor, numeroParcelas, aReceber, dataInicioRenovacao]);
 
   // Update first parcela aReceber when main switch changes
   useEffect(() => {
@@ -143,6 +156,9 @@ export const RenewPlanDialog = ({
 
   const resetForm = () => {
     setSelectedPeriod("30");
+    setDataInicioRenovacao(format(new Date(), "yyyy-MM-dd"));
+    setDataFimRenovacao("");
+    setDataFimEditadaManualmente(false);
     setRegisterPayment(false);
     setServicoId("");
     setValor("");
@@ -173,8 +189,8 @@ export const RenewPlanDialog = ({
 
     setLoading(true);
     try {
-      const dataInicio = format(today, "yyyy-MM-dd");
-      const dataFim = format(endDate, "yyyy-MM-dd");
+      const dataInicio = dataInicioRenovacao;
+      const dataFim = dataFimRenovacao;
       const periodLabel = RENEWAL_OPTIONS.find(
         (o) => o.days === selectedDays
       )?.label || `${selectedDays} dias`;
@@ -267,7 +283,7 @@ export const RenewPlanDialog = ({
 
       toast({
         title: "Plano renovado!",
-        description: `${clientName} agora tem plano até ${format(endDate, "dd/MM/yyyy")} (${periodLabel}).${registerPayment ? " Pagamento registrado." : ""}`,
+        description: `${clientName} agora tem plano até ${format(parseISO(dataFim), "dd/MM/yyyy")} (${periodLabel}).${registerPayment ? " Pagamento registrado." : ""}`,
       });
 
       resetForm();
@@ -313,18 +329,38 @@ export const RenewPlanDialog = ({
             </Select>
           </div>
 
-          {/* Date Preview */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">
-              📅 Novas Datas do Plano
+          {/* Datas Editáveis */}
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              📅 Datas do Plano
             </p>
-            <p className="text-sm">
-              <span className="font-medium">Início:</span>{" "}
-              {format(today, "dd/MM/yyyy", { locale: ptBR })}
-              <span className="mx-2">→</span>
-              <span className="font-medium">Fim:</span>{" "}
-              {format(endDate, "dd/MM/yyyy", { locale: ptBR })}
-            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="data-inicio">Data de Início</Label>
+                <Input
+                  id="data-inicio"
+                  type="date"
+                  value={dataInicioRenovacao}
+                  onChange={(e) => {
+                    setDataInicioRenovacao(e.target.value);
+                    setDataFimEditadaManualmente(false);
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="data-fim">Data de Término</Label>
+                <Input
+                  id="data-fim"
+                  type="date"
+                  value={dataFimRenovacao}
+                  min={dataInicioRenovacao}
+                  onChange={(e) => {
+                    setDataFimRenovacao(e.target.value);
+                    setDataFimEditadaManualmente(true);
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Payment Toggle */}
