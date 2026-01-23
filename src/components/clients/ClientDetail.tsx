@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDateDisplay } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -650,7 +651,7 @@ export const ClientDetail = ({ client, onBack }: ClientDetailProps) => {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{transaction.descricao}</h4>
                             <p className="text-xs sm:text-sm text-muted-foreground break-words">
-                              {transaction.categoria} • {new Date(transaction.data).toLocaleDateString('pt-BR')}
+                              {transaction.categoria} • {formatDateDisplay(transaction.data)}
                             </p>
                           </div>
                           <div className="flex items-center gap-2 sm:gap-4">
