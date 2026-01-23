@@ -574,6 +574,7 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pix">Pix</SelectItem>
+                        <SelectItem value="pix_parcelado">Pix Parcelado</SelectItem>
                         <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
                         <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
                         <SelectItem value="boleto">Boleto</SelectItem>
