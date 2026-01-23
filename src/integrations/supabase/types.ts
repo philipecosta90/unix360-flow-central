@@ -1901,6 +1901,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit_cs_stages: { Args: never; Returns: boolean }
       can_edit_empresa: { Args: never; Returns: boolean }
       create_default_anamnese_template_for_company: {
         Args: { p_empresa_id: string }
