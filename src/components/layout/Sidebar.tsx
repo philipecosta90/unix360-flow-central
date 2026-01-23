@@ -26,13 +26,17 @@ import {
   Users, 
   DollarSign, 
   CheckSquare, 
-  FileText, 
   UserCheck, 
   Settings,
   Shield,
   ClipboardList,
   MessageCircle,
-  Bot
+  MessageSquare,
+  Bot,
+  Package,
+  Utensils,
+  Dumbbell,
+  FileSignature
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -44,13 +48,17 @@ export const Sidebar = () => {
     { icon: BarChart3, label: "Dashboard", path: "/dashboard" },
     { icon: Users, label: "CRM", path: "/crm" },
     { icon: DollarSign, label: "Financeiro", path: "/financeiro" },
+    { icon: Package, label: "Serviços", path: "/servicos" },
     { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
     { icon: Users, label: "Clientes", path: "/clientes" },
     { icon: ClipboardList, label: "Anamnese", path: "/anamnese" },
-    { icon: FileText, label: "Contratos", path: "/contratos" },
+    { icon: Utensils, label: "Dieta (beta)", path: "/dieta" },
+    { icon: Dumbbell, label: "Treino (beta)", path: "/treino" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
     { icon: MessageCircle, label: "Conectar WhatsApp", path: "/whatsapp" },
-    { icon: Bot, label: "Agentes (teste)", path: "/agentes" },
+    { icon: MessageSquare, label: "Mensagens", path: "/mensagens" },
+    { icon: Bot, label: "Agentes (beta)", path: "/agentes" },
+    { icon: FileSignature, label: "Contratos & Notas (beta)", path: "/contratos" },
     { icon: Settings, label: "Configurações", path: "/configuracoes" },
   ];
 
