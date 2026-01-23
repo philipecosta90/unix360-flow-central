@@ -8,10 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/utils/logger";
-import { X, MapPin, CreditCard } from "lucide-react";
+import { X, MapPin, CreditCard, Info } from "lucide-react";
 import { parseISO, addMonths, format } from "date-fns";
 import { useServicos } from "@/hooks/useServicos";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { ClientAvatarUpload } from "./ClientAvatarUpload";
 
@@ -48,6 +49,7 @@ interface EditClientDrawerProps {
 export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDrawerProps) => {
   const { toast } = useToast();
   const { servicosAtivos } = useServicos();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -81,7 +83,14 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
   // Estados para Pix Parcelado
   const [numeroParcelas, setNumeroParcelas] = useState<number>(2);
   const [parcelasInfo, setParcelasInfo] = useState<Array<{
+    id?: string; // ID da transação no banco
     numero: number;
+    valor: number;
+    data: string;
+    status: string;
+  }>>([]);
+  const [parcelasOriginais, setParcelasOriginais] = useState<Array<{
+    id: string;
     valor: number;
     data: string;
     status: string;
@@ -155,8 +164,17 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
             if (pareceParcelado && transacoes.length > 1) {
               setFormaPagamento("pix_parcelado");
               setNumeroParcelas(transacoes.length);
-              setParcelasInfo(transacoes.map((t, idx) => ({
+              const parcelas = transacoes.map((t, idx) => ({
+                id: t.id,
                 numero: idx + 1,
+                valor: t.valor,
+                data: t.data,
+                status: t.a_receber ? "a_receber" : "pago"
+              }));
+              setParcelasInfo(parcelas);
+              // Guardar cópia original para comparação
+              setParcelasOriginais(transacoes.map(t => ({
+                id: t.id,
                 valor: t.valor,
                 data: t.data,
                 status: t.a_receber ? "a_receber" : "pago"
@@ -171,11 +189,13 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
               setStatusPagamento(transacao.a_receber ? "a_receber" : "pago");
               setDataPagamento(transacao.data || "");
               setParcelasInfo([]);
+              setParcelasOriginais([]);
             }
           } else {
             // Sem transações, resetar estado
             setFormaPagamento("pix");
             setParcelasInfo([]);
+            setParcelasOriginais([]);
           }
         } catch (error) {
           logger.error('Erro ao buscar dados de pagamento:', error);
@@ -268,6 +288,38 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
     setLoading(true);
 
     try {
+      // 1. Atualizar parcelas no financeiro se houver alterações
+      if (formaPagamento === "pix_parcelado" && parcelasInfo.length > 0) {
+        for (const parcela of parcelasInfo) {
+          if (parcela.id) {
+            // Encontrar a parcela original para comparar
+            const original = parcelasOriginais.find(p => p.id === parcela.id);
+            
+            // Só atualizar se houver mudanças
+            if (original && (
+              original.valor !== parcela.valor ||
+              original.data !== parcela.data ||
+              original.status !== parcela.status
+            )) {
+              const { error: updateError } = await supabase
+                .from('financeiro_lancamentos')
+                .update({
+                  valor: parcela.valor,
+                  data: parcela.data,
+                  a_receber: parcela.status === "a_receber",
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', parcela.id);
+              
+              if (updateError) {
+                logger.error('Erro ao atualizar parcela:', updateError);
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Preparar dados do cliente
       const clientData = {
         nome: formData.nome.trim(),
         email: formData.email.trim() || null,
@@ -291,6 +343,27 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
       };
 
       await onSave(clientData);
+      
+      // Mostrar toast de sucesso se parcelas foram atualizadas
+      const parcelasAlteradas = parcelasInfo.some(p => {
+        const original = parcelasOriginais.find(o => o.id === p.id);
+        return original && (
+          original.valor !== p.valor ||
+          original.data !== p.data ||
+          original.status !== p.status
+        );
+      });
+      
+      if (parcelasAlteradas) {
+        // Invalidar queries do financeiro para atualizar os dados
+        queryClient.invalidateQueries({ queryKey: ["financial-transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["all-financial-transactions"] });
+        
+        toast({
+          title: "Parcelas atualizadas",
+          description: "As alterações nas parcelas foram salvas no módulo financeiro.",
+        });
+      }
     } catch (error) {
       console.error('Erro ao atualizar cliente:', error);
     } finally {
@@ -747,9 +820,15 @@ export const EditClientDrawer = ({ open, onClose, onSave, client }: EditClientDr
                   </div>
                 )}
 
-                <p className="text-xs text-muted-foreground col-span-full">
-                  * Alterações nos dados de pagamento são apenas informativos. Para editar transações, acesse o módulo Financeiro.
-                </p>
+                <div className="flex items-start gap-2 text-xs text-muted-foreground col-span-full bg-muted/50 p-3 rounded-lg">
+                  <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>
+                    {formaPagamento === "pix_parcelado" && parcelasInfo.some(p => p.id) 
+                      ? "As alterações nas parcelas serão salvas automaticamente no módulo financeiro ao clicar em 'Salvar Alterações'."
+                      : "Alterações nos dados de pagamento são apenas informativos. Para editar transações existentes, acesse o módulo Financeiro."
+                    }
+                  </span>
+                </div>
               </div>
             )}
 
