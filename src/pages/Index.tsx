@@ -27,7 +27,6 @@ import {
   Users, 
   DollarSign, 
   CheckSquare, 
-  FileText, 
   UserCheck, 
   Settings as SettingsIcon,
   Shield,
@@ -35,7 +34,10 @@ import {
   MessageCircle,
   MessageSquare,
   Bot,
-  Package
+  Package,
+  Utensils,
+  Dumbbell,
+  FileSignature
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MainLogo } from "@/components/layout/MainLogo";
@@ -83,11 +85,13 @@ const Index = () => {
     { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
     { icon: Users, label: "Clientes", path: "/clientes" },
     { icon: ClipboardList, label: "Anamnese", path: "/anamnese" },
-    { icon: FileText, label: "Contratos", path: "/contratos" },
+    { icon: Utensils, label: "Dieta (beta)", path: "/dieta" },
+    { icon: Dumbbell, label: "Treino (beta)", path: "/treino" },
     { icon: UserCheck, label: "Sucesso do Cliente", path: "/cs" },
     { icon: MessageCircle, label: "Conectar WhatsApp", path: "/whatsapp" },
     { icon: MessageSquare, label: "Mensagens", path: "/mensagens" },
-    { icon: Bot, label: "Agentes (teste)", path: "/agentes" },
+    { icon: Bot, label: "Agentes (beta)", path: "/agentes" },
+    { icon: FileSignature, label: "Contratos & Notas (beta)", path: "/contratos" },
     { icon: SettingsIcon, label: "Configurações", path: "/configuracoes" },
   ];
 
@@ -110,6 +114,10 @@ const Index = () => {
         return <ClientsModule />;
       case '/anamnese':
         return <AnamneseModule />;
+      case '/dieta':
+        return <div className="p-6 text-center text-muted-foreground">Módulo Dieta em implementação</div>;
+      case '/treino':
+        return <div className="p-6 text-center text-muted-foreground">Módulo Treino em implementação</div>;
       case '/contratos':
         return <ContractsModule />;
       case '/cs':
