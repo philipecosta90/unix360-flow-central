@@ -16,6 +16,7 @@ import { ClientsModule } from "@/components/clients/ClientsModule";
 import { ContractsModule } from "@/components/contracts/ContractsModule";
 import { CSModule } from "@/components/cs/CSModule";
 import { AnamneseModule } from "@/components/anamnese/AnamneseModule";
+import { DietaModule } from "@/components/dieta/DietaModule";
 import { WhatsAppModule } from "@/components/whatsapp/WhatsAppModule";
 import { MessagesModule } from "@/components/messages/MessagesModule";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
@@ -115,7 +116,7 @@ const Index = () => {
       case '/anamnese':
         return <AnamneseModule />;
       case '/dieta':
-        return <div className="p-6 text-center text-muted-foreground">Módulo Dieta em implementação</div>;
+        return <DietaModule />;
       case '/treino':
         return <div className="p-6 text-center text-muted-foreground">Módulo Treino em implementação</div>;
       case '/contratos':

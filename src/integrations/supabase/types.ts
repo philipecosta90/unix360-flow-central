@@ -1211,6 +1211,361 @@ export type Database = {
           },
         ]
       }
+      dieta_cliente_alimentos: {
+        Row: {
+          calorias: number | null
+          carboidratos_g: number | null
+          created_at: string
+          gorduras_g: number | null
+          id: string
+          nome: string
+          observacoes: string | null
+          ordem: number
+          proteinas_g: number | null
+          quantidade: string | null
+          refeicao_id: string
+        }
+        Insert: {
+          calorias?: number | null
+          carboidratos_g?: number | null
+          created_at?: string
+          gorduras_g?: number | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          ordem?: number
+          proteinas_g?: number | null
+          quantidade?: string | null
+          refeicao_id: string
+        }
+        Update: {
+          calorias?: number | null
+          carboidratos_g?: number | null
+          created_at?: string
+          gorduras_g?: number | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          ordem?: number
+          proteinas_g?: number | null
+          quantidade?: string | null
+          refeicao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dieta_cliente_alimentos_refeicao_id_fkey"
+            columns: ["refeicao_id"]
+            isOneToOne: false
+            referencedRelation: "dieta_cliente_refeicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dieta_cliente_refeicoes: {
+        Row: {
+          created_at: string
+          dieta_id: string
+          horario_sugerido: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          ordem: number
+        }
+        Insert: {
+          created_at?: string
+          dieta_id: string
+          horario_sugerido?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          ordem?: number
+        }
+        Update: {
+          created_at?: string
+          dieta_id?: string
+          horario_sugerido?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dieta_cliente_refeicoes_dieta_id_fkey"
+            columns: ["dieta_id"]
+            isOneToOne: false
+            referencedRelation: "dieta_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dieta_clientes: {
+        Row: {
+          calorias_total: number | null
+          carboidratos_g: number | null
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          descricao: string | null
+          empresa_id: string
+          gorduras_g: number | null
+          id: string
+          nome: string
+          objetivo: string | null
+          observacoes_profissional: string | null
+          proteinas_g: number | null
+          status: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          calorias_total?: number | null
+          carboidratos_g?: number | null
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          descricao?: string | null
+          empresa_id: string
+          gorduras_g?: number | null
+          id?: string
+          nome: string
+          objetivo?: string | null
+          observacoes_profissional?: string | null
+          proteinas_g?: number | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          calorias_total?: number | null
+          carboidratos_g?: number | null
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          gorduras_g?: number | null
+          id?: string
+          nome?: string
+          objetivo?: string | null
+          observacoes_profissional?: string | null
+          proteinas_g?: number | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dieta_clientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dieta_clientes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dieta_clientes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "dieta_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dieta_historico: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dados_completos: Json
+          dieta_cliente_id: string
+          id: string
+          motivo_alteracao: string | null
+          versao: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dados_completos: Json
+          dieta_cliente_id: string
+          id?: string
+          motivo_alteracao?: string | null
+          versao?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dados_completos?: Json
+          dieta_cliente_id?: string
+          id?: string
+          motivo_alteracao?: string | null
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dieta_historico_dieta_cliente_id_fkey"
+            columns: ["dieta_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dieta_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dieta_template_alimentos: {
+        Row: {
+          calorias: number | null
+          carboidratos_g: number | null
+          created_at: string
+          gorduras_g: number | null
+          id: string
+          nome: string
+          observacoes: string | null
+          ordem: number
+          proteinas_g: number | null
+          quantidade: string | null
+          refeicao_id: string
+        }
+        Insert: {
+          calorias?: number | null
+          carboidratos_g?: number | null
+          created_at?: string
+          gorduras_g?: number | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          ordem?: number
+          proteinas_g?: number | null
+          quantidade?: string | null
+          refeicao_id: string
+        }
+        Update: {
+          calorias?: number | null
+          carboidratos_g?: number | null
+          created_at?: string
+          gorduras_g?: number | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          ordem?: number
+          proteinas_g?: number | null
+          quantidade?: string | null
+          refeicao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dieta_template_alimentos_refeicao_id_fkey"
+            columns: ["refeicao_id"]
+            isOneToOne: false
+            referencedRelation: "dieta_template_refeicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dieta_template_refeicoes: {
+        Row: {
+          created_at: string
+          horario_sugerido: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          ordem: number
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          horario_sugerido?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          ordem?: number
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          horario_sugerido?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          ordem?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dieta_template_refeicoes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "dieta_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dieta_templates: {
+        Row: {
+          ativo: boolean | null
+          calorias_total: number | null
+          carboidratos_g: number | null
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          empresa_id: string
+          gorduras_g: number | null
+          id: string
+          nome: string
+          objetivo: string | null
+          proteinas_g: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          calorias_total?: number | null
+          carboidratos_g?: number | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          empresa_id: string
+          gorduras_g?: number | null
+          id?: string
+          nome: string
+          objetivo?: string | null
+          proteinas_g?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          calorias_total?: number | null
+          carboidratos_g?: number | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          gorduras_g?: number | null
+          id?: string
+          nome?: string
+          objetivo?: string | null
+          proteinas_g?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dieta_templates_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ativa: boolean
