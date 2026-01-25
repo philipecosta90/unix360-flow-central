@@ -3,13 +3,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileText, Users, Bot, Loader2 } from 'lucide-react';
+import { Plus, FileText, Users, Bot, Loader2, Calculator } from 'lucide-react';
 import { useDietas } from '@/hooks/useDietas';
 import { DietaTemplatesList } from './DietaTemplatesList';
 import { DietaClientesList } from './DietaClientesList';
 import { DietaTemplateDialog } from './DietaTemplateDialog';
 import { DietaClienteDialog } from './DietaClienteDialog';
 import { DietaAIDialog } from './DietaAIDialog';
+import { DietaCalculadoraGET } from './DietaCalculadoraGET';
 
 export const DietaModule = () => {
   const { templates, dietasClientes, loading } = useDietas();
@@ -87,6 +88,10 @@ export const DietaModule = () => {
         <TabsList>
           <TabsTrigger value="clientes">Dietas dos Clientes</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="calculadora" className="flex items-center gap-1">
+            <Calculator className="h-4 w-4" />
+            Calculadora GET
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="clientes" className="mt-4">
@@ -113,6 +118,10 @@ export const DietaModule = () => {
               onNewTemplate={() => setShowTemplateDialog(true)}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="calculadora" className="mt-4">
+          <DietaCalculadoraGET />
         </TabsContent>
       </Tabs>
 

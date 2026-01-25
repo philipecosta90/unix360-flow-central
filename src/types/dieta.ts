@@ -145,3 +145,31 @@ export interface AlimentoFormData {
   gorduras_g?: number;
   observacoes?: string;
 }
+
+// Types para Cálculos Energéticos (TMB/GET)
+export interface CalculoEnergeticoData {
+  id: string;
+  empresa_id: string;
+  cliente_id: string;
+  peso_kg: number;
+  altura_cm: number;
+  idade: number;
+  sexo: 'masculino' | 'feminino';
+  massa_livre_gordura_kg?: number;
+  protocolo_tmb: string;
+  fator_atividade: number;
+  fator_injuria: number;
+  tmb_kcal: number;
+  get_kcal: number;
+  observacoes?: string;
+  created_at: string;
+  created_by?: string;
+}
+
+export interface DadosAntropometricosCliente {
+  peso_kg?: number;
+  altura_cm?: number;
+  sexo?: 'masculino' | 'feminino';
+  massa_livre_gordura_kg?: number;
+  data_nascimento?: string;
+}
