@@ -14,7 +14,7 @@ import { useServicos } from "@/hooks/useServicos";
 import { useFinancialTransactions } from "@/hooks/useFinancialTransactions";
 
 import { logger } from "@/utils/logger";
-import { X, ClipboardList, MessageCircle, CreditCard, MapPin } from "lucide-react";
+import { X, ClipboardList, MessageCircle, CreditCard, MapPin, Scale } from "lucide-react";
 import { ClientAvatarUpload } from "./ClientAvatarUpload";
 
 interface ParcelaEditavel {
@@ -54,6 +54,11 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
     cidade: "",
     estado: "",
     foto_url: "",
+    // Campos antropométricos
+    peso_kg: "",
+    altura_cm: "",
+    sexo: "" as '' | 'masculino' | 'feminino',
+    massa_livre_gordura_kg: "",
   });
   const [buscandoCep, setBuscandoCep] = useState(false);
   
@@ -220,6 +225,11 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
         cidade: formData.cidade.trim() || null,
         estado: formData.estado.trim() || null,
         foto_url: formData.foto_url || null,
+        // Campos antropométricos
+        peso_kg: formData.peso_kg ? parseFloat(formData.peso_kg) : null,
+        altura_cm: formData.altura_cm ? parseInt(formData.altura_cm) : null,
+        sexo: formData.sexo || null,
+        massa_livre_gordura_kg: formData.massa_livre_gordura_kg ? parseFloat(formData.massa_livre_gordura_kg) : null,
       };
 
       // Passa a flag de enviarBoasVindas para o ClientsModule
@@ -322,6 +332,10 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
       cidade: "",
       estado: "",
       foto_url: "",
+      peso_kg: "",
+      altura_cm: "",
+      sexo: "",
+      massa_livre_gordura_kg: "",
     });
     setServicoSelecionadoId("");
     setDataInicioPlano(format(new Date(), "yyyy-MM-dd"));
@@ -431,6 +445,64 @@ export const AddClientDrawer = ({ open, onClose, onSave }: AddClientDrawerProps)
                   placeholder="Somente números"
                   maxLength={14}
                 />
+              </div>
+            </div>
+
+            {/* Dados Antropométricos */}
+            <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
+              <div className="flex items-center gap-2">
+                <Scale className="h-4 w-4 text-primary" />
+                <Label className="font-medium">Dados Antropométricos (para cálculo de dieta)</Label>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="peso_kg">Peso (kg)</Label>
+                  <Input
+                    id="peso_kg"
+                    type="number"
+                    step="0.1"
+                    value={formData.peso_kg}
+                    onChange={(e) => setFormData({...formData, peso_kg: e.target.value})}
+                    placeholder="Ex: 75.5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="altura_cm">Altura (cm)</Label>
+                  <Input
+                    id="altura_cm"
+                    type="number"
+                    value={formData.altura_cm}
+                    onChange={(e) => setFormData({...formData, altura_cm: e.target.value})}
+                    placeholder="Ex: 175"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sexo">Sexo</Label>
+                  <Select 
+                    value={formData.sexo} 
+                    onValueChange={(v) => setFormData({...formData, sexo: v as 'masculino' | 'feminino'})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="masculino">Masculino</SelectItem>
+                      <SelectItem value="feminino">Feminino</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mlg">MLG (kg)</Label>
+                  <Input
+                    id="mlg"
+                    type="number"
+                    step="0.1"
+                    value={formData.massa_livre_gordura_kg}
+                    onChange={(e) => setFormData({...formData, massa_livre_gordura_kg: e.target.value})}
+                    placeholder="Opcional"
+                  />
+                </div>
               </div>
             </div>
 

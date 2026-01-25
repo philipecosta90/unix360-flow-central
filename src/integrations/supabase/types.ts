@@ -543,6 +543,71 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_calculos_energeticos: {
+        Row: {
+          altura_cm: number
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          fator_atividade: number
+          fator_injuria: number
+          get_kcal: number
+          id: string
+          idade: number
+          massa_livre_gordura_kg: number | null
+          observacoes: string | null
+          peso_kg: number
+          protocolo_tmb: string
+          sexo: string
+          tmb_kcal: number
+        }
+        Insert: {
+          altura_cm: number
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          fator_atividade?: number
+          fator_injuria?: number
+          get_kcal: number
+          id?: string
+          idade: number
+          massa_livre_gordura_kg?: number | null
+          observacoes?: string | null
+          peso_kg: number
+          protocolo_tmb: string
+          sexo: string
+          tmb_kcal: number
+        }
+        Update: {
+          altura_cm?: number
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          fator_atividade?: number
+          fator_injuria?: number
+          get_kcal?: number
+          id?: string
+          idade?: number
+          massa_livre_gordura_kg?: number | null
+          observacoes?: string | null
+          peso_kg?: number
+          protocolo_tmb?: string
+          sexo?: string
+          tmb_kcal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_calculos_energeticos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cliente_documentos: {
         Row: {
           cliente_id: string
@@ -584,6 +649,7 @@ export type Database = {
       }
       clientes: {
         Row: {
+          altura_cm: number | null
           bairro: string | null
           cep: string | null
           ciclo_atual: number | null
@@ -603,12 +669,15 @@ export type Database = {
           foto_url: string | null
           id: string
           logradouro: string | null
+          massa_livre_gordura_kg: number | null
           nome: string
           numero: string | null
           observacoes: string | null
+          peso_kg: number | null
           planner_obs: string | null
           plano_contratado: string | null
           semana_atual: number | null
+          sexo: string | null
           status: Database["public"]["Enums"]["status_cliente"]
           tags: string[] | null
           telefone: string | null
@@ -617,6 +686,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          altura_cm?: number | null
           bairro?: string | null
           cep?: string | null
           ciclo_atual?: number | null
@@ -636,12 +706,15 @@ export type Database = {
           foto_url?: string | null
           id?: string
           logradouro?: string | null
+          massa_livre_gordura_kg?: number | null
           nome: string
           numero?: string | null
           observacoes?: string | null
+          peso_kg?: number | null
           planner_obs?: string | null
           plano_contratado?: string | null
           semana_atual?: number | null
+          sexo?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
           tags?: string[] | null
           telefone?: string | null
@@ -650,6 +723,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          altura_cm?: number | null
           bairro?: string | null
           cep?: string | null
           ciclo_atual?: number | null
@@ -669,12 +743,15 @@ export type Database = {
           foto_url?: string | null
           id?: string
           logradouro?: string | null
+          massa_livre_gordura_kg?: number | null
           nome?: string
           numero?: string | null
           observacoes?: string | null
+          peso_kg?: number | null
           planner_obs?: string | null
           plano_contratado?: string | null
           semana_atual?: number | null
+          sexo?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
           tags?: string[] | null
           telefone?: string | null

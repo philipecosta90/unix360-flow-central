@@ -8,6 +8,11 @@ interface Cliente {
   email: string | null;
   telefone: string | null;
   status: string;
+  data_nascimento?: string | null;
+  peso_kg?: number | null;
+  altura_cm?: number | null;
+  sexo?: string | null;
+  massa_livre_gordura_kg?: number | null;
 }
 
 export const useClients = () => {
@@ -22,7 +27,7 @@ export const useClients = () => {
 
       const { data, error } = await supabase
         .from('clientes')
-        .select('id, nome, email, telefone, status')
+        .select('id, nome, email, telefone, status, data_nascimento, peso_kg, altura_cm, sexo, massa_livre_gordura_kg')
         .eq('empresa_id', userProfile.empresa_id)
         .order('nome');
 
