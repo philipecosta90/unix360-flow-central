@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      alimentos_base: {
+        Row: {
+          ativo: boolean | null
+          calcio_mg: number | null
+          calorias_100g: number | null
+          carboidratos_100g: number | null
+          codigo_original: string | null
+          created_at: string | null
+          empresa_id: string | null
+          ferro_mg: number | null
+          fibras_100g: number | null
+          gorduras_100g: number | null
+          grupo: string | null
+          id: string
+          nome: string
+          porcao_padrao: string | null
+          proteinas_100g: number | null
+          sodio_mg: number | null
+          tabela_origem: string
+          updated_at: string | null
+          vitamina_a_mcg: number | null
+          vitamina_c_mg: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          calcio_mg?: number | null
+          calorias_100g?: number | null
+          carboidratos_100g?: number | null
+          codigo_original?: string | null
+          created_at?: string | null
+          empresa_id?: string | null
+          ferro_mg?: number | null
+          fibras_100g?: number | null
+          gorduras_100g?: number | null
+          grupo?: string | null
+          id?: string
+          nome: string
+          porcao_padrao?: string | null
+          proteinas_100g?: number | null
+          sodio_mg?: number | null
+          tabela_origem: string
+          updated_at?: string | null
+          vitamina_a_mcg?: number | null
+          vitamina_c_mg?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          calcio_mg?: number | null
+          calorias_100g?: number | null
+          carboidratos_100g?: number | null
+          codigo_original?: string | null
+          created_at?: string | null
+          empresa_id?: string | null
+          ferro_mg?: number | null
+          fibras_100g?: number | null
+          gorduras_100g?: number | null
+          grupo?: string | null
+          id?: string
+          nome?: string
+          porcao_padrao?: string | null
+          proteinas_100g?: number | null
+          sodio_mg?: number | null
+          tabela_origem?: string
+          updated_at?: string | null
+          vitamina_a_mcg?: number | null
+          vitamina_c_mg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alimentos_base_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anamnese_envios: {
         Row: {
           cliente_id: string
@@ -1290,6 +1367,7 @@ export type Database = {
       }
       dieta_cliente_alimentos: {
         Row: {
+          alimento_base_id: string | null
           calorias: number | null
           carboidratos_g: number | null
           created_at: string
@@ -1301,8 +1379,10 @@ export type Database = {
           proteinas_g: number | null
           quantidade: string | null
           refeicao_id: string
+          tabela_origem: string | null
         }
         Insert: {
+          alimento_base_id?: string | null
           calorias?: number | null
           carboidratos_g?: number | null
           created_at?: string
@@ -1314,8 +1394,10 @@ export type Database = {
           proteinas_g?: number | null
           quantidade?: string | null
           refeicao_id: string
+          tabela_origem?: string | null
         }
         Update: {
+          alimento_base_id?: string | null
           calorias?: number | null
           carboidratos_g?: number | null
           created_at?: string
@@ -1327,8 +1409,16 @@ export type Database = {
           proteinas_g?: number | null
           quantidade?: string | null
           refeicao_id?: string
+          tabela_origem?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "dieta_cliente_alimentos_alimento_base_id_fkey"
+            columns: ["alimento_base_id"]
+            isOneToOne: false
+            referencedRelation: "alimentos_base"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "dieta_cliente_alimentos_refeicao_id_fkey"
             columns: ["refeicao_id"]
@@ -1501,6 +1591,7 @@ export type Database = {
       }
       dieta_template_alimentos: {
         Row: {
+          alimento_base_id: string | null
           calorias: number | null
           carboidratos_g: number | null
           created_at: string
@@ -1512,8 +1603,10 @@ export type Database = {
           proteinas_g: number | null
           quantidade: string | null
           refeicao_id: string
+          tabela_origem: string | null
         }
         Insert: {
+          alimento_base_id?: string | null
           calorias?: number | null
           carboidratos_g?: number | null
           created_at?: string
@@ -1525,8 +1618,10 @@ export type Database = {
           proteinas_g?: number | null
           quantidade?: string | null
           refeicao_id: string
+          tabela_origem?: string | null
         }
         Update: {
+          alimento_base_id?: string | null
           calorias?: number | null
           carboidratos_g?: number | null
           created_at?: string
@@ -1538,8 +1633,16 @@ export type Database = {
           proteinas_g?: number | null
           quantidade?: string | null
           refeicao_id?: string
+          tabela_origem?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "dieta_template_alimentos_alimento_base_id_fkey"
+            columns: ["alimento_base_id"]
+            isOneToOne: false
+            referencedRelation: "alimentos_base"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "dieta_template_alimentos_refeicao_id_fkey"
             columns: ["refeicao_id"]
