@@ -361,6 +361,80 @@ export const useDietas = () => {
     }
   };
 
+  const updateRefeicaoCliente = async (refeicaoId: string, data: Partial<RefeicaoFormData>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('dieta_cliente_refeicoes')
+        .update(data)
+        .eq('id', refeicaoId);
+
+      if (error) throw error;
+      
+      await fetchDietasClientes();
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao atualizar refeição:', error);
+      toast.error('Erro ao atualizar refeição');
+      return false;
+    }
+  };
+
+  const deleteRefeicaoCliente = async (refeicaoId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('dieta_cliente_refeicoes')
+        .delete()
+        .eq('id', refeicaoId);
+
+      if (error) throw error;
+      
+      toast.success('Refeição removida!');
+      await fetchDietasClientes();
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao remover refeição:', error);
+      toast.error('Erro ao remover refeição');
+      return false;
+    }
+  };
+
+  const updateRefeicaoTemplate = async (refeicaoId: string, data: Partial<RefeicaoFormData>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('dieta_template_refeicoes')
+        .update(data)
+        .eq('id', refeicaoId);
+
+      if (error) throw error;
+      
+      await fetchTemplates();
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao atualizar refeição:', error);
+      toast.error('Erro ao atualizar refeição');
+      return false;
+    }
+  };
+
+  const deleteRefeicaoTemplate = async (refeicaoId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('dieta_template_refeicoes')
+        .delete()
+        .eq('id', refeicaoId);
+
+      if (error) throw error;
+      
+      toast.success('Refeição removida!');
+      await fetchTemplates();
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao remover refeição:', error);
+      toast.error('Erro ao remover refeição');
+      return false;
+    }
+  };
+
   // ============ ALIMENTOS ============
 
   const addAlimentoTemplate = async (refeicaoId: string, data: AlimentoFormData, ordem: number): Promise<boolean> => {
@@ -401,6 +475,80 @@ export const useDietas = () => {
     } catch (error: any) {
       console.error('Erro ao adicionar alimento:', error);
       toast.error('Erro ao adicionar alimento');
+      return false;
+    }
+  };
+
+  const updateAlimentoCliente = async (alimentoId: string, data: Partial<AlimentoFormData>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('dieta_cliente_alimentos')
+        .update(data)
+        .eq('id', alimentoId);
+
+      if (error) throw error;
+      
+      await fetchDietasClientes();
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao atualizar alimento:', error);
+      toast.error('Erro ao atualizar alimento');
+      return false;
+    }
+  };
+
+  const deleteAlimentoCliente = async (alimentoId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('dieta_cliente_alimentos')
+        .delete()
+        .eq('id', alimentoId);
+
+      if (error) throw error;
+      
+      toast.success('Alimento removido!');
+      await fetchDietasClientes();
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao remover alimento:', error);
+      toast.error('Erro ao remover alimento');
+      return false;
+    }
+  };
+
+  const updateAlimentoTemplate = async (alimentoId: string, data: Partial<AlimentoFormData>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('dieta_template_alimentos')
+        .update(data)
+        .eq('id', alimentoId);
+
+      if (error) throw error;
+      
+      await fetchTemplates();
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao atualizar alimento:', error);
+      toast.error('Erro ao atualizar alimento');
+      return false;
+    }
+  };
+
+  const deleteAlimentoTemplate = async (alimentoId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('dieta_template_alimentos')
+        .delete()
+        .eq('id', alimentoId);
+
+      if (error) throw error;
+      
+      toast.success('Alimento removido!');
+      await fetchTemplates();
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao remover alimento:', error);
+      toast.error('Erro ao remover alimento');
       return false;
     }
   };
@@ -487,9 +635,17 @@ export const useDietas = () => {
     // Refeições
     addRefeicaoTemplate,
     addRefeicaoCliente,
+    updateRefeicaoTemplate,
+    updateRefeicaoCliente,
+    deleteRefeicaoTemplate,
+    deleteRefeicaoCliente,
     // Alimentos
     addAlimentoTemplate,
     addAlimentoCliente,
+    updateAlimentoTemplate,
+    updateAlimentoCliente,
+    deleteAlimentoTemplate,
+    deleteAlimentoCliente,
     // Histórico
     saveHistorico,
     fetchHistorico

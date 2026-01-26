@@ -144,6 +144,8 @@ export interface AlimentoFormData {
   carboidratos_g?: number;
   gorduras_g?: number;
   observacoes?: string;
+  alimento_base_id?: string;
+  tabela_origem?: string;
 }
 
 // Types para Cálculos Energéticos (TMB/GET)
@@ -172,4 +174,30 @@ export interface DadosAntropometricosCliente {
   sexo?: 'masculino' | 'feminino';
   massa_livre_gordura_kg?: number;
   data_nascimento?: string;
+}
+
+// Types para Alimentos Base (TACO, TBCA, etc)
+export type TabelaOrigem = 'taco' | 'tbca' | 'tbca72' | 'tucunduva' | 'fabricantes' | 'suplementos' | 'custom';
+
+export interface AlimentoBase {
+  id: string;
+  empresa_id?: string;
+  tabela_origem: TabelaOrigem;
+  codigo_original?: string;
+  nome: string;
+  grupo?: string;
+  porcao_padrao?: string;
+  calorias_100g?: number;
+  proteinas_100g?: number;
+  carboidratos_100g?: number;
+  gorduras_100g?: number;
+  fibras_100g?: number;
+  sodio_mg?: number;
+  calcio_mg?: number;
+  ferro_mg?: number;
+  vitamina_a_mcg?: number;
+  vitamina_c_mg?: number;
+  ativo: boolean;
+  created_at: string;
+  updated_at?: string;
 }
