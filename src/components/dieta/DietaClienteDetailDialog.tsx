@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -68,6 +68,15 @@ export const DietaClienteDetailDialog = ({ open, onOpenChange, dieta }: DietaCli
   const [openRefeicoes, setOpenRefeicoes] = useState<{ [key: string]: boolean }>({});
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'refeicao' | 'alimento'; id: string; nome: string } | null>(null);
 
+  // Initialize open state for all meals when dieta changes
+  useEffect(() => {
+    if (dieta?.refeicoes) {
+      const initialState: { [key: string]: boolean } = {};
+      dieta.refeicoes.forEach(r => { initialState[r.id] = true; });
+      setOpenRefeicoes(initialState);
+    }
+  }, [dieta?.id]);
+
   if (!dieta) return null;
 
   // Calcular totais atualizados
@@ -112,13 +121,6 @@ export const DietaClienteDetailDialog = ({ open, onOpenChange, dieta }: DietaCli
       [refeicaoId]: !prev[refeicaoId]
     }));
   };
-
-  // Iniciar todas as refeições abertas
-  if (dieta.refeicoes && Object.keys(openRefeicoes).length === 0) {
-    const initialState: { [key: string]: boolean } = {};
-    dieta.refeicoes.forEach(r => { initialState[r.id] = true; });
-    setOpenRefeicoes(initialState);
-  }
 
   return (
     <>
