@@ -1,253 +1,199 @@
 
-# Plano: Alinhar Modulo Dieta ao PRD Completo
 
-## Resumo Executivo
+# Plano: Gerenciamento de Dados Financeiros ao Inativar Cliente
 
-Sua implementacao atual cobre cerca de **60% do PRD**. Os principais gaps sao: tabelas alimentares oficiais (TACO/TBCA), busca inteligente, exportacao PDF funcional, agendamento por dias da semana, e recalculo automatico de totais.
+## Resumo do Problema
 
----
+Quando um cliente e marcado como "inativo", as transacoes financeiras pendentes (a_receber=true) e vencidas continuam aparecendo no sistema:
+- No dashboard em "A Receber" 
+- Na lista de "Transacoes Vencidas"
+- Na tabela de transacoes do modulo financeiro
 
-## Analise de Gaps Detalhada
+Isso gera alertas e valores incorretos, ja que o cliente nao vai mais efetuar pagamentos.
 
-### O que JA FUNCIONA
+## Dados Atuais Afetados
 
-| Feature | Status |
-|---------|--------|
-| Templates reutilizaveis | Completo |
-| Dietas vinculadas a clientes | Completo |
-| Estrutura refeicoes + alimentos | Completo |
-| Macros (P/C/G/kcal) por alimento | Completo |
-| Integracao IA para gerar dietas | Completo |
-| Historico de versoes (snapshots) | Completo |
-| Calculadora TMB/GET com protocolos | Completo |
-
-### O que PRECISA ser implementado
-
-| Feature | Prioridade | Fase |
-|---------|------------|------|
-| Tabelas alimentares (TACO, TBCA) | CRITICA | MVP |
-| Busca inteligente de alimentos | CRITICA | MVP |
-| Exportacao PDF funcional | ALTA | V1 |
-| Recalculo automatico de totais | ALTA | MVP |
-| Agendamento dias da semana | MEDIA | V1 |
-| Edicao/remocao alimentos e refeicoes | ALTA | MVP |
-| UI colapsavel para refeicoes | MEDIA | V1 |
+Atualmente existem **9 transacoes** de clientes inativos somando valores significativos que nao deveriam aparecer como pendentes:
+- Andriel: R$ 2.814,67 (3 parcelas)
+- Jucineide Abreu: R$ 1.332,33
+- Juliana Jardim: R$ 1.198,50
+- E outros...
 
 ---
 
-## Roadmap Proposto
+## Solucao Proposta
 
-### FASE 1: MVP Dieta (Prioridade Critica)
+### 1. Modificar o Dialogo de Inativacao
 
-#### 1.1 Banco de Alimentos com Tabelas Oficiais
+Transformar o dialogo simples em um dialogo com opcoes:
 
-**Banco de dados:**
+```
++--------------------------------------------------+
+| ⚠️ Inativar Cliente                              |
++--------------------------------------------------+
+| Tem certeza que deseja marcar "Jucineide Abreu"  |
+| como inativo?                                     |
+|                                                   |
+| Este cliente possui:                              |
+|  • 2 transacao(oes) pendentes (A Receber)         |
+|  • R$ 2.664,66 em valores a receber               |
+|                                                   |
+| O que fazer com os dados financeiros?             |
+|                                                   |
+| ○ Manter transacoes (ficam no historico)          |
+|   - Marcar como "nao a receber" para sair dos     |
+|     alertas                                       |
+|                                                   |
+| ○ Excluir transacoes pendentes                    |
+|   - Remove completamente os lancamentos futuros   |
++--------------------------------------------------+
+|                    [Cancelar] [Confirmar]         |
++--------------------------------------------------+
+```
 
+### 2. Logica de Negocio
+
+**Opcao A: Manter Transacoes**
+- Atualiza `a_receber = false` nas transacoes do cliente
+- Adiciona flag opcional `cancelado_motivo = 'cliente_inativo'` para auditoria
+- Transacoes ficam no historico mas nao geram alertas
+
+**Opcao B: Excluir Transacoes**
+- Deleta todas as transacoes com `a_receber = true` do cliente
+- Somente transacoes futuras/pendentes sao removidas
+- Transacoes ja recebidas (a_receber=false) sao mantidas
+
+---
+
+## Implementacao Tecnica
+
+### Arquivos a Modificar
+
+#### 1. `src/components/clients/SetInactiveButton.tsx`
+
+Expandir o componente para:
+- Buscar transacoes pendentes do cliente antes de mostrar dialogo
+- Exibir resumo financeiro (quantidade e valor total)
+- Adicionar RadioGroup para escolha da acao
+- Executar acao escolhida antes de inativar
+
+```tsx
+// Estrutura proposta
+interface PendingTransactions {
+  count: number;
+  total: number;
+  transactions: Array<{ id: string; descricao: string; valor: number }>;
+}
+
+const [pendingData, setPendingData] = useState<PendingTransactions | null>(null);
+const [financialAction, setFinancialAction] = useState<'keep' | 'delete'>('keep');
+
+// Buscar ao abrir dialogo
+useEffect(() => {
+  if (open) {
+    fetchPendingTransactions(clientId);
+  }
+}, [open]);
+```
+
+#### 2. Funcoes de Banco de Dados
+
+**Manter transacoes (marcar como nao a receber):**
 ```sql
--- Tabela centralizada de alimentos de referencia
-CREATE TABLE alimentos_base (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tabela_origem TEXT NOT NULL, -- 'taco', 'tbca', 'tbca72', 'tucunduva', 'fabricantes', 'suplementos', 'custom'
-  codigo_original TEXT, -- Codigo na tabela original
-  nome TEXT NOT NULL,
-  grupo TEXT, -- Ex: Cereais, Carnes, Laticinios
-  porcao_padrao TEXT, -- Ex: 100g
-  calorias_100g DECIMAL(8,2),
-  proteinas_100g DECIMAL(8,3),
-  carboidratos_100g DECIMAL(8,3),
-  gorduras_100g DECIMAL(8,3),
-  fibras_100g DECIMAL(8,3),
-  sodio_mg DECIMAL(8,2),
-  -- Micronutrientes opcionais
-  calcio_mg DECIMAL(8,2),
-  ferro_mg DECIMAL(8,2),
-  vitamina_a_mcg DECIMAL(8,2),
-  vitamina_c_mg DECIMAL(8,2),
-  ativo BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Indices para busca rapida
-CREATE INDEX idx_alimentos_nome ON alimentos_base USING gin(to_tsvector('portuguese', nome));
-CREATE INDEX idx_alimentos_tabela ON alimentos_base(tabela_origem);
-CREATE INDEX idx_alimentos_grupo ON alimentos_base(grupo);
+UPDATE financeiro_lancamentos 
+SET a_receber = false, 
+    observacoes = COALESCE(observacoes, '') || ' [Cancelado: cliente inativo]'
+WHERE cliente_id = $clientId 
+AND a_receber = true;
 ```
 
-**Arquivos:**
-- `src/hooks/useAlimentosBase.ts` - Hook para busca/filtro
-- `src/components/dieta/AlimentoSearchInput.tsx` - Input com autocomplete
-
-#### 1.2 Busca Inteligente de Alimentos
-
-Substituir input de texto livre por busca com autocomplete:
-
-```
-+-----------------------------------------------+
-| Buscar alimento...                      [Q]   |
-+-----------------------------------------------+
-| Filtros: [TACO] [TBCA] [Suplementos] [Todos]  |
-|                                               |
-| Resultados:                                   |
-| +-------------------------------------------+ |
-| | Peito de Frango Grelhado (TACO)           | |
-| | 100g | 159 kcal | P: 32g | C: 0g | G: 3g  | |
-| +-------------------------------------------+ |
-| | Frango, peito, sem pele, grelhado (TBCA)  | |
-| | 100g | 165 kcal | P: 31g | C: 0g | G: 4g  | |
-| +-------------------------------------------+ |
-+-----------------------------------------------+
-```
-
-**Arquivos:**
-- Modificar `DietaAlimentoDialog.tsx` para usar busca
-- Criar `AlimentoSearchResults.tsx` para lista de resultados
-
-#### 1.3 Recalculo Automatico de Totais
-
-Quando alimentos sao adicionados/removidos, recalcular automaticamente:
-- Total de calorias da dieta
-- Total de proteinas, carboidratos, gorduras
-- Totais por refeicao
-
-**Arquivos:**
-- `src/utils/dietaCalculations.ts` - Funcoes de calculo
-- Modificar `useDietas.ts` para recalcular apos mudancas
-
-#### 1.4 CRUD Completo de Alimentos e Refeicoes
-
-Adicionar funcoes faltantes:
-- `updateRefeicaoTemplate()` / `updateRefeicaoCliente()`
-- `deleteRefeicaoTemplate()` / `deleteRefeicaoCliente()`
-- `updateAlimentoTemplate()` / `updateAlimentoCliente()`
-- `deleteAlimentoTemplate()` / `deleteAlimentoCliente()`
-
-**Arquivos:**
-- Modificar `useDietas.ts`
-- Adicionar botoes de editar/remover na UI
-
----
-
-### FASE 2: V1 Dieta (Apos MVP)
-
-#### 2.1 Exportacao PDF Funcional
-
-Layout profissional:
-- Logo da empresa
-- Dados do cliente
-- Macros totais
-- Lista de refeicoes formatada
-- Observacoes do profissional
-
-**Arquivos:**
-- `src/utils/dietaPdfExport.ts` usando jsPDF
-- Modificar botao existente em `DietaClienteDetailDialog.tsx`
-
-#### 2.2 UI Colapsavel para Refeicoes
-
-Usar componente `Collapsible` para melhor escaneabilidade:
-
-```
-+-- Cafe da Manha (07:00) ----- [+] Alimento -----+
-|   > Peito de frango 150g                        |
-|   > Arroz integral 100g                         |
-|   > Salada verde                                |
-|   Subtotal: 450 kcal | P: 35g | C: 40g | G: 12g |
-+-------------------------------------------------+
-```
-
-**Arquivos:**
-- Modificar `DietaClienteDetailDialog.tsx`
-- Modificar `DietaTemplateDetailDialog.tsx`
-
-#### 2.3 Agendamento por Dias da Semana
-
-**Banco de dados:**
-
+**Excluir transacoes pendentes:**
 ```sql
-ALTER TABLE dieta_clientes ADD COLUMN dias_semana TEXT[]; 
--- Ex: ['seg', 'ter', 'qua', 'qui', 'sex']
-
-ALTER TABLE dieta_cliente_refeicoes ADD COLUMN dias_especificos TEXT[];
--- Permite refeicoes diferentes por dia
+DELETE FROM financeiro_lancamentos 
+WHERE cliente_id = $clientId 
+AND a_receber = true;
 ```
 
-**UI:**
-- Adicionar seletor de dias no formulario de dieta
-- Opcao de variar cardapio por dia
+### 3. Fluxo de Execucao
 
-#### 2.4 Observacoes com IA por Refeicao
-
-Botao em cada refeicao para gerar:
-- Sugestoes de substituicao
-- Dicas de preparo
-- Alertas nutricionais
-
----
-
-### FASE 3: V2 Dieta (Expansao Futura)
-
-| Feature | Descricao |
-|---------|-----------|
-| Visualizacao para paciente | Portal ou app para cliente ver sua dieta |
-| Refeicoes favoritas | Salvar e reutilizar refeicoes frequentes |
-| Biblioteca compartilhada | Templates entre profissionais |
-| Lembretes WhatsApp | Integrar com modulo de mensagens |
-| Dashboard de adesao | Metricas de seguimento da dieta |
-
----
-
-## O que REMOVER ou IGNORAR do PRD
-
-| Item do PRD | Motivo |
-|-------------|--------|
-| NestJS backend | Projeto usa Supabase/Edge Functions |
-| Tutorial interativo | Pode ser feito depois, nao e MVP |
-| Criacao automatica via meta calorica | Ja temos Calculadora GET + IA |
-
----
-
-## Estrutura de Arquivos Proposta
-
-```
-src/
-  components/
-    dieta/
-      DietaModule.tsx (existente)
-      DietaCalculadoraGET.tsx (existente)
-      DietaClienteDetailDialog.tsx (modificar)
-      DietaTemplateDetailDialog.tsx (modificar)
-      DietaAlimentoDialog.tsx (modificar para busca)
-      AlimentoSearchInput.tsx (NOVO)
-      AlimentoSearchResults.tsx (NOVO)
-      DietaPdfExport.tsx (NOVO)
-      DietaDiasSemanaSelector.tsx (NOVO - V1)
-  hooks/
-    useDietas.ts (expandir CRUD)
-    useAlimentosBase.ts (NOVO)
-  utils/
-    dietaCalculations.ts (NOVO)
-    dietaPdfExport.ts (NOVO)
-    tmbCalculations.ts (existente)
+```text
+Clique "Inativar"
+       |
+       v
+Buscar transacoes pendentes do cliente
+       |
+       v
+[Tem transacoes pendentes?]
+       |
+  Sim  |  Nao
+       |   |
+       v   v
+Mostrar opcoes  Inativar direto
+       |
+       v
+Usuario escolhe acao
+       |
+       v
+Executar acao financeira (keep/delete)
+       |
+       v
+Marcar cliente como inativo
+       |
+       v
+Invalidar queries (financial-transactions, dashboard-data)
 ```
 
 ---
 
-## Proximos Passos Recomendados
+## Impacto nas Queries Existentes
 
-1. **Primeiro**: Popular banco de alimentos com dados TACO/TBCA
-2. **Segundo**: Implementar busca inteligente
-3. **Terceiro**: CRUD completo + recalculo automatico
-4. **Quarto**: Exportacao PDF funcional
-5. **Quinto**: UI colapsavel + agendamento dias
+Apos implementacao, as transacoes de clientes inativos:
+
+1. **Se "Manter"**: Ficam com `a_receber=false`, nao aparecem mais em alertas
+2. **Se "Excluir"**: Sao removidas completamente do banco
+
+Nenhuma modificacao necessaria em:
+- `useFinancialTransactions.ts` 
+- `useDashboardData.ts`
+- `OverdueTransactionsDialog.tsx`
+
+A logica atual ja funciona corretamente filtrando por `a_receber = true`.
 
 ---
 
-## Decisao Necessaria
+## Arquivos a Criar/Modificar
 
-O maior investimento e a **integracao das tabelas alimentares oficiais** (TACO, TBCA, etc). Isso requer:
+| Arquivo | Acao | Descricao |
+|---------|------|-----------|
+| `src/components/clients/SetInactiveButton.tsx` | Modificar | Adicionar busca de transacoes, opcoes de acao, logica de processamento |
 
-1. Obter dados oficiais das tabelas (disponiveis publicamente)
-2. Normalizar e importar para o banco
-3. Manter atualizacoes
+---
 
-**Pergunta**: Voce ja tem acesso aos arquivos das tabelas TACO/TBCA ou precisa que eu oriente como obte-los e importa-los?
+## Consideracoes Adicionais
+
+### UI/UX
+- O dialogo so mostra opcoes se houver transacoes pendentes
+- Se nao houver transacoes, mantem o comportamento atual (simples confirmacao)
+- Adicionar loading state durante processamento
+- Toast de sucesso informando acao tomada
+
+### Seguranca
+- Usar RLS existente para garantir que so transacoes da empresa sejam afetadas
+- Transacoes ja recebidas (a_receber=false) nunca sao excluidas
+
+### Auditoria (opcional para futuro)
+- Adicionar coluna `cancelado_em` e `cancelado_motivo` na tabela financeiro_lancamentos
+- Permite rastrear quando transacoes foram canceladas por inativacao
+
+---
+
+## Resultado Esperado
+
+1. Usuario clica "Inativar" no card do cliente
+2. Sistema busca transacoes pendentes
+3. Dialogo mostra resumo: "2 transacoes pendentes - R$ 2.664,66"
+4. Usuario escolhe: "Manter" ou "Excluir"
+5. Sistema executa acao financeira + inativa cliente
+6. Dashboard e alertas refletem imediatamente a mudanca
+7. Toast confirma: "Cliente inativado. 2 transacoes pendentes foram marcadas como nao a receber."
+
