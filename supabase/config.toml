@@ -126,3 +126,6 @@ verify_jwt = false
 
 [functions.ai-agent]
 verify_jwt = false
+
+[functions.import-alimentos]
+verify_jwt = true

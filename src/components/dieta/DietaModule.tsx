@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileText, Users, Bot, Loader2, Calculator } from 'lucide-react';
+import { Plus, FileText, Users, Bot, Loader2, Calculator, Upload } from 'lucide-react';
 import { useDietas } from '@/hooks/useDietas';
 import { DietaTemplatesList } from './DietaTemplatesList';
 import { DietaClientesList } from './DietaClientesList';
@@ -11,6 +11,7 @@ import { DietaTemplateDialog } from './DietaTemplateDialog';
 import { DietaClienteDialog } from './DietaClienteDialog';
 import { DietaAIDialog } from './DietaAIDialog';
 import { DietaCalculadoraGET } from './DietaCalculadoraGET';
+import { AlimentosImportDialog } from '@/components/admin/AlimentosImportDialog';
 
 export const DietaModule = () => {
   const { templates, dietasClientes, loading } = useDietas();
@@ -18,6 +19,7 @@ export const DietaModule = () => {
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [showClienteDialog, setShowClienteDialog] = useState(false);
   const [showAIDialog, setShowAIDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -33,7 +35,11 @@ export const DietaModule = () => {
           </p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => setShowImportDialog(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Importar Alimentos
+          </Button>
           <Button variant="outline" onClick={() => setShowAIDialog(true)}>
             <Bot className="h-4 w-4 mr-2" />
             Gerar com IA
@@ -140,6 +146,11 @@ export const DietaModule = () => {
       <DietaAIDialog
         open={showAIDialog}
         onOpenChange={setShowAIDialog}
+      />
+
+      <AlimentosImportDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
       />
     </div>
   );
