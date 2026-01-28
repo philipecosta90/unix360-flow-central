@@ -244,7 +244,7 @@ export const DietaClientesList = ({ dietas, onNewDieta }: DietaClientesListProps
       <DietaClienteDetailDialog
         open={showDetailDialog}
         onOpenChange={setShowDetailDialog}
-        dieta={selectedDieta}
+        dietaId={selectedDieta?.id || null}
       />
 
       <DietaHistoricoDialog

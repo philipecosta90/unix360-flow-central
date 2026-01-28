@@ -63,14 +63,14 @@ export const DietaAlimentoDialog = ({ open, onOpenChange, onSubmit }: DietaAlime
     });
   };
 
-  const handleSelectFromSearch = async (alimento: AlimentoBase, portionGrams: number) => {
+  const handleSelectFromSearch = async (alimento: AlimentoBase, portionGrams: number, medidaTexto: string) => {
     const nutrients = calculateNutrientsByPortion(alimento, portionGrams);
     
     setLoading(true);
     try {
       await onSubmit({
         nome: alimento.nome,
-        quantidade: `${portionGrams}g`,
+        quantidade: medidaTexto,
         calorias: nutrients.calorias,
         proteinas_g: nutrients.proteinas_g,
         carboidratos_g: nutrients.carboidratos_g,
