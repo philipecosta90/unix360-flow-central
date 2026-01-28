@@ -12,23 +12,24 @@ import { DietaClienteDialog } from './DietaClienteDialog';
 import { DietaAIDialog } from './DietaAIDialog';
 import { DietaCalculadoraGET } from './DietaCalculadoraGET';
 import { AlimentosImportDialog } from '@/components/admin/AlimentosImportDialog';
-
 export const DietaModule = () => {
-  const { templates, dietasClientes, loading } = useDietas();
+  const {
+    templates,
+    dietasClientes,
+    loading
+  } = useDietas();
   const [activeTab, setActiveTab] = useState('clientes');
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [showClienteDialog, setShowClienteDialog] = useState(false);
   const [showAIDialog, setShowAIDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            Planos Alimentares
-            <Badge variant="secondary" className="text-xs">Beta</Badge>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">EM FASE DE TESTES
+
+Beta<Badge variant="secondary" className="text-xs">Beta</Badge>
           </h1>
           <p className="text-muted-foreground mt-1">
             Gerencie dietas personalizadas para seus clientes
@@ -101,29 +102,15 @@ export const DietaModule = () => {
         </TabsList>
 
         <TabsContent value="clientes" className="mt-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
+          {loading ? <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <DietaClientesList 
-              dietas={dietasClientes}
-              onNewDieta={() => setShowClienteDialog(true)}
-            />
-          )}
+            </div> : <DietaClientesList dietas={dietasClientes} onNewDieta={() => setShowClienteDialog(true)} />}
         </TabsContent>
 
         <TabsContent value="templates" className="mt-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
+          {loading ? <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <DietaTemplatesList 
-              templates={templates}
-              onNewTemplate={() => setShowTemplateDialog(true)}
-            />
-          )}
+            </div> : <DietaTemplatesList templates={templates} onNewTemplate={() => setShowTemplateDialog(true)} />}
         </TabsContent>
 
         <TabsContent value="calculadora" className="mt-4">
@@ -132,26 +119,12 @@ export const DietaModule = () => {
       </Tabs>
 
       {/* Dialogs */}
-      <DietaTemplateDialog 
-        open={showTemplateDialog} 
-        onOpenChange={setShowTemplateDialog} 
-      />
+      <DietaTemplateDialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog} />
       
-      <DietaClienteDialog 
-        open={showClienteDialog} 
-        onOpenChange={setShowClienteDialog}
-        templates={templates}
-      />
+      <DietaClienteDialog open={showClienteDialog} onOpenChange={setShowClienteDialog} templates={templates} />
 
-      <DietaAIDialog
-        open={showAIDialog}
-        onOpenChange={setShowAIDialog}
-      />
+      <DietaAIDialog open={showAIDialog} onOpenChange={setShowAIDialog} />
 
-      <AlimentosImportDialog
-        open={showImportDialog}
-        onOpenChange={setShowImportDialog}
-      />
-    </div>
-  );
+      <AlimentosImportDialog open={showImportDialog} onOpenChange={setShowImportDialog} />
+    </div>;
 };
