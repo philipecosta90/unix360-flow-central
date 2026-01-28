@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Plus, Flame, Clock, Utensils, FileDown, ChevronDown, ChevronRight, 
-  Trash2, Pencil, MoreVertical 
+  Trash2, MoreVertical 
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,7 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { DietaCliente } from '@/types/dieta';
 import { useDietas } from '@/hooks/useDietas';
 import { DietaRefeicaoDialog } from './DietaRefeicaoDialog';
 import { DietaAlimentoDialog } from './DietaAlimentoDialog';
@@ -41,7 +40,7 @@ import { ptBR } from 'date-fns/locale';
 interface DietaClienteDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  dieta: DietaCliente | null;
+  dietaId: string | null;
 }
 
 const getStatusColor = (status: string) => {
@@ -53,14 +52,18 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export const DietaClienteDetailDialog = ({ open, onOpenChange, dieta }: DietaClienteDetailDialogProps) => {
+export const DietaClienteDetailDialog = ({ open, onOpenChange, dietaId }: DietaClienteDetailDialogProps) => {
   const { 
+    dietasClientes,
     addRefeicaoCliente, 
     addAlimentoCliente, 
     deleteRefeicaoCliente, 
     deleteAlimentoCliente,
     updateDietaCliente 
   } = useDietas();
+  
+  // Buscar dieta atualizada da lista do hook
+  const dieta = dietasClientes.find(d => d.id === dietaId) || null;
   
   const [showRefeicaoDialog, setShowRefeicaoDialog] = useState(false);
   const [showAlimentoDialog, setShowAlimentoDialog] = useState(false);
@@ -250,7 +253,7 @@ export const DietaClienteDetailDialog = ({ open, onOpenChange, dieta }: DietaCli
                                       <MoreVertical className="h-4 w-4" />
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
+                                  <DropdownMenuContent align="end" className="bg-popover">
                                     <DropdownMenuItem
                                       onClick={(e) => {
                                         e.stopPropagation();

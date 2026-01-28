@@ -3,13 +3,15 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Loader2, X, Database, Plus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Loader2, X, Database, Plus, Check } from 'lucide-react';
 import { useAlimentosBase } from '@/hooks/useAlimentosBase';
+import { MEDIDAS_CASEIRAS, formatQuantidadeMedida, getMedidaById } from '@/constants/medidasCaseiras';
 import type { AlimentoBase, TabelaOrigem } from '@/types/dieta';
 import { cn } from '@/lib/utils';
 
 interface AlimentoSearchInputProps {
-  onSelect: (alimento: AlimentoBase, quantidade: number) => void;
+  onSelect: (alimento: AlimentoBase, quantidade: number, medidaTexto: string) => void;
   onManualAdd?: () => void;
   placeholder?: string;
   className?: string;
@@ -36,6 +38,11 @@ const getTabelaBadgeColor = (tabela: TabelaOrigem) => {
   }
 };
 
+interface AlimentoSelection {
+  quantidade: number;
+  medidaId: string;
+}
+
 export const AlimentoSearchInput = ({ 
   onSelect, 
   onManualAdd,
@@ -54,7 +61,7 @@ export const AlimentoSearchInput = ({
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<TabelaOrigem | 'todos'>('todos');
-  const [portionInput, setPortionInput] = useState<{ [key: string]: string }>({});
+  const [selections, setSelections] = useState<{ [alimentoId: string]: AlimentoSelection }>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -90,12 +97,35 @@ export const AlimentoSearchInput = ({
     }
   };
 
+  const getSelection = (alimentoId: string): AlimentoSelection => {
+    return selections[alimentoId] || { quantidade: 1, medidaId: 'porcao' };
+  };
+
+  const updateSelection = (alimentoId: string, updates: Partial<AlimentoSelection>) => {
+    setSelections(prev => ({
+      ...prev,
+      [alimentoId]: { ...getSelection(alimentoId), ...updates }
+    }));
+  };
+
+  const calculatePesoTotal = (alimentoId: string): number => {
+    const selection = getSelection(alimentoId);
+    const medida = getMedidaById(selection.medidaId);
+    if (!medida) return 100;
+    if (medida.id === 'gramas') return selection.quantidade;
+    return selection.quantidade * medida.pesoGramas;
+  };
+
   const handleSelectAlimento = (alimento: AlimentoBase) => {
-    const portion = parseInt(portionInput[alimento.id] || '100') || 100;
-    onSelect(alimento, portion);
+    const selection = getSelection(alimento.id);
+    const medida = getMedidaById(selection.medidaId);
+    const pesoTotal = calculatePesoTotal(alimento.id);
+    const medidaTexto = medida ? formatQuantidadeMedida(selection.quantidade, medida) : `${pesoTotal}g`;
+    
+    onSelect(alimento, pesoTotal, medidaTexto);
     setInputValue('');
     setIsOpen(false);
-    setPortionInput({});
+    setSelections({});
   };
 
   const handleClear = () => {
@@ -128,7 +158,7 @@ export const AlimentoSearchInput = ({
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg">
           {/* Filtros de tabela */}
-          <div className="flex flex-wrap gap-1 p-2 border-b">
+          <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/30">
             {TABELAS_FILTRO.map(({ value, label }) => (
               <Badge
                 key={value}
@@ -142,7 +172,7 @@ export const AlimentoSearchInput = ({
           </div>
 
           {/* Resultados */}
-          <ScrollArea className="max-h-[300px]">
+          <ScrollArea className="max-h-[400px]">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -171,23 +201,27 @@ export const AlimentoSearchInput = ({
             ) : (
               <div className="py-1">
                 {alimentos.map((alimento) => {
-                  const portion = parseInt(portionInput[alimento.id] || '100') || 100;
-                  const nutrients = calculateNutrientsByPortion(alimento, portion);
+                  const selection = getSelection(alimento.id);
+                  const pesoTotal = calculatePesoTotal(alimento.id);
+                  const nutrients = calculateNutrientsByPortion(alimento, pesoTotal);
+                  const medida = getMedidaById(selection.medidaId);
+                  const isGramas = selection.medidaId === 'gramas';
                   
                   return (
                     <div
                       key={alimento.id}
-                      className="px-3 py-2 hover:bg-muted/50 cursor-pointer border-b last:border-0"
+                      className="px-3 py-3 hover:bg-muted/50 border-b last:border-0"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0" onClick={() => handleSelectAlimento(alimento)}>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm truncate">
+                      {/* Header do alimento */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-sm">
                               {alimento.nome}
                             </span>
                             <Badge 
                               variant="outline" 
-                              className={cn("text-[10px] px-1.5 py-0", getTabelaBadgeColor(alimento.tabela_origem))}
+                              className={cn("text-[10px] px-1.5 py-0 shrink-0", getTabelaBadgeColor(alimento.tabela_origem))}
                             >
                               {alimento.tabela_origem.toUpperCase()}
                             </Badge>
@@ -198,40 +232,76 @@ export const AlimentoSearchInput = ({
                               {alimento.grupo}
                             </p>
                           )}
-                          
-                          <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
-                            <span>{nutrients.calorias} kcal</span>
-                            <span>P: {nutrients.proteinas_g}g</span>
-                            <span>C: {nutrients.carboidratos_g}g</span>
-                            <span>G: {nutrients.gorduras_g}g</span>
-                          </div>
                         </div>
+                      </div>
+                      
+                      {/* Seletor de quantidade e medida */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <Input
+                          type="number"
+                          value={selection.quantidade}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value) || 1;
+                            updateSelection(alimento.id, { quantidade: Math.max(1, val) });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-16 h-9 text-center"
+                          min="1"
+                          step={isGramas ? "10" : "1"}
+                        />
                         
-                        <div className="flex items-center gap-1">
-                          <Input
-                            type="number"
-                            value={portionInput[alimento.id] || '100'}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              setPortionInput({ ...portionInput, [alimento.id]: e.target.value });
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-16 h-8 text-xs text-center"
-                            min="1"
-                          />
-                          <span className="text-xs text-muted-foreground">g</span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelectAlimento(alimento);
-                            }}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Select
+                          value={selection.medidaId}
+                          onValueChange={(value) => {
+                            updateSelection(alimento.id, { 
+                              medidaId: value,
+                              quantidade: value === 'gramas' ? 100 : 1
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="flex-1 h-9" onClick={(e) => e.stopPropagation()}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover">
+                            {MEDIDAS_CASEIRAS.map((medida) => (
+                              <SelectItem key={medida.id} value={medida.id}>
+                                {medida.nome} {medida.pesoGramas > 0 && medida.id !== 'gramas' && `(${medida.pesoGramas}g)`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        
+                        <Button
+                          size="sm"
+                          className="h-9 px-3 shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectAlimento(alimento);
+                          }}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Adicionar
+                        </Button>
+                      </div>
+                      
+                      {/* Preview de nutrientes */}
+                      <div className="flex items-center justify-between text-xs bg-muted/50 rounded-md px-2 py-1.5">
+                        <span className="text-muted-foreground">
+                          {medida && medida.id !== 'a_vontade' && (
+                            <span className="font-medium text-foreground">{pesoTotal}g</span>
+                          )}
+                          {medida?.id === 'a_vontade' && (
+                            <span className="italic">Sem cálculo</span>
+                          )}
+                        </span>
+                        {medida?.id !== 'a_vontade' && (
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold text-orange-600">{nutrients.calorias} kcal</span>
+                            <span className="text-blue-600">P: {nutrients.proteinas_g}g</span>
+                            <span className="text-amber-600">C: {nutrients.carboidratos_g}g</span>
+                            <span className="text-red-600">G: {nutrients.gorduras_g}g</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -242,7 +312,7 @@ export const AlimentoSearchInput = ({
           
           {/* Footer com opção manual */}
           {onManualAdd && alimentos.length > 0 && (
-            <div className="p-2 border-t">
+            <div className="p-2 border-t bg-muted/20">
               <Button 
                 variant="ghost" 
                 size="sm" 
