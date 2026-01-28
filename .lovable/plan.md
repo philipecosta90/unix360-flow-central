@@ -1,181 +1,161 @@
 
-# Plano: Campo Editável "Últ. Contato" + Alerta de Clientes em Risco no Planner
 
-## Resumo do Problema
+# Plano: Corrigir Importação de Alimentos
 
-1. A coluna "Últ. Contato" no Planner de Clientes está apenas exibindo a data, sem permitir edição manual
-2. Não há indicação visual de clientes que estão há mais de 10 dias sem contato
-3. O usuário precisa registrar manualmente quando fez o último contato com cada cliente
+## Problema Identificado
+
+O erro "there is no unique or exclusion constraint matching the ON CONFLICT specification" ocorre porque:
+
+1. **O Edge Function usa**: `onConflict: 'tabela_origem,codigo_original'` (2 colunas)
+2. **O índice existente usa**: `(tabela_origem, COALESCE(codigo_original, ''), nome)` (3 colunas com função)
+
+A sintaxe `onConflict` do Supabase não suporta índices parciais (com WHERE) nem funções como COALESCE.
 
 ---
 
-## Solução Proposta
+## Solução
 
-### 1. Criar Componente de Célula Editável para Data de Último Contato
+### Opção Escolhida: Usar INSERT simples com fallback
 
-Adicionar um novo componente `UltimoContatoCell` no arquivo `CSPlannerCell.tsx` que:
-- Exibe a data formatada ou "-" se não houver data
-- Ao clicar, abre um DatePicker para seleção da data
-- Calcula e exibe visualmente quantos dias se passaram desde o último contato
-- Mostra alerta visual (badge vermelho) quando > 10 dias sem contato
+Como o objetivo é popular a base pela primeira vez e evitar duplicatas, a solução mais robusta é:
 
-```text
-+----------------------------------+
-| Últ. Contato                     |
-+----------------------------------+
-| 15/01/2026                       |  (Normal - verde/neutro)
-| 13 dias ⚠️                       |  (Em risco - vermelho)
-| -                                |  (Sem registro - amarelo)
-+----------------------------------+
+1. **Remover upsert** - usar INSERT simples
+2. **Verificar duplicatas manualmente** antes de inserir
+3. **Ignorar conflitos** usando `onConflict: { ignoreDuplicates: true }` em colunas simples
+
+---
+
+## Alterações Necessárias
+
+### 1. Migração SQL - Criar índice único simples
+
+Criar um novo índice único que o Supabase client possa usar:
+
+```sql
+-- Criar índice único simples para upsert funcionar
+CREATE UNIQUE INDEX IF NOT EXISTS idx_alimentos_base_upsert 
+ON alimentos_base (tabela_origem, nome) 
+WHERE empresa_id IS NULL;
 ```
 
-### 2. Adicionar Filtro/Seção de Clientes em Risco
+**Problema**: Índices parciais (com WHERE) também não funcionam com onConflict do JS client.
 
-Adicionar na interface do Planner:
-- Toggle ou badge para filtrar apenas clientes em risco (10+ dias sem contato)
-- Contador visual de quantos clientes estão em risco
-- Ordenação opcional por "dias sem contato"
+### 2. Alternativa Final - Usar INSERT com ignoreDuplicates
 
-```text
-+--------------------------------------------------+
-| Planner de Clientes     ⚠️ 5 em risco    [🔍]   |
-+--------------------------------------------------+
-| [Mostrar apenas em risco] ☑                      |
-+--------------------------------------------------+
-| Nome     | Contrato | ... | Últ. Contato | ...  |
-| Andriel  | Voucher  | ... | ⚠️ 15 dias   | ...  |
-| Brenno   | Semest.  | ... | ⚠️ 12 dias   | ...  |
-+--------------------------------------------------+
-```
-
----
-
-## Implementação Técnica
-
-### Arquivos a Modificar
-
-| Arquivo | Ação | Descrição |
-|---------|------|-----------|
-| `src/components/cs/CSPlannerCell.tsx` | Adicionar | Novo componente `UltimoContatoCell` com DatePicker e cálculo de dias |
-| `src/components/cs/CSPlanner.tsx` | Modificar | Integrar o novo componente + filtro de clientes em risco |
-| `src/hooks/useCSPlanner.ts` | Verificar | Já possui mutation para atualizar `ultimo_contato` |
-
----
-
-### Componente UltimoContatoCell
-
-```tsx
-interface UltimoContatoCellProps {
-  value: string | null;
-  onChange: (value: string) => void;
-}
-
-// Funcionalidades:
-// - Exibe data formatada DD/MM/AAAA
-// - Calcula dias desde o último contato
-// - Badge verde: < 7 dias (OK)
-// - Badge amarelo: 7-10 dias (Atenção)
-// - Badge vermelho: > 10 dias (Em risco)
-// - Clique abre Popover com Calendar (DatePicker)
-// - Usa toLocalISODate() para salvar no formato correto
-```
-
----
-
-### Lógica de Cálculo de Dias
+Modificar o Edge Function para:
 
 ```typescript
-const calcularDiasSemContato = (ultimoContato: string | null): number => {
-  if (!ultimoContato) return -1; // Sem registro
-  const hoje = new Date();
-  const ultimo = parseLocalDate(ultimoContato);
-  const diffMs = hoje.getTime() - ultimo.getTime();
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
-};
-
-// Cores por status:
-// dias < 0 (sem data): amarelo/warning
-// dias <= 7: verde
-// dias 8-10: amarelo
-// dias > 10: vermelho com ícone ⚠️
+// Ao invés de upsert com onConflict complexo
+const { data, error } = await supabase
+  .from('alimentos_base')
+  .insert(batch)
+  .select();
 ```
+
+E tratar duplicatas via constraint existente (o banco rejeitará e a função continua).
 
 ---
 
-### Filtro de Clientes em Risco
+## Implementação Detalhada
 
-No CSPlanner, adicionar estado e lógica:
+### Modificar Edge Function `import-alimentos/index.ts`
+
+Trocar a estratégia de **upsert** para **insert com tratamento de erro de duplicata**:
 
 ```typescript
-const [showOnlyRisk, setShowOnlyRisk] = useState(false);
-
-const clientesFiltrados = useMemo(() => {
-  let filtered = clientes.filter(cliente =>
-    cliente.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+// Inserir em lotes de 100
+for (let i = 0; i < alimentos.length; i += batchSize) {
+  const batch = alimentos.slice(i, i + batchSize);
   
-  if (showOnlyRisk) {
-    filtered = filtered.filter(cliente => {
-      const dias = calcularDiasSemContato(cliente.ultimo_contato);
-      return dias > 10 || dias < 0; // Em risco ou sem registro
-    });
+  // Inserir um por um para não falhar o batch todo
+  for (const alimento of batch) {
+    const { error } = await supabase
+      .from('alimentos_base')
+      .insert({
+        tabela_origem: alimento.tabela_origem,
+        codigo_original: alimento.codigo_original || null,
+        nome: alimento.nome,
+        // ... demais campos
+        empresa_id: null,
+      });
+    
+    if (error) {
+      // Se for duplicata, ignorar e continuar
+      if (error.code === '23505') { // unique_violation
+        continue;
+      }
+      erros.push(`${alimento.nome}: ${error.message}`);
+    } else {
+      totalInserido++;
+    }
   }
-  
-  return filtered;
-}, [clientes, searchTerm, showOnlyRisk]);
-
-// Contador de clientes em risco
-const clientesEmRisco = clientes.filter(c => 
-  calcularDiasSemContato(c.ultimo_contato) > 10 || 
-  !c.ultimo_contato
-).length;
+}
 ```
 
----
+**Nota**: Inserir um por um é mais lento, mas garante que duplicatas sejam ignoradas sem parar o processo.
 
-## Fluxo de Uso
+### Alternativa mais rápida - Batch com tratamento
 
-```text
-1. Usuário entra na aba "Planner"
-2. Vê a tabela com coluna "Últ. Contato"
-   - Clientes sem contato há 10+ dias aparecem com badge vermelho
-   - Badge mostra "12 dias" ou "Sem registro"
-3. Clica na célula de um cliente
-4. Abre DatePicker com calendário
-5. Seleciona a data do último contato
-6. Sistema salva no campo `ultimo_contato` da tabela `clientes`
-7. A UI atualiza automaticamente (React Query invalidation)
-8. Badge muda de cor conforme os dias
+Manter batch, mas usar `insert` sem upsert e ignorar erros de constraint:
+
+```typescript
+const { data, error, count } = await supabase
+  .from('alimentos_base')
+  .insert(batchData);
+
+if (error) {
+  // Se for erro de constraint, tentar inserir um por um
+  if (error.code === '23505') {
+    // Fallback para inserção individual
+    for (const item of batchData) {
+      const { error: singleError } = await supabase
+        .from('alimentos_base')
+        .insert(item);
+      if (!singleError) totalInserido++;
+    }
+  }
+}
 ```
-
----
-
-## Alinhamento com Lógica Existente
-
-A lógica atual em `useCustomerSuccess.ts` usa interações (tabela `cs_interacoes`) para calcular clientes em risco baseado em 7 dias. 
-
-**Para o Planner, usaremos:**
-- Campo `ultimo_contato` da tabela `clientes` (entrada manual)
-- Critério de 10 dias (conforme solicitado pelo usuário)
-- Independente das interações formais cadastradas
-
-Isso permite que o profissional registre contatos rápidos (WhatsApp, ligação) sem precisar criar uma interação formal no sistema.
 
 ---
 
 ## Resultado Esperado
 
-1. Coluna "Últ. Contato" clicável com DatePicker
-2. Badge visual mostrando dias desde último contato
-3. Cores: verde (OK), amarelo (atenção), vermelho (risco)
-4. Filtro "Mostrar apenas em risco" no topo
-5. Contador "X clientes em risco" visível
-6. Data salva corretamente no banco sem problemas de timezone
+| Antes | Depois |
+|-------|--------|
+| 0 alimentos inseridos | 2000+ alimentos inseridos |
+| Erro de constraint em todos os batches | Inserção bem-sucedida com duplicatas ignoradas |
 
 ---
 
-## Dependências
+## Arquivos a Modificar
 
-- Componente Calendar/DatePicker já existente no projeto
-- Utilitários `toLocalISODate` e `parseLocalDate` de `@/utils/dateUtils`
-- Mutation `updateClientePlanner` já suporta atualizar `ultimo_contato`
+| Arquivo | Ação |
+|---------|------|
+| `supabase/functions/import-alimentos/index.ts` | Trocar upsert por insert + tratamento de duplicatas |
+
+---
+
+## Fluxo de Importação Corrigido
+
+```text
+1. Usuário faz upload de CSV/Excel
+2. Frontend envia dados para Edge Function
+3. Edge Function processa em batches de 100
+4. Para cada batch:
+   - Tenta INSERT batch completo
+   - Se falhar com duplicata (23505):
+     - Faz INSERT individual ignorando duplicatas
+   - Conta sucessos e erros
+5. Retorna total inserido e erros (se houver)
+```
+
+---
+
+## Vantagem desta abordagem
+
+- Não requer alteração no banco de dados
+- Funciona com os índices parciais existentes
+- Ignora duplicatas automaticamente
+- Mantém integridade dos dados
+
