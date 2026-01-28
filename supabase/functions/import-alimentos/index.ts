@@ -163,39 +163,60 @@ serve(async (req) => {
     // Inserir em lotes de 100
     const batchSize = 100;
     let totalInserido = 0;
+    let duplicados = 0;
     let erros: string[] = [];
     
     for (let i = 0; i < alimentos.length; i += batchSize) {
       const batch = alimentos.slice(i, i + batchSize);
       
-      const { data, error } = await supabase
+      const batchData = batch.map(a => ({
+        tabela_origem: a.tabela_origem,
+        codigo_original: a.codigo_original || null,
+        nome: a.nome,
+        grupo: a.grupo || null,
+        porcao_padrao: a.porcao_padrao || '100g',
+        calorias_100g: a.calorias_100g,
+        proteinas_100g: a.proteinas_100g,
+        carboidratos_100g: a.carboidratos_100g,
+        gorduras_100g: a.gorduras_100g,
+        fibras_100g: a.fibras_100g,
+        sodio_mg: a.sodio_mg,
+        calcio_mg: a.calcio_mg,
+        ferro_mg: a.ferro_mg,
+        vitamina_a_mcg: a.vitamina_a_mcg,
+        vitamina_c_mg: a.vitamina_c_mg,
+        ativo: true,
+        empresa_id: null, // Dados globais
+      }));
+      
+      // Tentar inserir batch completo
+      const { error } = await supabase
         .from('alimentos_base')
-        .upsert(
-          batch.map(a => ({
-            tabela_origem: a.tabela_origem,
-            codigo_original: a.codigo_original || null,
-            nome: a.nome,
-            grupo: a.grupo || null,
-            porcao_padrao: a.porcao_padrao || '100g',
-            calorias_100g: a.calorias_100g,
-            proteinas_100g: a.proteinas_100g,
-            carboidratos_100g: a.carboidratos_100g,
-            gorduras_100g: a.gorduras_100g,
-            fibras_100g: a.fibras_100g,
-            sodio_mg: a.sodio_mg,
-            calcio_mg: a.calcio_mg,
-            ferro_mg: a.ferro_mg,
-            vitamina_a_mcg: a.vitamina_a_mcg,
-            vitamina_c_mg: a.vitamina_c_mg,
-            ativo: true,
-            empresa_id: null, // Dados globais
-          })),
-          { onConflict: 'tabela_origem,codigo_original' }
-        );
+        .insert(batchData);
       
       if (error) {
-        console.error(`Erro no batch ${i}:`, error);
-        erros.push(`Batch ${i}: ${error.message}`);
+        // Se for erro de constraint (duplicata), inserir um por um
+        if (error.code === '23505') {
+          console.log(`Batch ${i} tem duplicatas, inserindo individualmente...`);
+          for (const item of batchData) {
+            const { error: singleError } = await supabase
+              .from('alimentos_base')
+              .insert(item);
+            
+            if (singleError) {
+              if (singleError.code === '23505') {
+                duplicados++;
+              } else {
+                erros.push(`${item.nome}: ${singleError.message}`);
+              }
+            } else {
+              totalInserido++;
+            }
+          }
+        } else {
+          console.error(`Erro no batch ${i}:`, error);
+          erros.push(`Batch ${i}: ${error.message}`);
+        }
       } else {
         totalInserido += batch.length;
       }
@@ -206,8 +227,11 @@ serve(async (req) => {
         success: true, 
         totalInserido,
         totalRecebido: alimentos.length,
+        duplicados,
         erros: erros.length > 0 ? erros : undefined
       }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
     
