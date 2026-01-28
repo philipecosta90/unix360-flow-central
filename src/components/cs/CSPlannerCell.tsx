@@ -2,7 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, X, Minus } from 'lucide-react';
+import { Check, X, Minus, CalendarIcon, AlertTriangle } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
+import { toLocalISODate, parseLocalDate, formatDateDisplay } from '@/utils/dateUtils';
 import { cn } from '@/lib/utils';
 
 interface MicroMetaCellProps {
@@ -228,5 +232,90 @@ export const CicloSemanaBadge = ({ value, max = 12 }: CicloSemanaBadgeProps) => 
     )}>
       {val}
     </span>
+  );
+};
+
+// Função para calcular dias sem contato
+export const calcularDiasSemContato = (ultimoContato: string | null): number => {
+  if (!ultimoContato) return -1; // Sem registro
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const ultimo = parseLocalDate(ultimoContato);
+  ultimo.setHours(0, 0, 0, 0);
+  const diffMs = hoje.getTime() - ultimo.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+};
+
+// Componente para exibir e editar a data do último contato
+interface UltimoContatoCellProps {
+  value: string | null;
+  onChange: (value: string) => void;
+}
+
+export const UltimoContatoCell = ({ value, onChange }: UltimoContatoCellProps) => {
+  const [open, setOpen] = useState(false);
+  const dias = calcularDiasSemContato(value);
+  
+  // Determina cor e status baseado nos dias
+  const getStatus = () => {
+    if (dias < 0) return { 
+      color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700', 
+      label: 'Sem registro',
+      isRisk: true
+    };
+    if (dias <= 7) return { 
+      color: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-300 dark:border-green-700', 
+      label: formatDateDisplay(value!),
+      isRisk: false
+    };
+    if (dias <= 10) return { 
+      color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700', 
+      label: `${dias} dias`,
+      isRisk: false
+    };
+    return { 
+      color: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-300 dark:border-red-700', 
+      label: `${dias} dias`,
+      isRisk: true
+    };
+  };
+  
+  const status = getStatus();
+  
+  const handleSelect = (date: Date | undefined) => {
+    if (date) {
+      onChange(toLocalISODate(date));
+      setOpen(false);
+    }
+  };
+  
+  const selectedDate = value ? parseLocalDate(value) : undefined;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-7 text-xs font-medium border px-2 py-1 gap-1 min-w-[90px] justify-start",
+            status.color
+          )}
+        >
+          {status.isRisk && dias > 10 && <AlertTriangle className="h-3 w-3" />}
+          <span className="truncate">{status.label}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0 z-50" align="start">
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={handleSelect}
+          initialFocus
+          className="pointer-events-auto"
+          disabled={(date) => date > new Date()}
+        />
+      </PopoverContent>
+    </Popover>
   );
 };
