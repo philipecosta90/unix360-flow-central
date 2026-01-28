@@ -1,212 +1,181 @@
 
+# Plano: Campo Editável "Últ. Contato" + Alerta de Clientes em Risco no Planner
 
-# Analise Completa: Modulo Dieta - PRD vs Implementacao Atual
+## Resumo do Problema
 
-## Resumo Executivo
-
-Analisando seu roadmap detalhado contra a implementacao atual, identifico que **aproximadamente 70% da estrutura basica ja esta pronta**, mas existem **gaps criticos** que precisam ser resolvidos para o modulo funcionar completamente.
-
----
-
-## Status Detalhado por Fase
-
-### 1. ESTRUTURA DE DADOS E BACKEND
-
-| Item | Status | Detalhes |
-|------|--------|----------|
-| Tabela `planos_alimentares` (dieta_clientes) | PRONTO | Estrutura completa com 17 colunas |
-| Tabela `refeicoes` (dieta_cliente_refeicoes) | PRONTO | 7 colunas incluindo ordem e horario |
-| Tabela `alimentos_prescritos` (dieta_cliente_alimentos) | PRONTO | 13 colunas com link para alimento_base |
-| Tabela `observacoes` por refeicao | PRONTO | Campo `observacoes` em refeicoes |
-| Tabela `alimentos_base` | PRONTO (estrutura) | Tabela existe mas **SEM DADOS** |
-| Importacao TACO/TBCA/etc | **PENDENTE** | Tabela vazia - 0 registros |
-
-**Gap Critico**: A busca inteligente de alimentos nao funciona porque `alimentos_base` esta vazia!
+1. A coluna "Últ. Contato" no Planner de Clientes está apenas exibindo a data, sem permitir edição manual
+2. Não há indicação visual de clientes que estão há mais de 10 dias sem contato
+3. O usuário precisa registrar manualmente quando fez o último contato com cada cliente
 
 ---
 
-### 2. INTEGRACAO COM BASE DE PACIENTES
+## Solução Proposta
 
-| Item | Status | Detalhes |
-|------|--------|----------|
-| Conectar plano ao paciente | PRONTO | FK `cliente_id` + join com `clientes` |
-| RLS por empresa | PRONTO | Politicas configuradas corretamente |
-| Apenas profissional responsavel ve/edita | PRONTO | `empresa_id = get_user_empresa_id()` |
+### 1. Criar Componente de Célula Editável para Data de Último Contato
 
----
+Adicionar um novo componente `UltimoContatoCell` no arquivo `CSPlannerCell.tsx` que:
+- Exibe a data formatada ou "-" se não houver data
+- Ao clicar, abre um DatePicker para seleção da data
+- Calcula e exibe visualmente quantos dias se passaram desde o último contato
+- Mostra alerta visual (badge vermelho) quando > 10 dias sem contato
 
-### 3. UI: MONTAGEM DO PLANO
-
-| Item | Status | Detalhes |
-|------|--------|----------|
-| Selecionar paciente + criar plano | PRONTO | `DietaClienteDialog.tsx` |
-| Escolher modelo (template) | PRONTO | `duplicateFromTemplate()` |
-| Blocos de refeicoes colapsaveis | PRONTO | `Collapsible` implementado |
-| Adicionar alimento via busca | PRONTO (UI) | `AlimentoSearchInput.tsx` existe |
-| Filtros por tabela/macros | PRONTO (UI) | Filtros TACO/TBCA/etc na UI |
-| Macros somados automaticamente | PRONTO | `calcularTotaisRefeicao()` + `calcularTotaisDieta()` |
-
-**Gap**: A busca nao retorna resultados porque a base esta vazia.
-
----
-
-### 4. OBSERVACOES INTELIGENTES (IA)
-
-| Item | Status | Detalhes |
-|------|--------|----------|
-| Gerar dieta com IA | PRONTO | `DietaAIDialog.tsx` + `DietGeneratorAgent.tsx` |
-| Botao por refeicao | **PENDENTE** | Nao ha botao "gerar sugestao" dentro de cada refeicao |
-| Campo editavel com sugestao | **PENDENTE** | Falta implementar |
-
----
-
-### 5. AGENDAMENTO DO PLANO
-
-| Item | Status | Detalhes |
-|------|--------|----------|
-| Data inicio/fim | PRONTO | Campos `data_inicio` e `data_fim` existem |
-| Dias da semana ativos | **PENDENTE** | Campo `dias_semana` nao existe no banco |
-| Validacao de sobreposicao | **PENDENTE** | Nao ha validacao |
-
----
-
-### 6. VISUALIZACAO E EXPORTACAO
-
-| Item | Status | Detalhes |
-|------|--------|----------|
-| Tela de resumo do plano | PRONTO | `DietaClienteDetailDialog.tsx` |
-| Exportacao PDF | **PENDENTE** | Botao existe mas marcado como TODO |
-
----
-
-### 7. SEGURANCA E TESTES
-
-| Item | Status | Detalhes |
-|------|--------|----------|
-| Permissoes de acesso (RLS) | PRONTO | Politicas robustas em todas as tabelas |
-| Validacao de entrada | PARCIAL | Validacao basica, pode melhorar |
-| Historico/versionamento | PRONTO | `dieta_historico` + `fetchHistorico()` |
-
----
-
-## Prioridades de Implementacao
-
-### PRIORIDADE 1: Popular a Base de Alimentos (CRITICO)
-
-```
-+---------------------------------------------------------+
-| SEM ISSO, O MODULO NAO FUNCIONA!                        |
-| A busca inteligente esta pronta mas retorna 0 resultados|
-+---------------------------------------------------------+
+```text
++----------------------------------+
+| Últ. Contato                     |
++----------------------------------+
+| 15/01/2026                       |  (Normal - verde/neutro)
+| 13 dias ⚠️                       |  (Em risco - vermelho)
+| -                                |  (Sem registro - amarelo)
++----------------------------------+
 ```
 
-**Acao**: Importar dados das tabelas TACO, TBCA, etc.
+### 2. Adicionar Filtro/Seção de Clientes em Risco
 
-**Fontes disponiveis publicamente**:
-- TACO: ~600 alimentos (UNICAMP)
-- TBCA: ~2.000 alimentos (USP)
-- Suplementos: Lista customizada
+Adicionar na interface do Planner:
+- Toggle ou badge para filtrar apenas clientes em risco (10+ dias sem contato)
+- Contador visual de quantos clientes estão em risco
+- Ordenação opcional por "dias sem contato"
 
-**Estrutura do import**:
-```sql
-INSERT INTO alimentos_base (
-  tabela_origem, nome, grupo,
-  calorias_100g, proteinas_100g, carboidratos_100g, gorduras_100g, fibras_100g
-) VALUES 
-('taco', 'Arroz, integral, cozido', 'Cereais e derivados', 124, 2.6, 25.8, 1.0, 2.7),
-('taco', 'Feijao, carioca, cozido', 'Leguminosas', 76, 4.8, 13.6, 0.5, 8.5),
-...
+```text
++--------------------------------------------------+
+| Planner de Clientes     ⚠️ 5 em risco    [🔍]   |
++--------------------------------------------------+
+| [Mostrar apenas em risco] ☑                      |
++--------------------------------------------------+
+| Nome     | Contrato | ... | Últ. Contato | ...  |
+| Andriel  | Voucher  | ... | ⚠️ 15 dias   | ...  |
+| Brenno   | Semest.  | ... | ⚠️ 12 dias   | ...  |
++--------------------------------------------------+
 ```
 
 ---
 
-### PRIORIDADE 2: Exportacao PDF Funcional
+## Implementação Técnica
 
-**Arquivos a criar/modificar**:
-- `src/utils/dietaPdfExport.ts` (NOVO)
-- `DietaClienteDetailDialog.tsx` (conectar botao)
+### Arquivos a Modificar
 
-**Layout sugerido**:
-```
-+------------------------------------------+
-| [LOGO EMPRESA]                           |
-| PLANO ALIMENTAR                          |
-+------------------------------------------+
-| Paciente: Joao Silva                     |
-| Objetivo: Emagrecimento                  |
-| Periodo: 01/02/2026 a 01/03/2026         |
-+------------------------------------------+
-| RESUMO NUTRICIONAL                       |
-| 1800 kcal | P: 120g | C: 180g | G: 60g   |
-+------------------------------------------+
-| CAFE DA MANHA (07:00)                    |
-| - Ovo cozido (2 un) .......... 156 kcal  |
-| - Pao integral (2 fatias) .... 140 kcal  |
-| Subtotal: 296 kcal                       |
-+------------------------------------------+
-| ALMOCO (12:00)                           |
-| ...                                      |
-+------------------------------------------+
-| Observacoes do Profissional:             |
-| Beber 2L de agua por dia. Evitar...      |
-+------------------------------------------+
-```
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/components/cs/CSPlannerCell.tsx` | Adicionar | Novo componente `UltimoContatoCell` com DatePicker e cálculo de dias |
+| `src/components/cs/CSPlanner.tsx` | Modificar | Integrar o novo componente + filtro de clientes em risco |
+| `src/hooks/useCSPlanner.ts` | Verificar | Já possui mutation para atualizar `ultimo_contato` |
 
 ---
 
-### PRIORIDADE 3: Dias da Semana no Agendamento
+### Componente UltimoContatoCell
 
-**Migracao SQL necessaria**:
-```sql
-ALTER TABLE dieta_clientes ADD COLUMN dias_semana TEXT[] DEFAULT NULL;
--- Ex: ['seg', 'ter', 'qua', 'qui', 'sex']
-
-ALTER TABLE dieta_cliente_refeicoes ADD COLUMN dias_especificos TEXT[] DEFAULT NULL;
--- Permite refeicoes diferentes por dia
-```
-
----
-
-### PRIORIDADE 4: Sugestoes IA por Refeicao
-
-**Componente**: Adicionar botao em cada `CollapsibleContent`:
 ```tsx
-<Button variant="ghost" size="sm" onClick={() => gerarSugestaoIA(refeicao)}>
-  <Bot className="h-4 w-4 mr-1" />
-  Sugestao IA
-</Button>
+interface UltimoContatoCellProps {
+  value: string | null;
+  onChange: (value: string) => void;
+}
+
+// Funcionalidades:
+// - Exibe data formatada DD/MM/AAAA
+// - Calcula dias desde o último contato
+// - Badge verde: < 7 dias (OK)
+// - Badge amarelo: 7-10 dias (Atenção)
+// - Badge vermelho: > 10 dias (Em risco)
+// - Clique abre Popover com Calendar (DatePicker)
+// - Usa toLocalISODate() para salvar no formato correto
 ```
 
 ---
 
-## Roadmap Simplificado
+### Lógica de Cálculo de Dias
 
-| Semana | Entrega |
-|--------|---------|
-| 1 | Popular `alimentos_base` com TACO + TBCA (500-1000 itens iniciais) |
-| 2 | Exportacao PDF funcional |
-| 3 | Agendamento por dias da semana |
-| 4 | Sugestoes IA por refeicao + testes |
-| 5 | Polimento UX + beta com usuarios |
+```typescript
+const calcularDiasSemContato = (ultimoContato: string | null): number => {
+  if (!ultimoContato) return -1; // Sem registro
+  const hoje = new Date();
+  const ultimo = parseLocalDate(ultimoContato);
+  const diffMs = hoje.getTime() - ultimo.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+};
 
----
-
-## Proximos Passos Recomendados
-
-1. **Imediato**: Voce tem acesso aos arquivos CSV/Excel das tabelas TACO ou TBCA? Se sim, posso criar um script de importacao. Se nao, posso orientar onde obter.
-
-2. **Apos importacao**: Testar a busca inteligente que ja esta pronta.
-
-3. **Em paralelo**: Implementar exportacao PDF (jsPDF ja esta instalado no projeto).
+// Cores por status:
+// dias < 0 (sem data): amarelo/warning
+// dias <= 7: verde
+// dias 8-10: amarelo
+// dias > 10: vermelho com ícone ⚠️
+```
 
 ---
 
-## O que NAO Fazer (Escopo V2+)
+### Filtro de Clientes em Risco
 
-| Item | Motivo |
-|------|--------|
-| Widget para app do paciente | Requer desenvolvimento mobile separado |
-| Comparar dois planos | Feature avanada, nao essencial para MVP |
-| Prescricao automatizada por meta calorica | Ja temos Calculadora GET + IA que faz algo similar |
-| Tutorial interativo | Nice-to-have, nao bloqueante |
+No CSPlanner, adicionar estado e lógica:
 
+```typescript
+const [showOnlyRisk, setShowOnlyRisk] = useState(false);
+
+const clientesFiltrados = useMemo(() => {
+  let filtered = clientes.filter(cliente =>
+    cliente.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  if (showOnlyRisk) {
+    filtered = filtered.filter(cliente => {
+      const dias = calcularDiasSemContato(cliente.ultimo_contato);
+      return dias > 10 || dias < 0; // Em risco ou sem registro
+    });
+  }
+  
+  return filtered;
+}, [clientes, searchTerm, showOnlyRisk]);
+
+// Contador de clientes em risco
+const clientesEmRisco = clientes.filter(c => 
+  calcularDiasSemContato(c.ultimo_contato) > 10 || 
+  !c.ultimo_contato
+).length;
+```
+
+---
+
+## Fluxo de Uso
+
+```text
+1. Usuário entra na aba "Planner"
+2. Vê a tabela com coluna "Últ. Contato"
+   - Clientes sem contato há 10+ dias aparecem com badge vermelho
+   - Badge mostra "12 dias" ou "Sem registro"
+3. Clica na célula de um cliente
+4. Abre DatePicker com calendário
+5. Seleciona a data do último contato
+6. Sistema salva no campo `ultimo_contato` da tabela `clientes`
+7. A UI atualiza automaticamente (React Query invalidation)
+8. Badge muda de cor conforme os dias
+```
+
+---
+
+## Alinhamento com Lógica Existente
+
+A lógica atual em `useCustomerSuccess.ts` usa interações (tabela `cs_interacoes`) para calcular clientes em risco baseado em 7 dias. 
+
+**Para o Planner, usaremos:**
+- Campo `ultimo_contato` da tabela `clientes` (entrada manual)
+- Critério de 10 dias (conforme solicitado pelo usuário)
+- Independente das interações formais cadastradas
+
+Isso permite que o profissional registre contatos rápidos (WhatsApp, ligação) sem precisar criar uma interação formal no sistema.
+
+---
+
+## Resultado Esperado
+
+1. Coluna "Últ. Contato" clicável com DatePicker
+2. Badge visual mostrando dias desde último contato
+3. Cores: verde (OK), amarelo (atenção), vermelho (risco)
+4. Filtro "Mostrar apenas em risco" no topo
+5. Contador "X clientes em risco" visível
+6. Data salva corretamente no banco sem problemas de timezone
+
+---
+
+## Dependências
+
+- Componente Calendar/DatePicker já existente no projeto
+- Utilitários `toLocalISODate` e `parseLocalDate` de `@/utils/dateUtils`
+- Mutation `updateClientePlanner` já suporta atualizar `ultimo_contato`
